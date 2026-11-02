@@ -25,6 +25,7 @@ RPM_RANGE_FRAC = 0.1  # stands in for Spark's plausible running-speed range: tru
 
 
 TWIN_HASH = hashlib.sha1(Path(twin.__file__).read_bytes()).hexdigest()[:10]
+MEASURE_HASH = hashlib.sha1(Path(measure.__file__).read_bytes()).hexdigest()[:10]
 
 
 def run_one(fault, seed, seconds, scale, root, rerender=False, encoding="grain"):
@@ -40,14 +41,20 @@ def run_one(fault, seed, seconds, scale, root, rerender=False, encoding="grain")
     sc = measure.Scale.from_reference(masks, truth["reference"]["part"], truth["reference"]["width_mm"])
     rpm = truth["rpm"]
     t0 = time.time()
-    res, arrays = measure.measure(str(d / "clip.mp4"), masks, truth["fps"],
-                                  rpm_range=(rpm * (1 - RPM_RANGE_FRAC), rpm * (1 + RPM_RANGE_FRAC)), scale=sc)
+    mpath = d / "measured.json"
+    cached = json.loads(mpath.read_text()) if mpath.exists() and not rerender else None
+    if cached and cached.get("measure_hash") == MEASURE_HASH:  # same clip, same measurement code
+        res = cached
+    else:
+        res, arrays = measure.measure(str(d / "clip.mp4"), masks, truth["fps"],
+                                      rpm_range=(rpm * (1 - RPM_RANGE_FRAC), rpm * (1 + RPM_RANGE_FRAC)), scale=sc)
+        res["measure_hash"] = MEASURE_HASH
+        mpath.write_text(json.dumps(res, indent=2))
+        measure.plot_spectra(res, arrays, d / "spectrum.png", f"twin {fault}, seed {seed}")
     fp = fingerprint.fingerprint(res)
     t_measure = time.time() - t0
     cmp = evaluate.compare(truth, res, fp["verdict"])
-    (d / "measured.json").write_text(json.dumps(res, indent=2))
     (d / "fingerprint.json").write_text(json.dumps(fp, indent=2))
-    measure.plot_spectra(res, arrays, d / "spectrum.png", f"twin {fault}, seed {seed}")
     return truth, res, fp, cmp, t_render, t_measure
 
 
