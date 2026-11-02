@@ -126,3 +126,15 @@ def test_fan_parts_are_asked_for():
                       {"phrase": "fan blades", "visibility": "clear", "rotation": "changing"}],
                      machine="pedestal fan"), 240)
     assert p["parts"] == ["pedestal fan", "fan motor housing", "fan guard rim", "fan stand"]
+
+
+def test_still_frame_for_small_details(tmp_path):
+    import subprocess
+    clip = tmp_path / "c.mp4"
+    subprocess.run(["ffmpeg", "-nostdin", "-y", "-loglevel", "error", "-f", "lavfi", "-i", "testsrc=size=2560x1440:rate=30",
+                    "-frames:v", "20", "-pix_fmt", "yuv420p", str(clip)], check=True)
+    import cv2
+    out = plan_parts.still_frame(clip, tmp_path / "s.png", 10)
+    assert cv2.imread(out).shape == (1080, 1920, 3)  # capped at full HD
+    assert plan_parts.still_frame(clip, tmp_path / "x.png", 500) is None
+    assert "machine_type in front of every part" in plan_parts.PROMPT and "full-resolution frame" in plan_parts.PROMPT
