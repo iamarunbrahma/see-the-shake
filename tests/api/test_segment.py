@@ -75,3 +75,37 @@ def test_rotated_clip_decodes_the_same_in_subclip_and_measurement(tmp_path):
                     "-c", "copy", str(rot)], check=True)
     sub = segment.subclip(rot, tmp_path / "sub.mp4", 0, 50)
     assert segment.decoded_shape(sub["path"]) == next(read_gray(rot)).shape == (320, 180)
+
+
+def test_missed_part_is_retried_with_the_machine_name(tmp_path, door_events):
+    from shake.meta_api import SAM, Cassette, MetaAPI
+    fx = load_fixture("imbalance")
+    calls = {c["key"]: c["response"] for c in sam_calls(fx)}
+    empty = calls[fx["report"]["segment"]["missing"][0]]  # a recorded "found nothing" stream
+    c = Cassette(tmp_path / "c.json", "record")
+    c.add("sam", SAM, "washing machine", {}, calls["washing machine"])
+    c.add("sam", SAM, "front door", {}, empty)
+    c.add("sam", SAM, "washing machine front door", {}, door_events)
+    api = MetaAPI("replay", cassette=tmp_path / "c.json")
+    masks, infos = segment.segment_file(api, "file-1", ["washing machine", "front door"], (twin.H, twin.W), 60,
+                                        fallback_phrase="washing machine")
+    assert set(masks) == {"washing machine", "front door"} and api.cassette.pos == 3
+    assert infos["front door"]["retried_as"] == "washing machine front door"
+    assert infos["front door"]["first_try"]["found"] is False and infos["front door"]["usd"] == pytest.approx(0.024)
+    assert segment.iou(masks["front door"], twin.part_masks()[0]["door"]) > 0.95
+
+
+def test_replay_retries_only_where_the_recording_did(tmp_path):
+    from shake.meta_api import SAM, Cassette, MetaAPI
+    fx = load_fixture("imbalance")
+    calls = {c["key"]: c["response"] for c in sam_calls(fx)}
+    missing = fx["report"]["segment"]["missing"][0]
+    c = Cassette(tmp_path / "c.json", "record")
+    c.add("sam", SAM, "washing machine", {}, calls["washing machine"])
+    c.add("sam", SAM, missing, {}, calls[missing])
+    api = MetaAPI("replay", cassette=tmp_path / "c.json")
+    masks, infos = segment.segment_file(api, "file-1", ["washing machine", missing], (twin.H, twin.W), 60,
+                                        fallback_phrase="washing machine")
+    assert set(masks) == {"washing machine"} and "retried_as" not in infos[missing]
+    assert segment.retry_phrase("front door", "washing machine") == "washing machine front door"
+    assert segment.retry_phrase("washing machine door", "washing machine") is None

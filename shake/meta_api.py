@@ -195,6 +195,17 @@ class Cassette:
             have = f"next unused is {nxt['op']} {nxt['model']} {nxt['key']!r}" if nxt else "none left"
             raise APIError(f"cassette {self.path.name}: no recorded call for {op} {model} {key!r} ({have})")
 
+    def has(self, op, model, key):
+        """Whether next(op, model, key) would find a recording."""
+        with self._lock:
+            i = self.pos
+            while i < len(self.items) and self.items[i]["op"] == op:
+                it = self.items[i]
+                if i not in self._used and (it["model"], it["key"]) == (model, key):
+                    return True
+                i += 1
+            return False
+
     def save(self):
         with self._lock:
             _write_json(self.path, self.items)
@@ -314,6 +325,12 @@ class MetaAPI:
         if self._client is None:
             self._client = make_client()
         return self._client
+
+    def will_call(self, op, key):
+        """Whether an optional call (a retry) should be made: always live; in replay, only if it was recorded."""
+        if self.mode != "replay":
+            return True
+        return self.cassette.has(op, {"sam": SAM, "spark": SPARK, "upload": "files"}[op], key)
 
     def _call(self, op, model, key, request, live_fn):
         if self.mode == "replay":

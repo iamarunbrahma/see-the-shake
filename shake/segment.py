@@ -303,19 +303,41 @@ def segment_phrase(api: MetaAPI, file_id, phrase, shape, frames_sent):
     return mask, info
 
 
-def segment_file(api: MetaAPI, file_id, phrases, shape, frames_sent, fallback_phrase=None, parallel=MAX_PARALLEL):
-    """Masks for each phrase on an uploaded sub-clip. Returns ({phrase: mask}, {phrase: info}).
-
-    The phrases' requests run concurrently (each waits mostly on the network, then decodes in a process pool)."""
-    masks, infos = {}, {}
+def _run_phrases(api, file_id, phrases, shape, frames_sent, parallel):
     if parallel > 1 and len(phrases) > 1:
         from concurrent.futures import ThreadPoolExecutor
         with ThreadPoolExecutor(min(parallel, len(phrases)), thread_name_prefix="sam") as ex:
             futs = [(p, ex.submit(segment_phrase, api, file_id, p, shape, frames_sent)) for p in phrases]
-            done = [(p, f.result()) for p, f in futs]  # a 402 (or any error) is raised here, in phrase order
-    else:
-        done = [(p, segment_phrase(api, file_id, p, shape, frames_sent)) for p in phrases]
-    for p, (m, info) in done:
+            return [(p, f.result()) for p, f in futs]  # a 402 (or any error) is raised here, in phrase order
+    return [(p, segment_phrase(api, file_id, p, shape, frames_sent)) for p in phrases]
+
+
+def retry_phrase(phrase, machine):
+    """The phrase with the machine's name in front, or None when it already has it. SAM often finds a part
+    named with its machine ("washing machine front door") when the bare part ("front door") finds nothing."""
+    if not machine or phrase == machine or machine in phrase:
+        return None
+    return f"{machine} {phrase}"
+
+
+def segment_file(api: MetaAPI, file_id, phrases, shape, frames_sent, fallback_phrase=None, parallel=MAX_PARALLEL):
+    """Masks for each phrase on an uploaded sub-clip. Returns ({phrase: mask}, {phrase: info}).
+
+    The phrases' requests run concurrently (each waits mostly on the network, then decodes in a process pool).
+    A part that finds nothing is tried once more with the machine's name in front (fallback_phrase is the
+    machine); its mask keeps the planned phrase as its name. A replay retries only where the recording did."""
+    masks, infos = {}, {}
+    for p, (m, info) in _run_phrases(api, file_id, phrases, shape, frames_sent, parallel):
+        infos[p] = info
+        if m is not None:
+            masks[p] = m
+    retry = {p: retry_phrase(p, fallback_phrase) for p in phrases if p not in masks}
+    retry = {p: q for p, q in retry.items() if q and api.will_call("sam", q)}
+    for (p, q), (_, (m, info)) in zip(retry.items(),
+                                      _run_phrases(api, file_id, list(retry.values()), shape, frames_sent, parallel)):
+        info["retried_as"] = q
+        info["first_try"] = {k: infos[p].get(k) for k in ("found", "objects", "usd")}
+        info["usd"] = round(info["usd"] + infos[p].get("usd", 0.0), 6)
         infos[p] = info
         if m is not None:
             masks[p] = m
