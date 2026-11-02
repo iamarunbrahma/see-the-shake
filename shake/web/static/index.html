@@ -39,7 +39,8 @@
   .chip { font-size: 12px; padding: 1px 8px; border-radius: 999px; background: var(--chip); color: var(--muted); min-width: 92px; text-align: center; }
   .chip.done { color: var(--ok); } .chip.running { color: var(--accent); } .chip.failed { color: var(--bad); }
   .chip.skipped, .chip.fallback, .chip.context { color: var(--warn); }
-  .chip.verified { color: var(--ok); } .chip.dropped { color: var(--bad); }
+  .chip.verified { color: var(--ok); } .chip.dropped, .chip.not_verified { color: var(--bad); }
+  .chip.unverifiable, .chip.partly_verified { color: var(--warn); }
   .cost { font-variant-numeric: tabular-nums; }
   .detail { color: var(--muted); font-size: 13px; }
   .verdict { display: flex; gap: 16px; align-items: baseline; flex-wrap: wrap; }
@@ -185,7 +186,9 @@
 const $ = (id) => document.getElementById(id);
 const VERDICT = { none: "No fault found", imbalance: "Imbalance", looseness: "Looseness", misalignment: "Misalignment", unclear: "Unclear" };
 const STATUS = { pending: "waiting", running: "running", done: "done", skipped: "off", fallback: "fell back", failed: "failed" };
-const EVIDENCE = { verified: "verified", context: "context", dropped: "dropped" };
+const EVIDENCE = { verified: "verified", context: "context", dropped: "dropped", not_verified: "not verified",
+                   unverifiable: "unverifiable", "not verified": "not verified", "partly verified": "partly verified" };
+const CLAIM = { most_moving_part: "Most moving part", direction: "Direction" };
 const usd = (v) => "$" + Number(v || 0).toFixed(4);
 let steps = [], timer = null;
 
@@ -357,6 +360,27 @@ function showPlan(r) {
   list(body, "Notes", plan.warnings);
 }
 
+function chip(status) {
+  return el("span", EVIDENCE[status] || status, "chip " + String(status).replace(" ", "_"));
+}
+
+function showVisual(body, v) {
+  // present only when the magnified clip was sent to Spark
+  if (!v || v.status === "not provided") return;
+  const h = el("h3", "What Spark saw in the magnified clip "); h.appendChild(chip(v.status)); body.appendChild(h);
+  if (v.description) body.appendChild(el("p", v.description));
+  const tbl = el("table"); const hr = el("tr"); ["Check", "Claim", "Spark said", "Why"].forEach(x => hr.appendChild(el("th", x)));
+  const thead = el("thead"); thead.appendChild(hr); tbl.appendChild(thead); const tb = el("tbody");
+  for (const c of v.checks || []) {
+    const tr = el("tr"); const td = el("td"); td.appendChild(chip(c.status)); tr.appendChild(td);
+    const said = c.claim === "direction" ? (v.direction || "") : (v.most_moving_part || "");
+    [CLAIM[c.claim] || c.claim, said, c.reason].forEach(x => tr.appendChild(el("td", x)));
+    tb.appendChild(tr);
+  }
+  tbl.appendChild(tb); const wrap = el("div", null, "scroll"); wrap.appendChild(tbl); body.appendChild(wrap);
+  body.appendChild(el("p", "Checked against the measured motion inside the magnification band. Rocking cannot be confirmed by translation tracking, so it is always unverifiable.", "hint"));
+}
+
 function showDiagnosis(r) {
   const dg = r.diagnosis || {}, body = $("diagnosis-body"); clear(body);
   $("both").textContent = "";
@@ -391,6 +415,7 @@ function showDiagnosis(r) {
   tbl.appendChild(tb); const wrap = el("div", null, "scroll"); wrap.appendChild(tbl); body.appendChild(wrap);
   const c = sp.counts || {};
   body.appendChild(el("p", `${c.verified || 0} verified, ${c.context || 0} context (a real peak, but not what this fault rests on), ${c.dropped || 0} dropped.`, "hint"));
+  showVisual(body, sp.visual);
   list(body, "How to fix it", sp.fix);
   list(body, "What to check next", sp.check_next);
   if (dg.usd !== undefined) body.appendChild(el("p", "Cost of this answer: " + usd(dg.usd), "hint cost"));
