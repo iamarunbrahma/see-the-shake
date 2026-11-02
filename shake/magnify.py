@@ -200,12 +200,14 @@ def magnify(path, masks, rel, fps, f1, out_dir, start=0, alpha="auto", band=DEFA
     sh = {k: v[:m] for k, v in sh.items()}
     shape = next(iter(masks.values())).shape
     H, W = shape
-    layers = build_layers(masks, sh, shape)
-    plate = make_plate(path, start, n_all, layers, shape)
-
     s = min(1.0, 960.0 / W)
     hw, hh = _even(W * s), _even(H * s)
     slow = fps / PLAYBACK_FPS
+    if not write_native:
+        return _magnify_display(path, masks, sh, alpha, band, band_hz, fps, start, m, out, s, hw, hh, slow, outline)
+    layers = build_layers(masks, sh, shape)
+    plate = make_plate(path, start, n_all, layers, shape)
+
     sbs = _Writer(out / "side_by_side.mp4", 2 * hw, hh, PLAYBACK_FPS, ["-preset", "veryfast", "-crf", "20"])
     nat = _Writer(out / "magnified_native.mp4", W, H, int(round(fps)),
                   ["-preset", "veryfast", "-tune", "grain", "-crf", "16"]) if write_native else None
@@ -256,6 +258,82 @@ def magnify(path, masks, rel, fps, f1, out_dir, start=0, alpha="auto", band=DEFA
         "slice": {"row": row, "cols": [c0, c1], "seconds": 0.5},
         "files": {"side_by_side": "side_by_side.mp4", "native": "magnified_native.mp4" if write_native else None,
                   "slice": "slice.png"},
+    }
+
+
+def _magnify_display(path, masks, sh, alpha, band, band_hz, fps, start, m, out, s, hw, hh, slow, outline,
+                     workers=4):
+    """The side-by-side video composited at display resolution: what the page shows, for a quarter of the work.
+
+    The rendered frames are decoded once, downscaled, and reused for the plate; shifts are scaled to display px,
+    so the visible wobble is the same as compositing at full resolution and shrinking afterwards. Frames are
+    composited in parallel threads and written in order.
+    """
+    from concurrent.futures import ThreadPoolExecutor
+    frames = [cv2.resize(f, (hw, hh), interpolation=cv2.INTER_AREA) for f in read_bgr(path, start, m)]
+    m = len(frames)
+    dmasks = {k: ((cv2.resize(v, (hw, hh), interpolation=cv2.INTER_AREA) > 127) * 255).astype(np.uint8)
+              for k, v in masks.items()}
+    dsh = {k: v[:m] * s for k, v in sh.items()}
+    layers = build_layers(dmasks, dsh, (hh, hw))
+    step = max(1, m // 60)
+    plate = np.mean(np.stack(frames[::step]).astype(np.float64), axis=0).astype(np.uint8)
+    hole = np.zeros((hh, hw), np.uint8)
+    for L in layers:
+        if L.outer:
+            y0, y1, x0, x1 = L.box
+            hole[y0:y1, x0:x1] |= (L.fm > 0.01).astype(np.uint8)
+    hole = cv2.dilate(hole, np.ones((5, 5), np.uint8))
+    plate = cv2.inpaint(plate, hole, 5, cv2.INPAINT_TELEA).astype(np.float32)
+
+    lead = layers[0]
+    lm = dmasks[lead.name] > 0
+    row = int(np.nonzero(lm.any(1))[0].mean())
+    xl = int(np.nonzero(lm[row])[0].min())
+    c0, c1 = max(0, xl - 30), min(hw, xl + 30)
+    n_slice = min(m, int(0.5 * fps))
+
+    def render(i):
+        a = frames[i]
+        b = magnify_frame(a, i, layers, plate)
+        sl = (a[row, c0:c1].copy(), b[row, c0:c1].copy()) if i < n_slice else None
+        a = a.copy()
+        if outline:
+            _outline(a, masks, s)
+            _outline(b, masks, s)
+        _label(a, f"Original, {slow:g}x slower")
+        _label(b, f"Shake magnified {alpha:.0f}x")
+        return np.hstack([a, b]), sl
+
+    sbs = _Writer(out / "side_by_side.mp4", 2 * hw, hh, PLAYBACK_FPS, ["-preset", "veryfast", "-crf", "20"])
+    slices = {"original": [], "magnified": []}
+    ok = False
+    try:
+        with ThreadPoolExecutor(workers, thread_name_prefix="magnify") as ex:
+            for img, sl in ex.map(render, range(m)):  # map keeps frame order
+                sbs.write(img)
+                if sl:
+                    slices["original"].append(sl[0])
+                    slices["magnified"].append(sl[1])
+        ok = True
+    finally:
+        sbs.close(ok)
+    tiles = []
+    for k in ("original", "magnified"):
+        arr = np.array(slices[k], np.uint8)
+        tiles.append(cv2.resize(arr, (arr.shape[1] * 8, arr.shape[0] * 2), interpolation=cv2.INTER_NEAREST))
+    gap = np.full((tiles[0].shape[0], 16, 3), 255, np.uint8)
+    cv2.imwrite(str(out / "slice.png"), np.hstack([tiles[0], gap, tiles[1]]))
+    ref_index = int(np.argmin(np.max([np.hypot(v[:, 0], v[:, 1]) for v in sh.values()], axis=0)))
+    return {
+        "alpha": round(alpha, 3), "band_hz": [round(band_hz[0], 3), round(band_hz[1], 3)],
+        "band_orders": list(band), "frames": m, "seconds": round(m / fps, 3), "playback_fps": PLAYBACK_FPS,
+        "slow_factor": slow, "start_frame": start, "ref_index": ref_index, "render_scale": round(s, 4),
+        "zones_px": {L.name: int(L.zone.sum()) for L in layers},
+        "layers": [{"part": L.name, "outer": L.outer, "max_shift_px": round(float(np.abs(L.shift).max()) / s, 3)}
+                   for L in layers],
+        "slice": {"row": row, "cols": [c0, c1], "seconds": 0.5, "scale": round(s, 4)},
+        "files": {"side_by_side": "side_by_side.mp4", "native": None, "slice": "slice.png"},
     }
 
 
