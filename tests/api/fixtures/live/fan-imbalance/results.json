@@ -1,0 +1,1810 @@
+{
+ "run_id": "14c296b352a3",
+ "code_version": "38eff31314",
+ "options": {
+  "capture_fps": null,
+  "rpm": null,
+  "rpm_range": null,
+  "reference": [
+   "fan guard rim",
+   430.0,
+   "height"
+  ],
+  "alpha": "auto",
+  "band": [
+   0.8,
+   1.25
+  ],
+  "video_seconds": 3.0,
+  "min_seconds": 4.0,
+  "max_seconds": 10.0,
+  "verify": false,
+  "mains_hz": 50.0,
+  "api": "record",
+  "cassette": null,
+  "api_label": "fan-imbalance",
+  "spark_video": true,
+  "user_parts": null,
+  "blades": 3,
+  "extra": {}
+ },
+ "mask_source": "SAM 3.1",
+ "clip": {
+  "name": "clip.mp4"
+ },
+ "ingest": {
+  "clip": {
+   "path": "runs/twin_clips/fan_imbalance_seed1_6s_1x_7d53fd19d2/clip.mp4",
+   "width": 1920,
+   "height": 1080,
+   "codec": "h264",
+   "container": "mov,mp4,m4a,3gp,3g2,mj2",
+   "stream_fps": 240.0,
+   "capture_fps": 240.0,
+   "fps_source": "stream",
+   "frames": 1440,
+   "duration_s": 6.0,
+   "time_scale": 1.0,
+   "rotation": 0,
+   "warnings": [],
+   "variable_rate": false
+  },
+  "interpolation": {
+   "flagged": false,
+   "status": "ok",
+   "whiteness": 0.743,
+   "threshold": 0.7,
+   "temporal_noise_grey": 0.791,
+   "min_noise_grey": 0.3,
+   "tile_whiteness_p10_p90": [
+    0.585,
+    0.747
+   ],
+   "frames_checked": 720
+  },
+  "window": {
+   "start_frame": 0,
+   "frames": 1440,
+   "start_s": 0.0,
+   "seconds": 6.0
+  }
+ },
+ "plan": {
+  "status": "done",
+  "machine_type": "standing fan",
+  "rpm_range": [
+   600.0,
+   1800.0
+  ],
+  "rpm_reason": "Typical standing fan runs near 1000 to 1500 rpm so range is widened for safety.",
+  "parts": [
+   "standing fan",
+   "standing fan motor housing",
+   "standing fan guard rim",
+   "standing fan pole"
+  ],
+  "parts_source": "spark",
+  "fallback_phrase": "standing fan",
+  "parts_not_clear": [],
+  "rotating_parts_seen": [
+   "blades"
+  ],
+  "blades": 3,
+  "warnings": [],
+  "usd": 0.01297,
+  "usage": {
+   "input_tokens": 4494,
+   "output_tokens": 1730
+  },
+  "preview": {
+   "seconds": 4.0,
+   "fps": 30,
+   "height": 480,
+   "step": 8
+  },
+  "preview_file_id": "file-4078880542416253"
+ },
+ "segment": {
+  "file_id": "file-1157386416717520",
+  "subclip": {
+   "start_frame": 690,
+   "frames": 60
+  },
+  "missing": [
+   "standing fan motor housing"
+  ],
+  "usd": 0.048,
+  "parts": {
+   "standing fan": {
+    "objects": 1,
+    "frames_sent": 60,
+    "found": true,
+    "object_id": "0",
+    "frames_returned": 60,
+    "frames_decoded": 8,
+    "present_share": 1.0,
+    "confidence": 0.9649,
+    "area_px": 167143,
+    "bbox": [
+     751,
+     101,
+     1288,
+     919
+    ],
+    "unstable_share": 0.0211,
+    "frames_billed": 60,
+    "usd": 0.012
+   },
+   "standing fan motor housing": {
+    "objects": 0,
+    "frames_sent": 60,
+    "found": false,
+    "frames_billed": 60,
+    "usd": 0.012
+   },
+   "standing fan guard rim": {
+    "objects": 1,
+    "frames_sent": 60,
+    "found": true,
+    "object_id": "0",
+    "frames_returned": 60,
+    "frames_decoded": 8,
+    "present_share": 1.0,
+    "confidence": 0.8476,
+    "area_px": 19202,
+    "bbox": [
+     750,
+     99,
+     1112,
+     562
+    ],
+    "unstable_share": 0.2398,
+    "frames_billed": 60,
+    "usd": 0.012
+   },
+   "standing fan pole": {
+    "objects": 1,
+    "frames_sent": 60,
+    "found": true,
+    "object_id": "0",
+    "frames_returned": 60,
+    "frames_decoded": 8,
+    "present_share": 1.0,
+    "confidence": 0.7064,
+    "area_px": 11165,
+    "bbox": [
+     1092,
+     427,
+     1152,
+     873
+    ],
+    "unstable_share": 0.0731,
+    "frames_billed": 60,
+    "usd": 0.012
+   }
+  }
+ },
+ "sam_iou": {
+  "fan motor housing": {
+   "iou": 0.0571,
+   "phrase": "standing fan"
+  },
+  "fan guard rim": {
+   "iou": 0.6736,
+   "phrase": "standing fan guard rim"
+  },
+  "fan stand": {
+   "iou": 0.8482,
+   "phrase": "standing fan pole"
+  }
+ },
+ "measurement": {
+  "fps": 240.0,
+  "frames": 1440,
+  "start_frame": 0,
+  "seconds": 6.0,
+  "bin_hz": 0.16667,
+  "nyquist_hz": 120.0,
+  "running_speed": {
+   "hz": 21.4925,
+   "rpm": 1289.5,
+   "source": "rpm_range"
+  },
+  "scale": {
+   "mm_per_px": 0.5256723716381418,
+   "basis": "standing fan height = 430 mm over 818 px"
+  },
+  "flicker_hz": 100.0,
+  "pixel_noise_grey": 0.4011,
+  "parts": {
+   "standing fan": {
+    "axes": {
+     "x": {
+      "noise_floor_px": 0.000245,
+      "peaks": [
+       {
+        "hz": 21.492,
+        "amp_px": 0.18837,
+        "amp_mm": 0.09902,
+        "order": 1.0,
+        "label": "1x",
+        "phase": -0.8815,
+        "snr": 768.2,
+        "bg_amp_px": 0.00727
+       },
+       {
+        "hz": 43.133,
+        "amp_px": 0.00235,
+        "amp_mm": 0.00123,
+        "order": 2.0,
+        "label": "2x",
+        "phase": -0.902,
+        "snr": 9.6,
+        "bg_amp_px": 0.00024
+       },
+       {
+        "hz": 58.521,
+        "amp_px": 0.002,
+        "amp_mm": 0.00105,
+        "order": null,
+        "label": "non-synchronous",
+        "phase": -2.333,
+        "snr": 8.2,
+        "bg_amp_px": 0.00017
+       },
+       {
+        "hz": 64.474,
+        "amp_px": 0.00835,
+        "amp_mm": 0.00439,
+        "order": 3.0,
+        "label": "3x",
+        "phase": 0.9571,
+        "snr": 34.0,
+        "bg_amp_px": 0.00033
+       },
+       {
+        "hz": 98.502,
+        "amp_px": 0.00197,
+        "amp_mm": 0.00104,
+        "order": 4.5,
+        "label": "4.5x",
+        "phase": -2.4418,
+        "snr": 8.0,
+        "bg_amp_px": 0.00018
+       },
+       {
+        "hz": 101.496,
+        "amp_px": 0.00203,
+        "amp_mm": 0.00107,
+        "order": null,
+        "label": "non-synchronous",
+        "phase": 2.4744,
+        "snr": 8.3,
+        "bg_amp_px": 0.00021
+       }
+      ],
+      "orders": {
+       "0.5x": {
+        "hz": 10.409,
+        "amp_px": 0.00061,
+        "above_floor": false,
+        "phase": -3.0495
+       },
+       "1x": {
+        "hz": 21.492,
+        "amp_px": 0.18837,
+        "above_floor": true,
+        "phase": -0.8815
+       },
+       "1.5x": {
+        "hz": 32.053,
+        "amp_px": 0.00038,
+        "above_floor": false,
+        "phase": 1.5791
+       },
+       "2x": {
+        "hz": 43.133,
+        "amp_px": 0.00235,
+        "above_floor": true,
+        "phase": -0.902
+       },
+       "2.5x": {
+        "hz": 53.952,
+        "amp_px": 0.00041,
+        "above_floor": false,
+        "phase": -0.0136
+       },
+       "3x": {
+        "hz": 64.474,
+        "amp_px": 0.00835,
+        "above_floor": true,
+        "phase": 0.9571
+       },
+       "4x": {
+        "hz": 85.81,
+        "amp_px": 0.00033,
+        "above_floor": false,
+        "phase": -0.9361
+       },
+       "5x": {
+        "hz": 107.483,
+        "amp_px": 0.00065,
+        "above_floor": false,
+        "phase": 0.9783
+       },
+       "6x": {
+        "hz": 128.955,
+        "amp_px": 0.0,
+        "above_floor": false,
+        "phase": null
+       }
+      }
+     },
+     "y": {
+      "noise_floor_px": 0.000141,
+      "peaks": [
+       {
+        "hz": 21.492,
+        "amp_px": 0.09894,
+        "amp_mm": 0.05201,
+        "order": 1.0,
+        "label": "1x",
+        "phase": 0.7374,
+        "snr": 701.2,
+        "bg_amp_px": 0.00404
+       },
+       {
+        "hz": 64.481,
+        "amp_px": 0.00492,
+        "amp_mm": 0.00258,
+        "order": 3.0,
+        "label": "3x",
+        "phase": 2.879,
+        "snr": 34.8,
+        "bg_amp_px": 0.00021
+       }
+      ],
+      "orders": {
+       "0.5x": {
+        "hz": 10.499,
+        "amp_px": 0.00032,
+        "above_floor": false,
+        "phase": 0.6089
+       },
+       "1x": {
+        "hz": 21.492,
+        "amp_px": 0.09894,
+        "above_floor": true,
+        "phase": 0.7374
+       },
+       "1.5x": {
+        "hz": 32.372,
+        "amp_px": 0.00019,
+        "above_floor": false,
+        "phase": 0.3783
+       },
+       "2x": {
+        "hz": 43.186,
+        "amp_px": 0.0009,
+        "above_floor": false,
+        "phase": 1.5275
+       },
+       "2.5x": {
+        "hz": 54.038,
+        "amp_px": 0.00035,
+        "above_floor": false,
+        "phase": -2.5132
+       },
+       "3x": {
+        "hz": 64.481,
+        "amp_px": 0.00492,
+        "above_floor": true,
+        "phase": 2.879
+       },
+       "4x": {
+        "hz": 85.954,
+        "amp_px": 0.00043,
+        "above_floor": false,
+        "phase": 0.4498
+       },
+       "5x": {
+        "hz": 107.422,
+        "amp_px": 0.00018,
+        "above_floor": false,
+        "phase": 0.6292
+       },
+       "6x": {
+        "hz": 128.955,
+        "amp_px": 0.0,
+        "above_floor": false,
+        "phase": null
+       }
+      }
+     }
+    },
+    "velocity_rms": 10.806,
+    "velocity_unit": "mm/s",
+    "excluded_rotating_px": 106600
+   },
+   "standing fan guard rim": {
+    "axes": {
+     "x": {
+      "noise_floor_px": 0.000317,
+      "peaks": [
+       {
+        "hz": 21.493,
+        "amp_px": 0.29736,
+        "amp_mm": 0.15631,
+        "order": 1.0,
+        "label": "1x",
+        "phase": -0.8723,
+        "snr": 938.2,
+        "bg_amp_px": 0.00727
+       },
+       {
+        "hz": 43.111,
+        "amp_px": 0.00445,
+        "amp_mm": 0.00234,
+        "order": 2.0,
+        "label": "2x",
+        "phase": -0.9108,
+        "snr": 14.0,
+        "bg_amp_px": 0.00024
+       },
+       {
+        "hz": 64.478,
+        "amp_px": 0.01072,
+        "amp_mm": 0.00563,
+        "order": 3.0,
+        "label": "3x",
+        "phase": 1.0738,
+        "snr": 33.8,
+        "bg_amp_px": 0.00033
+       },
+       {
+        "hz": 98.505,
+        "amp_px": 0.00259,
+        "amp_mm": 0.00136,
+        "order": 4.5,
+        "label": "4.5x",
+        "phase": -2.4076,
+        "snr": 8.2,
+        "bg_amp_px": 0.00018
+       },
+       {
+        "hz": 101.495,
+        "amp_px": 0.00289,
+        "amp_mm": 0.00152,
+        "order": null,
+        "label": "non-synchronous",
+        "phase": 2.5039,
+        "snr": 9.1,
+        "bg_amp_px": 0.00021
+       }
+      ],
+      "orders": {
+       "0.5x": {
+        "hz": 10.32,
+        "amp_px": 0.00077,
+        "above_floor": false,
+        "phase": 2.8576
+       },
+       "1x": {
+        "hz": 21.493,
+        "amp_px": 0.29736,
+        "above_floor": true,
+        "phase": -0.8723
+       },
+       "1.5x": {
+        "hz": 31.924,
+        "amp_px": 0.00059,
+        "above_floor": false,
+        "phase": 2.2268
+       },
+       "2x": {
+        "hz": 43.111,
+        "amp_px": 0.00445,
+        "above_floor": true,
+        "phase": -0.9108
+       },
+       "2.5x": {
+        "hz": 54.047,
+        "amp_px": 0.00059,
+        "above_floor": false,
+        "phase": -0.4366
+       },
+       "3x": {
+        "hz": 64.478,
+        "amp_px": 0.01072,
+        "above_floor": true,
+        "phase": 1.0738
+       },
+       "4x": {
+        "hz": 85.841,
+        "amp_px": 0.00076,
+        "above_floor": false,
+        "phase": -1.0055
+       },
+       "5x": {
+        "hz": 107.455,
+        "amp_px": 0.0012,
+        "above_floor": false,
+        "phase": 1.1596
+       },
+       "6x": {
+        "hz": 128.955,
+        "amp_px": 0.0,
+        "above_floor": false,
+        "phase": null
+       }
+      }
+     },
+     "y": {
+      "noise_floor_px": 0.000211,
+      "peaks": [
+       {
+        "hz": 21.492,
+        "amp_px": 0.15913,
+        "amp_mm": 0.08365,
+        "order": 1.0,
+        "label": "1x",
+        "phase": 0.699,
+        "snr": 755.3,
+        "bg_amp_px": 0.00404
+       },
+       {
+        "hz": 43.215,
+        "amp_px": 0.00239,
+        "amp_mm": 0.00126,
+        "order": 2.0,
+        "label": "2x",
+        "phase": 1.4437,
+        "snr": 11.4,
+        "bg_amp_px": 0.00031
+       },
+       {
+        "hz": 64.478,
+        "amp_px": 0.00747,
+        "amp_mm": 0.00393,
+        "order": 3.0,
+        "label": "3x",
+        "phase": 2.708,
+        "snr": 35.5,
+        "bg_amp_px": 0.00021
+       }
+      ],
+      "orders": {
+       "0.5x": {
+        "hz": 10.931,
+        "amp_px": 0.00041,
+        "above_floor": false,
+        "phase": 1.1511
+       },
+       "1x": {
+        "hz": 21.492,
+        "amp_px": 0.15913,
+        "above_floor": true,
+        "phase": 0.699
+       },
+       "1.5x": {
+        "hz": 32.243,
+        "amp_px": 0.00028,
+        "above_floor": false,
+        "phase": -1.3339
+       },
+       "2x": {
+        "hz": 43.215,
+        "amp_px": 0.00239,
+        "above_floor": true,
+        "phase": 1.4437
+       },
+       "2.5x": {
+        "hz": 54.063,
+        "amp_px": 0.00047,
+        "above_floor": false,
+        "phase": -2.6125
+       },
+       "3x": {
+        "hz": 64.478,
+        "amp_px": 0.00747,
+        "above_floor": true,
+        "phase": 2.708
+       },
+       "4x": {
+        "hz": 85.995,
+        "amp_px": 0.00064,
+        "above_floor": false,
+        "phase": 0.3657
+       },
+       "5x": {
+        "hz": 107.445,
+        "amp_px": 0.00062,
+        "above_floor": false,
+        "phase": 0.9248
+       },
+       "6x": {
+        "hz": 128.955,
+        "amp_px": 0.0,
+        "above_floor": false,
+        "phase": null
+       }
+      }
+     }
+    },
+    "velocity_rms": 17.075,
+    "velocity_unit": "mm/s",
+    "excluded_rotating_px": 890
+   },
+   "standing fan pole": {
+    "axes": {
+     "x": {
+      "noise_floor_px": 0.000266,
+      "peaks": [
+       {
+        "hz": 21.492,
+        "amp_px": 0.14443,
+        "amp_mm": 0.07592,
+        "order": 1.0,
+        "label": "1x",
+        "phase": -0.873,
+        "snr": 543.9,
+        "bg_amp_px": 0.00727
+       },
+       {
+        "hz": 64.471,
+        "amp_px": 0.00604,
+        "amp_mm": 0.00318,
+        "order": 3.0,
+        "label": "3x",
+        "phase": 0.9437,
+        "snr": 22.8,
+        "bg_amp_px": 0.00033
+       }
+      ],
+      "orders": {
+       "0.5x": {
+        "hz": 10.429,
+        "amp_px": 0.0006,
+        "above_floor": false,
+        "phase": 0.5432
+       },
+       "1x": {
+        "hz": 21.492,
+        "amp_px": 0.14443,
+        "above_floor": true,
+        "phase": -0.873
+       },
+       "1.5x": {
+        "hz": 32.078,
+        "amp_px": 0.00056,
+        "above_floor": false,
+        "phase": 1.1133
+       },
+       "2x": {
+        "hz": 43.146,
+        "amp_px": 0.00144,
+        "above_floor": false,
+        "phase": -0.8081
+       },
+       "2.5x": {
+        "hz": 53.868,
+        "amp_px": 0.0004,
+        "above_floor": false,
+        "phase": 2.7402
+       },
+       "3x": {
+        "hz": 64.471,
+        "amp_px": 0.00604,
+        "above_floor": true,
+        "phase": 0.9437
+       },
+       "4x": {
+        "hz": 86.192,
+        "amp_px": 0.00035,
+        "above_floor": false,
+        "phase": 1.6246
+       },
+       "5x": {
+        "hz": 107.502,
+        "amp_px": 0.00059,
+        "above_floor": false,
+        "phase": -0.0584
+       },
+       "6x": {
+        "hz": 128.955,
+        "amp_px": 0.0,
+        "above_floor": false,
+        "phase": null
+       }
+      }
+     },
+     "y": {
+      "noise_floor_px": 0.000231,
+      "peaks": [
+       {
+        "hz": 21.492,
+        "amp_px": 0.09484,
+        "amp_mm": 0.04986,
+        "order": 1.0,
+        "label": "1x",
+        "phase": 0.8282,
+        "snr": 410.3,
+        "bg_amp_px": 0.00404
+       },
+       {
+        "hz": 61.514,
+        "amp_px": 0.00231,
+        "amp_mm": 0.00122,
+        "order": null,
+        "label": "non-synchronous",
+        "phase": -2.7954,
+        "snr": 10.0,
+        "bg_amp_px": 0.00036
+       },
+       {
+        "hz": 64.478,
+        "amp_px": 0.00591,
+        "amp_mm": 0.00311,
+        "order": 3.0,
+        "label": "3x",
+        "phase": 2.9728,
+        "snr": 25.6,
+        "bg_amp_px": 0.00021
+       }
+      ],
+      "orders": {
+       "0.5x": {
+        "hz": 10.345,
+        "amp_px": 0.00031,
+        "above_floor": false,
+        "phase": -2.0834
+       },
+       "1x": {
+        "hz": 21.492,
+        "amp_px": 0.09484,
+        "above_floor": true,
+        "phase": 0.8282
+       },
+       "1.5x": {
+        "hz": 32.5,
+        "amp_px": 0.00022,
+        "above_floor": false,
+        "phase": 1.017
+       },
+       "2x": {
+        "hz": 43.087,
+        "amp_px": 0.00099,
+        "above_floor": false,
+        "phase": 1.617
+       },
+       "2.5x": {
+        "hz": 54.033,
+        "amp_px": 0.00107,
+        "above_floor": false,
+        "phase": -2.3832
+       },
+       "3x": {
+        "hz": 64.478,
+        "amp_px": 0.00591,
+        "above_floor": true,
+        "phase": 2.9728
+       },
+       "4x": {
+        "hz": 85.724,
+        "amp_px": 0.00062,
+        "above_floor": false,
+        "phase": 0.493
+       },
+       "5x": {
+        "hz": 107.505,
+        "amp_px": 0.00065,
+        "above_floor": false,
+        "phase": -1.045
+       },
+       "6x": {
+        "hz": 128.955,
+        "amp_px": 0.0,
+        "above_floor": false,
+        "phase": null
+       }
+      }
+     }
+    },
+    "velocity_rms": 8.772,
+    "velocity_unit": "mm/s",
+    "excluded_rotating_px": 0
+   }
+  },
+  "background": {
+   "axes": {
+    "x": {
+     "noise_floor_px": 0.000172,
+     "peaks": [
+      {
+       "hz": 2.167,
+       "amp_px": 0.00383,
+       "amp_mm": 0.00201,
+       "order": null,
+       "label": "non-synchronous",
+       "phase": -1.0577,
+       "snr": 22.2
+      },
+      {
+       "hz": 3.526,
+       "amp_px": 0.00348,
+       "amp_mm": 0.00183,
+       "order": null,
+       "label": "non-synchronous",
+       "phase": 2.8857,
+       "snr": 20.2
+      },
+      {
+       "hz": 4.31,
+       "amp_px": 0.00269,
+       "amp_mm": 0.00142,
+       "order": null,
+       "label": "non-synchronous",
+       "phase": 0.1796,
+       "snr": 15.6
+      },
+      {
+       "hz": 5.014,
+       "amp_px": 0.00142,
+       "amp_mm": 0.00075,
+       "order": null,
+       "label": "non-synchronous",
+       "phase": 0.2693,
+       "snr": 8.2
+      },
+      {
+       "hz": 7.173,
+       "amp_px": 0.00175,
+       "amp_mm": 0.00092,
+       "order": null,
+       "label": "non-synchronous",
+       "phase": 1.9045,
+       "snr": 10.1
+      },
+      {
+       "hz": 10.32,
+       "amp_px": 0.00142,
+       "amp_mm": 0.00075,
+       "order": null,
+       "label": "non-synchronous",
+       "phase": 2.9232,
+       "snr": 8.2
+      },
+      {
+       "hz": 21.489,
+       "amp_px": 0.00727,
+       "amp_mm": 0.00382,
+       "order": 1.0,
+       "label": "1x",
+       "phase": -0.9383,
+       "snr": 42.2
+      }
+     ],
+     "orders": {
+      "0.5x": {
+       "hz": 10.32,
+       "amp_px": 0.00142,
+       "above_floor": true,
+       "phase": 2.9232
+      },
+      "1x": {
+       "hz": 21.489,
+       "amp_px": 0.00727,
+       "above_floor": true,
+       "phase": -0.9383
+      },
+      "1.5x": {
+       "hz": 32.236,
+       "amp_px": 0.00014,
+       "above_floor": false,
+       "phase": 0.7661
+      },
+      "2x": {
+       "hz": 42.989,
+       "amp_px": 0.00024,
+       "above_floor": false,
+       "phase": 1.5838
+      },
+      "2.5x": {
+       "hz": 54.0,
+       "amp_px": 0.00022,
+       "above_floor": false,
+       "phase": -1.7922
+      },
+      "3x": {
+       "hz": 64.577,
+       "amp_px": 0.00033,
+       "above_floor": false,
+       "phase": 0.7099
+      },
+      "4x": {
+       "hz": 85.925,
+       "amp_px": 0.00044,
+       "above_floor": false,
+       "phase": -1.9191
+      },
+      "5x": {
+       "hz": 107.473,
+       "amp_px": 0.00041,
+       "above_floor": false,
+       "phase": -2.4861
+      },
+      "6x": {
+       "hz": 128.955,
+       "amp_px": 0.0,
+       "above_floor": false,
+       "phase": null
+      }
+     }
+    },
+    "y": {
+     "noise_floor_px": 0.000141,
+     "peaks": [
+      {
+       "hz": 2.083,
+       "amp_px": 0.00472,
+       "amp_mm": 0.00248,
+       "order": null,
+       "label": "non-synchronous",
+       "phase": -1.8887,
+       "snr": 33.6
+      },
+      {
+       "hz": 3.069,
+       "amp_px": 0.0023,
+       "amp_mm": 0.00121,
+       "order": null,
+       "label": "non-synchronous",
+       "phase": 2.8178,
+       "snr": 16.4
+      },
+      {
+       "hz": 3.6,
+       "amp_px": 0.00346,
+       "amp_mm": 0.00182,
+       "order": null,
+       "label": "non-synchronous",
+       "phase": 1.707,
+       "snr": 24.6
+      },
+      {
+       "hz": 7.122,
+       "amp_px": 0.0012,
+       "amp_mm": 0.00063,
+       "order": null,
+       "label": "non-synchronous",
+       "phase": -2.3168,
+       "snr": 8.5
+      },
+      {
+       "hz": 8.014,
+       "amp_px": 0.00128,
+       "amp_mm": 0.00067,
+       "order": null,
+       "label": "non-synchronous",
+       "phase": 1.2543,
+       "snr": 9.1
+      },
+      {
+       "hz": 9.639,
+       "amp_px": 0.00143,
+       "amp_mm": 0.00075,
+       "order": null,
+       "label": "non-synchronous",
+       "phase": 1.738,
+       "snr": 10.2
+      },
+      {
+       "hz": 10.355,
+       "amp_px": 0.00138,
+       "amp_mm": 0.00072,
+       "order": null,
+       "label": "non-synchronous",
+       "phase": -2.6632,
+       "snr": 9.8
+      },
+      {
+       "hz": 11.32,
+       "amp_px": 0.00113,
+       "amp_mm": 0.0006,
+       "order": null,
+       "label": "non-synchronous",
+       "phase": 0.3346,
+       "snr": 8.0
+      },
+      {
+       "hz": 12.189,
+       "amp_px": 0.00125,
+       "amp_mm": 0.00066,
+       "order": null,
+       "label": "non-synchronous",
+       "phase": -1.9913,
+       "snr": 8.9
+      },
+      {
+       "hz": 21.486,
+       "amp_px": 0.00404,
+       "amp_mm": 0.00212,
+       "order": 1.0,
+       "label": "1x",
+       "phase": 0.6001,
+       "snr": 28.7
+      }
+     ],
+     "orders": {
+      "0.5x": {
+       "hz": 10.355,
+       "amp_px": 0.00138,
+       "above_floor": true,
+       "phase": -2.6632
+      },
+      "1x": {
+       "hz": 21.486,
+       "amp_px": 0.00404,
+       "above_floor": true,
+       "phase": 0.6001
+      },
+      "1.5x": {
+       "hz": 32.013,
+       "amp_px": 0.00037,
+       "above_floor": false,
+       "phase": 0.2538
+      },
+      "2x": {
+       "hz": 42.9,
+       "amp_px": 0.00031,
+       "above_floor": false,
+       "phase": -2.2377
+      },
+      "2.5x": {
+       "hz": 54.0,
+       "amp_px": 0.0001,
+       "above_floor": false,
+       "phase": -2.9737
+      },
+      "3x": {
+       "hz": 64.265,
+       "amp_px": 0.00021,
+       "above_floor": false,
+       "phase": -0.1631
+      },
+      "4x": {
+       "hz": 85.963,
+       "amp_px": 0.00028,
+       "above_floor": false,
+       "phase": -1.9004
+      },
+      "5x": {
+       "hz": 107.842,
+       "amp_px": 0.0001,
+       "above_floor": false,
+       "phase": -1.8466
+      },
+      "6x": {
+       "hz": 128.955,
+       "amp_px": 0.0,
+       "above_floor": false,
+       "phase": null
+      }
+     }
+    }
+   },
+   "velocity_rms": 0.431,
+   "velocity_unit": "mm/s"
+  },
+  "mains_hz": 50.0
+ },
+ "fingerprint": {
+  "verdict": "imbalance",
+  "confidence": "high",
+  "reason": "1x holds 100% of the vibration energy",
+  "lead_part": "standing fan guard rim",
+  "evidence": [
+   {
+    "axis": "x",
+    "hz": 21.493,
+    "order": 1.0,
+    "label": "1x",
+    "amp_px": 0.29736
+   },
+   {
+    "axis": "y",
+    "hz": 21.492,
+    "order": 1.0,
+    "label": "1x",
+    "amp_px": 0.15913
+   }
+  ],
+  "alert_level": 7.0,
+  "alert_unit": "mm/s",
+  "scaled": true,
+  "phase_1x_x_rad": {
+   "standing fan -> standing fan guard rim": 0.009,
+   "standing fan -> standing fan pole": 0.008,
+   "standing fan guard rim -> standing fan pole": -0.001
+  },
+  "blades": 3,
+  "parts": {
+   "standing fan": {
+    "features": {
+     "amp_1x_px": 0.21277,
+     "e1_share": 1.0,
+     "r21": 0.012,
+     "r31": 0.0,
+     "harmonics": [],
+     "n_harmonics": 0,
+     "faint_harmonics": [
+      "2x"
+     ],
+     "half_order": false,
+     "half_ratio": 0.003,
+     "h_over_v_1x": 1.904,
+     "velocity_rms": 10.806,
+     "velocity_unit": "mm/s",
+     "present": {
+      "1x": true,
+      "2x": true
+     },
+     "artifacts": [],
+     "blade_pass": {
+      "blades": 3,
+      "order": "3x",
+      "hz": 64.474,
+      "amp_px": 0.00969,
+      "velocity_rms": 1.459
+     },
+     "velocity_without_blade_pass": 10.707
+    },
+    "verdict": "imbalance",
+    "confidence": "high",
+    "reason": "1x holds 100% of the vibration energy",
+    "evidence": [
+     {
+      "axis": "x",
+      "hz": 21.492,
+      "order": 1.0,
+      "label": "1x",
+      "amp_px": 0.18837
+     },
+     {
+      "axis": "y",
+      "hz": 21.492,
+      "order": 1.0,
+      "label": "1x",
+      "amp_px": 0.09894
+     }
+    ]
+   },
+   "standing fan guard rim": {
+    "features": {
+     "amp_1x_px": 0.33726,
+     "e1_share": 1.0,
+     "r21": 0.015,
+     "r31": 0.0,
+     "harmonics": [],
+     "n_harmonics": 0,
+     "faint_harmonics": [
+      "2x"
+     ],
+     "half_order": false,
+     "half_ratio": 0.003,
+     "h_over_v_1x": 1.869,
+     "velocity_rms": 17.075,
+     "velocity_unit": "mm/s",
+     "present": {
+      "1x": true,
+      "2x": true
+     },
+     "artifacts": [],
+     "blade_pass": {
+      "blades": 3,
+      "order": "3x",
+      "hz": 64.478,
+      "amp_px": 0.01307,
+      "velocity_rms": 1.968
+     },
+     "velocity_without_blade_pass": 16.961
+    },
+    "verdict": "imbalance",
+    "confidence": "high",
+    "reason": "1x holds 100% of the vibration energy",
+    "evidence": [
+     {
+      "axis": "x",
+      "hz": 21.493,
+      "order": 1.0,
+      "label": "1x",
+      "amp_px": 0.29736
+     },
+     {
+      "axis": "y",
+      "hz": 21.492,
+      "order": 1.0,
+      "label": "1x",
+      "amp_px": 0.15913
+     }
+    ]
+   },
+   "standing fan pole": {
+    "features": {
+     "amp_1x_px": 0.17278,
+     "e1_share": 1.0,
+     "r21": 0.01,
+     "r31": 0.0,
+     "harmonics": [],
+     "n_harmonics": 0,
+     "faint_harmonics": [],
+     "half_order": false,
+     "half_ratio": 0.004,
+     "h_over_v_1x": 1.523,
+     "velocity_rms": 8.772,
+     "velocity_unit": "mm/s",
+     "present": {
+      "1x": true
+     },
+     "artifacts": [],
+     "blade_pass": {
+      "blades": 3,
+      "order": "3x",
+      "hz": 64.471,
+      "amp_px": 0.00845,
+      "velocity_rms": 1.272
+     },
+     "velocity_without_blade_pass": 8.679
+    },
+    "verdict": "imbalance",
+    "confidence": "high",
+    "reason": "1x holds 100% of the vibration energy",
+    "evidence": [
+     {
+      "axis": "x",
+      "hz": 21.492,
+      "order": 1.0,
+      "label": "1x",
+      "amp_px": 0.14443
+     },
+     {
+      "axis": "y",
+      "hz": 21.492,
+      "order": 1.0,
+      "label": "1x",
+      "amp_px": 0.09484
+     }
+    ]
+   }
+  }
+ },
+ "diagnosis": {
+  "status": "done",
+  "headline": {
+   "fault": "imbalance",
+   "confidence": "high",
+   "reason": "1x holds 100% of the vibration energy",
+   "lead_part": "standing fan guard rim",
+   "evidence": [
+    {
+     "axis": "x",
+     "hz": 21.493,
+     "order": 1.0,
+     "label": "1x",
+     "amp_px": 0.29736
+    },
+    {
+     "axis": "y",
+     "hz": 21.492,
+     "order": 1.0,
+     "label": "1x",
+     "amp_px": 0.15913
+    }
+   ],
+   "source": "fixed rules"
+  },
+  "spark": {
+   "fault": "imbalance",
+   "fault_reported": "imbalance",
+   "confidence": "high",
+   "confidence_reported": "high",
+   "capped": false,
+   "cap_reasons": [],
+   "agrees": true,
+   "supported": true,
+   "evidence": [
+    {
+     "part": "standing fan guard rim",
+     "frequency_hz": 21.493,
+     "order": "1x",
+     "matched": {
+      "part": "standing fan guard rim",
+      "axis": "x",
+      "hz": 21.493,
+      "label": "1x",
+      "amp_px": 0.29736,
+      "snr": 938.2
+     },
+     "status": "verified",
+     "reason": "matches the measured 1x peak"
+    },
+    {
+     "part": "standing fan guard rim",
+     "frequency_hz": 21.492,
+     "order": "1x",
+     "matched": {
+      "part": "standing fan guard rim",
+      "axis": "y",
+      "hz": 21.492,
+      "label": "1x",
+      "amp_px": 0.15913,
+      "snr": 755.3
+     },
+     "status": "verified",
+     "reason": "matches the measured 1x peak"
+    },
+    {
+     "part": "standing fan guard rim",
+     "frequency_hz": 43.111,
+     "order": "2x",
+     "matched": {
+      "part": "standing fan guard rim",
+      "axis": "x",
+      "hz": 43.111,
+      "label": "2x",
+      "amp_px": 0.00445,
+      "snr": 14.0
+     },
+     "status": "context",
+     "reason": "a real 2x peak, but it is not what this fault rests on"
+    },
+    {
+     "part": "standing fan guard rim",
+     "frequency_hz": 43.215,
+     "order": "2x",
+     "matched": {
+      "part": "standing fan guard rim",
+      "axis": "y",
+      "hz": 43.215,
+      "label": "2x",
+      "amp_px": 0.00239,
+      "snr": 11.4
+     },
+     "status": "context",
+     "reason": "a real 2x peak, but it is not what this fault rests on"
+    }
+   ],
+   "counts": {
+    "verified": 2,
+    "context": 2,
+    "dropped": 0
+   },
+   "explanation": "The guard rim shakes hardest at running speed with almost all energy at 1x. The 2x peak is tiny and there is no 0.5x or row of harmonics, so misalignment and looseness are not indicated. The 3x peak is expected blade pass from the 3 blades and is not a fault.",
+   "fix": [
+    "Unplug the fan and clean dust from all blades evenly.",
+    "Check blades and guard for bends, cracks or loose clips and tighten the guard.",
+    "Tighten the head to pole screw and set the base on a flat floor.",
+    "Run again and if shake stays, replace the bent blade."
+   ],
+   "check_next": [
+    "Look for a bent, cracked or dirty blade after cleaning.",
+    "Recheck if the head still wobbles side to side at speed."
+   ],
+   "visual": {
+    "most_moving_part": "standing fan guard rim",
+    "direction": "horizontal",
+    "description": "The fan head and rim swing side to side past its rest outline while the pole stays steadier.",
+    "status": "verified",
+    "checks": [
+     {
+      "claim": "most_moving_part",
+      "status": "verified",
+      "measured": {
+       "amplitude_px": {
+        "standing fan": 0.21277,
+        "standing fan guard rim": 0.33726,
+        "standing fan pole": 0.17278
+       }
+      },
+      "reason": "standing fan guard rim moves 0.3373 px in the band; the most is 0.3373 px (standing fan guard rim)"
+     },
+     {
+      "claim": "direction",
+      "status": "verified",
+      "measured": {
+       "part": "standing fan guard rim",
+       "horizontal_share": 0.777
+      },
+      "reason": "measured motion of standing fan guard rim is horizontal (78% horizontal)"
+     }
+    ]
+   }
+  },
+  "show_both": false,
+  "spark_raw": {
+   "check_next": [
+    "Look for a bent, cracked or dirty blade after cleaning.",
+    "Recheck if the head still wobbles side to side at speed."
+   ],
+   "confidence": "high",
+   "evidence": [
+    {
+     "frequency_hz": 21.493,
+     "order": "1x",
+     "part": "standing fan guard rim"
+    },
+    {
+     "frequency_hz": 21.492,
+     "order": "1x",
+     "part": "standing fan guard rim"
+    },
+    {
+     "frequency_hz": 43.111,
+     "order": "2x",
+     "part": "standing fan guard rim"
+    },
+    {
+     "frequency_hz": 43.215,
+     "order": "2x",
+     "part": "standing fan guard rim"
+    }
+   ],
+   "explanation": "The guard rim shakes hardest at running speed with almost all energy at 1x. The 2x peak is tiny and there is no 0.5x or row of harmonics, so misalignment and looseness are not indicated. The 3x peak is expected blade pass from the 3 blades and is not a fault.",
+   "fault": "imbalance",
+   "fix": [
+    "Unplug the fan and clean dust from all blades evenly.",
+    "Check blades and guard for bends, cracks or loose clips and tighten the guard.",
+    "Tighten the head to pole screw and set the base on a flat floor.",
+    "Run again and if shake stays, replace the bent blade."
+   ],
+   "visual_observation": {
+    "description": "The fan head and rim swing side to side past its rest outline while the pole stays steadier.",
+    "direction": "horizontal",
+    "most_moving_part": "standing fan guard rim"
+   }
+  },
+  "usd": 0.020033,
+  "usage": {
+   "input_tokens": 9192,
+   "output_tokens": 2010
+  }
+ },
+ "api": {
+  "mode": "record",
+  "usd": {
+   "plan": 0.01297,
+   "segment": 0.048,
+   "diagnose": 0.020033,
+   "total": 0.081003
+  },
+  "calls": {
+   "usd": 0.081003,
+   "calls": 9,
+   "by_step": [
+    {
+     "op": "upload",
+     "label": "fan-imbalance:plan:preview",
+     "calls": 1,
+     "usd": 0.0
+    },
+    {
+     "op": "spark",
+     "label": "fan-imbalance:plan",
+     "calls": 1,
+     "usd": 0.01297
+    },
+    {
+     "op": "upload",
+     "label": "fan-imbalance:segment:subclip",
+     "calls": 1,
+     "usd": 0.0
+    },
+    {
+     "op": "sam",
+     "label": "standing fan motor housing",
+     "calls": 1,
+     "usd": 0.012
+    },
+    {
+     "op": "sam",
+     "label": "standing fan",
+     "calls": 1,
+     "usd": 0.012
+    },
+    {
+     "op": "sam",
+     "label": "standing fan pole",
+     "calls": 1,
+     "usd": 0.012
+    },
+    {
+     "op": "sam",
+     "label": "standing fan guard rim",
+     "calls": 1,
+     "usd": 0.012
+    },
+    {
+     "op": "upload",
+     "label": "fan-imbalance:diagnose:magnified",
+     "calls": 1,
+     "usd": 0.0
+    },
+    {
+     "op": "spark",
+     "label": "fan-imbalance:diagnose",
+     "calls": 1,
+     "usd": 0.020033
+    }
+   ]
+  }
+ },
+ "steps": [
+  {
+   "key": "ingest",
+   "label": "Ingest the clip",
+   "status": "done",
+   "detail": "240 fps (stream), window 6.0 s, frames check: ok",
+   "seconds": 5.7
+  },
+  {
+   "key": "plan",
+   "label": "Plan the inspection (Muse Spark)",
+   "status": "done",
+   "detail": "standing fan: standing fan, standing fan motor housing, standing fan guard rim, standing fan pole",
+   "seconds": 26.04
+  },
+  {
+   "key": "segment",
+   "label": "Find the parts (SAM 3.1)",
+   "status": "done",
+   "detail": "3 parts; not found: standing fan motor housing",
+   "seconds": 25.98
+  },
+  {
+   "key": "measure",
+   "label": "Measure the vibration",
+   "status": "done",
+   "detail": "running speed 21.49 Hz (1290 rpm, from the rpm range)",
+   "seconds": 67.16
+  },
+  {
+   "key": "fingerprint",
+   "label": "Match fault fingerprints",
+   "status": "done",
+   "detail": "imbalance (high)",
+   "seconds": 1.78
+  },
+  {
+   "key": "magnify",
+   "label": "Magnify the shake",
+   "status": "done",
+   "detail": "27x, band 17.2 to 26.9 Hz",
+   "seconds": 21.82
+  },
+  {
+   "key": "diagnose",
+   "label": "Explain and suggest a fix (Muse Spark)",
+   "status": "done",
+   "detail": "Spark: imbalance (high); evidence 2 verified, 2 context, 0 dropped",
+   "seconds": 21.03
+  }
+ ],
+ "magnify": {
+  "alpha": 27.348,
+  "band_hz": [
+   17.194,
+   26.866
+  ],
+  "band_orders": [
+   0.8,
+   1.25
+  ],
+  "frames": 720,
+  "seconds": 3.0,
+  "playback_fps": 30,
+  "slow_factor": 8.0,
+  "start_frame": 0,
+  "ref_index": 0,
+  "render_scale": 0.5,
+  "zones_px": {
+   "standing fan": 59542,
+   "standing fan guard rim": 24011,
+   "standing fan pole": 8011
+  },
+  "layers": [
+   {
+    "part": "standing fan",
+    "outer": true,
+    "max_shift_px": 5.162
+   },
+   {
+    "part": "standing fan guard rim",
+    "outer": false,
+    "max_shift_px": 8.09
+   },
+   {
+    "part": "standing fan pole",
+    "outer": true,
+    "max_shift_px": 3.964
+   }
+  ],
+  "slice": {
+   "row": 254,
+   "cols": [
+    378,
+    438
+   ],
+   "seconds": 0.5,
+   "scale": 0.5
+  },
+  "files": {
+   "side_by_side": "side_by_side.mp4",
+   "native": null,
+   "slice": "slice.png"
+  }
+ },
+ "truth": {
+  "machine": "fan",
+  "fault": "imbalance",
+  "expected_verdict": "imbalance",
+  "rpm": 1290.0,
+  "seed": 1
+ },
+ "truth_comparison": {
+  "rows": [
+   {
+    "part": "fan guard rim",
+    "axis": "x",
+    "order": 1.0,
+    "true_hz": 21.5,
+    "true_amp_px": 0.3,
+    "true_amp_centroid_px": 0.3,
+    "floor_px": 0.000317,
+    "scored": true,
+    "found": true,
+    "meas_hz": 21.493,
+    "meas_amp_px": 0.29736,
+    "freq_err_bins": 0.042,
+    "amp_err": -0.0088,
+    "amp_err_centroid": -0.0088,
+    "pass": true
+   },
+   {
+    "part": "fan guard rim",
+    "axis": "y",
+    "order": 1.0,
+    "true_hz": 21.5,
+    "true_amp_px": 0.16,
+    "true_amp_centroid_px": 0.16,
+    "floor_px": 0.000211,
+    "scored": true,
+    "found": true,
+    "meas_hz": 21.492,
+    "meas_amp_px": 0.15913,
+    "freq_err_bins": 0.048,
+    "amp_err": -0.0054,
+    "amp_err_centroid": -0.0054,
+    "pass": true
+   },
+   {
+    "part": "fan guard rim",
+    "axis": "x",
+    "order": 3.0,
+    "true_hz": 64.5,
+    "true_amp_px": 0.012,
+    "true_amp_centroid_px": 0.012,
+    "floor_px": 0.000317,
+    "scored": true,
+    "found": true,
+    "meas_hz": 64.478,
+    "meas_amp_px": 0.01072,
+    "freq_err_bins": 0.132,
+    "amp_err": -0.1067,
+    "amp_err_centroid": -0.1067,
+    "pass": true
+   },
+   {
+    "part": "fan guard rim",
+    "axis": "y",
+    "order": 3.0,
+    "true_hz": 64.5,
+    "true_amp_px": 0.01,
+    "true_amp_centroid_px": 0.01,
+    "floor_px": 0.000211,
+    "scored": true,
+    "found": true,
+    "meas_hz": 64.478,
+    "meas_amp_px": 0.00747,
+    "freq_err_bins": 0.132,
+    "amp_err": -0.253,
+    "amp_err_centroid": -0.253,
+    "pass": false
+   },
+   {
+    "part": "fan stand",
+    "axis": "x",
+    "order": 1.0,
+    "true_hz": 21.5,
+    "true_amp_px": 0.135,
+    "true_amp_centroid_px": 0.135,
+    "floor_px": 0.000266,
+    "scored": true,
+    "found": true,
+    "meas_hz": 21.492,
+    "meas_amp_px": 0.14443,
+    "freq_err_bins": 0.048,
+    "amp_err": 0.0699,
+    "amp_err_centroid": 0.0699,
+    "pass": true
+   },
+   {
+    "part": "fan stand",
+    "axis": "y",
+    "order": 1.0,
+    "true_hz": 21.5,
+    "true_amp_px": 0.072,
+    "true_amp_centroid_px": 0.072,
+    "floor_px": 0.000231,
+    "scored": true,
+    "found": true,
+    "meas_hz": 21.492,
+    "meas_amp_px": 0.09484,
+    "freq_err_bins": 0.048,
+    "amp_err": 0.3172,
+    "amp_err_centroid": 0.3172,
+    "pass": false
+   },
+   {
+    "part": "fan stand",
+    "axis": "x",
+    "order": 3.0,
+    "true_hz": 64.5,
+    "true_amp_px": 0.0054,
+    "true_amp_centroid_px": 0.0054,
+    "floor_px": 0.000266,
+    "scored": true,
+    "found": true,
+    "meas_hz": 64.471,
+    "meas_amp_px": 0.00604,
+    "freq_err_bins": 0.174,
+    "amp_err": 0.1185,
+    "amp_err_centroid": 0.1185,
+    "pass": true
+   },
+   {
+    "part": "fan stand",
+    "axis": "y",
+    "order": 3.0,
+    "true_hz": 64.5,
+    "true_amp_px": 0.0045,
+    "true_amp_centroid_px": 0.0045,
+    "floor_px": 0.000231,
+    "scored": true,
+    "found": true,
+    "meas_hz": 64.478,
+    "meas_amp_px": 0.00591,
+    "freq_err_bins": 0.132,
+    "amp_err": 0.3133,
+    "amp_err_centroid": 0.3133,
+    "pass": false
+   }
+  ],
+  "scored": 8,
+  "passed": 5,
+  "running_speed_err_bins": 0.045,
+  "verdict": "imbalance",
+  "expected_verdict": "imbalance",
+  "verdict_ok": true,
+  "parts_matched_by_iou": {
+   "fan guard rim": "standing fan guard rim",
+   "fan stand": "standing fan pole"
+  }
+ },
+ "blades": {
+  "count": 3,
+  "source": "given"
+ },
+ "warnings": [
+  "The reference part 'fan guard rim' is measured as 'standing fan'."
+ ]
+}
