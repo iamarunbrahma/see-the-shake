@@ -1,0 +1,376 @@
+{
+ "fault": "looseness",
+ "seed": 1,
+ "seconds": 6.0,
+ "expected_verdict": "looseness",
+ "window": {
+  "start_frame": 0,
+  "frames": 1440
+ },
+ "fps": 240.0,
+ "plan": {
+  "machine_type": "washing machine",
+  "rpm_range": [
+   400.0,
+   1600.0
+  ],
+  "rpm_reason": "Front load washing machine in spin typically runs from low to high spin speeds.",
+  "parts": [
+   "washing machine",
+   "round front door",
+   "top control panel"
+  ],
+  "rotating_parts_seen": [
+   "inner drum",
+   "laundry load"
+  ],
+  "warnings": []
+ },
+ "true_rpm": 1000.0,
+ "rpm_in_plan_range": true,
+ "segment": {
+  "subclip": {
+   "start_frame": 690,
+   "frames": 60
+  },
+  "missing": [],
+  "added_for_iou": [],
+  "parts": {
+   "washing machine": {
+    "objects": 1,
+    "frames_sent": 60,
+    "found": true,
+    "object_id": "0",
+    "frames_returned": 60,
+    "frames_decoded": 8,
+    "present_share": 1.0,
+    "confidence": 0.9452,
+    "area_px": 344183,
+    "bbox": [
+     712,
+     187,
+     1208,
+     887
+    ],
+    "unstable_share": 0.012,
+    "usd": 0.012,
+    "frames_billed": 60
+   },
+   "round front door": {
+    "objects": 1,
+    "frames_sent": 60,
+    "found": true,
+    "object_id": "0",
+    "frames_returned": 58,
+    "frames_decoded": 8,
+    "present_share": 0.967,
+    "confidence": 0.7193,
+    "area_px": 92263,
+    "bbox": [
+     788,
+     404,
+     1124,
+     749
+    ],
+    "unstable_share": 0.0232,
+    "usd": 0.012,
+    "frames_billed": 60
+   },
+   "top control panel": {
+    "objects": 1,
+    "frames_sent": 60,
+    "found": true,
+    "object_id": "0",
+    "frames_returned": 60,
+    "frames_decoded": 8,
+    "present_share": 1.0,
+    "confidence": 0.8161,
+    "area_px": 54051,
+    "bbox": [
+     712,
+     187,
+     1208,
+     298
+    ],
+    "unstable_share": 0.0295,
+    "usd": 0.012,
+    "frames_billed": 60
+   }
+  }
+ },
+ "iou": {
+  "washing machine": {
+   "iou": 0.9808,
+   "phrase": "washing machine",
+   "added_for_iou": false
+  },
+  "door": {
+   "iou": 0.959,
+   "phrase": "round front door",
+   "added_for_iou": false
+  }
+ },
+ "measured_parts": [
+  "washing machine",
+  "round front door",
+  "top control panel"
+ ],
+ "scale_basis": "washing machine width = 600 mm over 496 px",
+ "running_speed": {
+  "hz": 16.6423,
+  "rpm": 998.5,
+  "source": "rpm_range"
+ },
+ "rule_verdict": "looseness",
+ "rule_confidence": "high",
+ "rule_reason": "0.5x at 0.19 of 1x; 3 harmonics (2x, 3x, 4x)",
+ "rule_ok": true,
+ "spark": {
+  "fault": "looseness",
+  "confidence_reported": "high",
+  "confidence": "high",
+  "agrees": true,
+  "supported": true,
+  "cap_reasons": [],
+  "counts": {
+   "verified": 4,
+   "context": 1,
+   "dropped": 0
+  },
+  "error": null
+ },
+ "card": {
+  "headline": {
+   "fault": "looseness",
+   "confidence": "high",
+   "reason": "0.5x at 0.19 of 1x; 3 harmonics (2x, 3x, 4x)",
+   "lead_part": "top control panel",
+   "evidence": [
+    {
+     "axis": "x",
+     "hz": 8.326,
+     "order": 0.5,
+     "label": "0.5x",
+     "amp_px": 0.05229
+    },
+    {
+     "axis": "y",
+     "hz": 8.321,
+     "order": 0.5,
+     "label": "0.5x",
+     "amp_px": 0.0324
+    },
+    {
+     "axis": "x",
+     "hz": 16.642,
+     "order": 1.0,
+     "label": "1x",
+     "amp_px": 0.3127
+    },
+    {
+     "axis": "y",
+     "hz": 16.645,
+     "order": 1.0,
+     "label": "1x",
+     "amp_px": 0.10988
+    },
+    {
+     "axis": "x",
+     "hz": 33.295,
+     "order": 2.0,
+     "label": "2x",
+     "amp_px": 0.08952
+    },
+    {
+     "axis": "y",
+     "hz": 33.287,
+     "order": 2.0,
+     "label": "2x",
+     "amp_px": 0.07317
+    },
+    {
+     "axis": "x",
+     "hz": 49.934,
+     "order": 3.0,
+     "label": "3x",
+     "amp_px": 0.05463
+    },
+    {
+     "axis": "y",
+     "hz": 49.931,
+     "order": 3.0,
+     "label": "3x",
+     "amp_px": 0.04888
+    },
+    {
+     "axis": "y",
+     "hz": 66.499,
+     "order": 4.0,
+     "label": "4x",
+     "amp_px": 0.00308
+    }
+   ],
+   "source": "fixed rules"
+  },
+  "spark": {
+   "fault": "looseness",
+   "fault_reported": "looseness",
+   "confidence": "high",
+   "confidence_reported": "high",
+   "capped": false,
+   "cap_reasons": [],
+   "agrees": true,
+   "supported": true,
+   "evidence": [
+    {
+     "part": "top control panel",
+     "frequency_hz": 8.326,
+     "order": "0.5x",
+     "matched": {
+      "part": "top control panel",
+      "axis": "x",
+      "hz": 8.326,
+      "label": "0.5x",
+      "amp_px": 0.05229,
+      "snr": 145.5
+     },
+     "status": "verified",
+     "reason": "matches the measured 0.5x peak"
+    },
+    {
+     "part": "top control panel",
+     "frequency_hz": 16.642,
+     "order": "1x",
+     "matched": {
+      "part": "top control panel",
+      "axis": "x",
+      "hz": 16.642,
+      "label": "1x",
+      "amp_px": 0.3127,
+      "snr": 870.3
+     },
+     "status": "context",
+     "reason": "a real 1x peak, but it is not what this fault rests on"
+    },
+    {
+     "part": "top control panel",
+     "frequency_hz": 33.295,
+     "order": "2x",
+     "matched": {
+      "part": "top control panel",
+      "axis": "x",
+      "hz": 33.295,
+      "label": "2x",
+      "amp_px": 0.08952,
+      "snr": 249.1
+     },
+     "status": "verified",
+     "reason": "matches the measured 2x peak"
+    },
+    {
+     "part": "top control panel",
+     "frequency_hz": 49.934,
+     "order": "3x",
+     "matched": {
+      "part": "top control panel",
+      "axis": "x",
+      "hz": 49.934,
+      "label": "3x",
+      "amp_px": 0.05463,
+      "snr": 152.1
+     },
+     "status": "verified",
+     "reason": "matches the measured 3x peak"
+    },
+    {
+     "part": "top control panel",
+     "frequency_hz": 66.499,
+     "order": "4x",
+     "matched": {
+      "part": "top control panel",
+      "axis": "y",
+      "hz": 66.499,
+      "label": "4x",
+      "amp_px": 0.00308,
+      "snr": 10.7
+     },
+     "status": "verified",
+     "reason": "matches the measured 4x peak"
+    }
+   ],
+   "counts": {
+    "verified": 4,
+    "context": 1,
+    "dropped": 0
+   },
+   "explanation": "Top panel vibration is very high at 41 mm/s RMS with a dominant 1x but also a clear 0.5x subharmonic and strong 2x, 3x and 4x harmonics seen in both directions. The same 0.5x and harmonic row appears on the cabinet and door with near zero phase shift, which fits a loose panel or loose machine mounting excited by spin force. This matches the rule verdict of looseness, not pure imbalance.",
+   "fix": [
+    "Stop and unplug the machine and do not reach inside while drum can move",
+    "Check leveling feet are firm on floor and tighten lock nuts",
+    "Tighten top cover, back panel and door screws and check for cracked mounts",
+    "Check drum suspension springs and dampers for play then run empty test spin"
+   ],
+   "check_next": [
+    "Push and lift corners by hand to feel for rocking or rattling panel",
+    "Re-film a short spin after tightening to confirm 0.5x and harmonics drop",
+    "If still high, run empty at same speed to separate load imbalance from looseness"
+   ]
+  },
+  "show_both": false,
+  "spark_raw": {
+   "check_next": [
+    "Push and lift corners by hand to feel for rocking or rattling panel",
+    "Re-film a short spin after tightening to confirm 0.5x and harmonics drop",
+    "If still high, run empty at same speed to separate load imbalance from looseness"
+   ],
+   "confidence": "high",
+   "evidence": [
+    {
+     "frequency_hz": 8.326,
+     "order": "0.5x",
+     "part": "top control panel"
+    },
+    {
+     "frequency_hz": 16.642,
+     "order": "1x",
+     "part": "top control panel"
+    },
+    {
+     "frequency_hz": 33.295,
+     "order": "2x",
+     "part": "top control panel"
+    },
+    {
+     "frequency_hz": 49.934,
+     "order": "3x",
+     "part": "top control panel"
+    },
+    {
+     "frequency_hz": 66.499,
+     "order": "4x",
+     "part": "top control panel"
+    }
+   ],
+   "explanation": "Top panel vibration is very high at 41 mm/s RMS with a dominant 1x but also a clear 0.5x subharmonic and strong 2x, 3x and 4x harmonics seen in both directions. The same 0.5x and harmonic row appears on the cabinet and door with near zero phase shift, which fits a loose panel or loose machine mounting excited by spin force. This matches the rule verdict of looseness, not pure imbalance.",
+   "fault": "looseness",
+   "fix": [
+    "Stop and unplug the machine and do not reach inside while drum can move",
+    "Check leveling feet are firm on floor and tighten lock nuts",
+    "Tighten top cover, back panel and door screws and check for cracked mounts",
+    "Check drum suspension springs and dampers for play then run empty test spin"
+   ]
+  },
+  "usd": 0.024046,
+  "usage": {
+   "input_tokens": 3287,
+   "output_tokens": 4691
+  }
+ },
+ "costs_usd": {
+  "plan": 0.009714,
+  "segment": 0.036,
+  "diagnose": 0.024046,
+  "total": 0.06976
+ },
+ "seconds_elapsed": 191.0
+}
