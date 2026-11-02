@@ -80,3 +80,20 @@ def test_schema_asks_for_visibility():
     item = plan_parts.SCHEMA["properties"]["parts"]["items"]
     assert item["properties"]["visibility"]["enum"] == ["clear", "partial", "unsure"]
     assert "control panel" not in plan_parts.PROMPT
+
+
+def test_smooth_rotating_parts_are_kept_and_changing_ones_dropped():
+    def part(phrase, rotation):
+        return {"phrase": phrase, "visibility": "clear", "rotation": rotation}
+    p = validate(raw([part("rotor test rig", "none"), part("rotor disc", "smooth"), part("rotor shaft", "smooth"),
+                      part("fan blades", "changing")], machine="rotor test rig"), 500)
+    assert p["parts"] == ["rotor test rig", "rotor disc", "rotor shaft"]
+    assert any("outline changes as they turn" in w for w in p["warnings"])
+    # a washing machine's drum shows its contents turning: dropped even when named
+    w = validate(raw([part("washing machine", "none"), part("drum", "changing"), part("front door", "none")]), 240)
+    assert w["parts"] == ["washing machine", "front door"]
+
+
+def test_schema_asks_for_rotation():
+    item = plan_parts.SCHEMA["properties"]["parts"]["items"]
+    assert item["properties"]["rotation"]["enum"] == ["none", "smooth", "changing"] and "rotation" in item["required"]
