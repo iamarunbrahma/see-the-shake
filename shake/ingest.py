@@ -15,13 +15,19 @@ import re
 import subprocess
 from dataclasses import asdict, dataclass, field
 from fractions import Fraction
+from pathlib import Path
 
 import cv2
 import numpy as np
 
 MIN_CAPTURE_FPS = 120.0
-SAM_CODECS = {"h264", "hevc"}
-SAM_CONTAINERS = {"mov", "mp4"}
+# The synthesised-frame check relies on sensor noise surviving the encoder. It is calibrated on H.264 and H.265, what
+# phones record, at roughly a phone's slow-motion bitrate or more. Heavily compressed clips (web re-encodes such as
+# VP9 at 0.06 bits per pixel) and other codecs (a lab camera's MPEG-4 Part 2) lose that noise, and their frames look
+# "smooth" whatever produced them, so the check reports inconclusive for them instead of flagging.
+NOISE_CODECS = {"h264", "hevc"}
+MIN_BITS_PER_PIXEL = 0.10  # per frame; a 720p 240 fps phone clip at 24 Mbit/s is about 0.11
+PHONE_INTERPOLATED_FPS = 480  # phones reach 960 fps (and often 480) by inventing frames from 240 fps capture
 CAPTURE_TAG = re.compile(r"capture[._-]?fps|capture[._-]?frame[._-]?rate", re.I)
 
 
@@ -149,10 +155,6 @@ def clip_info(path, capture_fps=None, min_fps=MIN_CAPTURE_FPS):
 
     codec = v.get("codec_name", "")
     container = meta.get("format", {}).get("format_name", "")
-    if codec not in SAM_CODECS:
-        warnings.append(f"codec {codec} is not H.264 or H.265; SAM 3.1 needs one of those")
-    if not SAM_CONTAINERS & set(container.split(",")):
-        warnings.append(f"container {container} is not MP4 or MOV; SAM 3.1 needs one of those")
     return ClipInfo(path=str(path), width=int(v.get("width", 0)), height=int(v.get("height", 0)), codec=codec,
                     container=container, stream_fps=round(stream_fps, 4), capture_fps=round(fps, 4), fps_source=source,
                     frames=frames, duration_s=round(frames / fps, 4) if fps else 0.0,
@@ -246,7 +248,7 @@ def frame_energies(path, max_frames=1440, scale=0.5, grid=6):
     return {"e1": e1 / n1, "e2": e2 / n2, "brightness": (bright / (n1 + 1)).ravel(), "global_diff": np.array(gdiff)}
 
 
-def interpolation_check(path, threshold=0.70, min_noise=0.3, max_frames=720):
+def interpolation_check(path, threshold=0.70, min_noise=0.3, max_frames=720, info=None):
     """Flag clips whose in-between frames look synthesised.
 
     Real frames carry independent sensor noise from frame to frame. For white temporal noise the ratio of
@@ -259,15 +261,33 @@ def interpolation_check(path, threshold=0.70, min_noise=0.3, max_frames=720):
 
     Known limit: a phone's temporal noise reduction also lowers the ratio, so a flag means "check", and the
     fallback is to film at a mode that is certainly native (1080p 120 fps on the Redmi).
+
+    The noise test is only made where the noise can have survived (NOISE_CODECS at MIN_BITS_PER_PIXEL or more);
+    elsewhere the answer is inconclusive. Separately, a phone's capture tag of PHONE_INTERPOLATED_FPS or more is
+    reported as likely interpolated, from the metadata alone.
     """
+    info = info or clip_info(path, min_fps=1)
+    bpp = (Path(path).stat().st_size * 8 / (info.frames * info.width * info.height)
+           if info.frames and info.width and info.height else None)
     st = frame_energies(path, max_frames=max_frames)
     ratio = st["e2"] / np.maximum(st["e1"], 1e-12)
     r = float(np.median(ratio))
     noise = float(np.median(np.sqrt(st["e1"] / 2) * st["brightness"]))  # temporal noise, grey levels
-    conclusive = noise >= min_noise
-    flagged = bool(conclusive and r < threshold)
-    status = "synthesised" if flagged else ("ok" if conclusive else "inconclusive")
-    return {"flagged": flagged, "status": status, "whiteness": round(r, 3), "threshold": threshold,
+    reason = None
+    if noise < min_noise:
+        reason = "too little sensor noise to check"
+    elif info.codec not in NOISE_CODECS:
+        reason = f"{info.codec} compression removes the sensor noise this check relies on"
+    elif bpp is not None and bpp < MIN_BITS_PER_PIXEL:
+        reason = f"heavy compression ({bpp:.2f} bits per pixel) removes the sensor noise this check relies on"
+    phone_tag = info.fps_source.startswith("metadata:") and info.capture_fps >= PHONE_INTERPOLATED_FPS
+    flagged = bool(reason is None and r < threshold) or phone_tag
+    status = "synthesised" if flagged else ("ok" if reason is None else "inconclusive")
+    if phone_tag:
+        reason = (f"the phone tagged {info.capture_fps:g} fps; phones reach that rate by inventing frames "
+                  "from 240 fps capture")
+    return {"flagged": flagged, "status": status, "reason": reason, "whiteness": round(r, 3), "threshold": threshold,
+            "bits_per_pixel": round(bpp, 4) if bpp is not None else None, "codec": info.codec,
             "temporal_noise_grey": round(noise, 3), "min_noise_grey": min_noise,
             "tile_whiteness_p10_p90": [round(float(v), 3) for v in np.percentile(ratio, [10, 90])],
             "frames_checked": min(max_frames, len(st["global_diff"]) + 1)}
@@ -315,13 +335,13 @@ class Ingested:
 def ingest(path, capture_fps=None, min_fps=MIN_CAPTURE_FPS, min_s=4.0, max_s=10.0, check_frames=720):
     """Metadata, capture fps, synthesised-frame check and steady window for one clip."""
     info = clip_info(path, capture_fps=capture_fps, min_fps=min_fps)
-    check = interpolation_check(path, max_frames=check_frames)
+    check = interpolation_check(path, max_frames=check_frames, info=info)
     if check["flagged"]:
-        info.warnings.append(f"in-between frames look synthesised (noise whiteness {check['whiteness']} below "
-                             f"{check['threshold']}); the spectrum would be meaningless. Re-film at a native capture "
-                             "rate (e.g. 1080p 120 fps).")
+        why = check["reason"] or (f"noise whiteness {check['whiteness']} is below {check['threshold']}")
+        info.warnings.append(f"in-between frames look synthesised ({why}); the spectrum would be meaningless. "
+                             "Re-film at a native capture rate (e.g. 1080p 120 fps).")
     elif check["status"] == "inconclusive":
-        info.warnings.append("too little sensor noise to check for synthesised frames")
+        info.warnings.append(f"could not check for synthesised frames: {check['reason']}")
     if info.frames and info.frames <= int(round(max_s * info.capture_fps)):
         window = (0, info.frames)  # the whole clip fits the window: steady_window would return it unchanged
     else:
