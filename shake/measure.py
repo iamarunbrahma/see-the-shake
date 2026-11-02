@@ -7,6 +7,11 @@ Added: any number of parts with the background outside their union; rotating con
 dropped from each part's weight; peak frequency and amplitude refined by log-parabolic interpolation; running
 speed from an RPM or an RPM range; order labels; amplitudes read at every order; mm scale from one reference length.
 """
+import os
+import queue
+import threading
+from collections import deque
+from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
 
 import cv2
@@ -24,6 +29,7 @@ PEAK_FACTOR = 8.0  # peaks must exceed this multiple of the median floor
 F_MIN = 2.0  # Hz
 MAX_VIB_PX = 1.0  # temporal change beyond what this much motion explains is treated as rotating content
 ORDERS = [0.5, 1, 1.5, 2, 2.5, 3, 4, 5, 6]
+WORKERS = min(4, os.cpu_count() or 1)  # frames tracked in parallel; results are identical for any count
 MAINS_HZ = 50.0  # India; lights flicker at twice this
 
 
@@ -73,6 +79,66 @@ class Region:
         return d
 
 
+def _blur(gray_u8, blur):
+    g = gray_u8.astype(np.float32)  # exactly read_gray's steps after decoding: grey, float32, Gaussian blur
+    return cv2.GaussianBlur(g, (0, 0), blur) if blur else g
+
+
+def frames_ahead(path, start, count, blur=BLUR, depth=16, blur_threads=3):
+    """The frames read_gray(path, start, count, blur=blur) yields, in the same order, but decoded in a background
+    thread and blurred in a small pool, so both overlap the work on earlier frames."""
+    q, stop, done, err = queue.Queue(maxsize=depth), threading.Event(), object(), []
+    pool = ThreadPoolExecutor(blur_threads, thread_name_prefix="blur")
+
+    def put(item):
+        while not stop.is_set():
+            try:
+                q.put(item, timeout=0.2)
+                return True
+            except queue.Full:
+                continue
+        return False
+
+    def produce():
+        cap = cv2.VideoCapture(str(path))
+        try:
+            if not cap.isOpened():
+                raise OSError(f"cannot open {path}")
+            i = 0
+            while count is None or i < start + count:
+                ok, f = cap.read()
+                if not ok:
+                    break
+                if i >= start and not put(pool.submit(_blur, cv2.cvtColor(f, cv2.COLOR_BGR2GRAY), blur)):
+                    return
+                i += 1
+        except BaseException as e:  # surfaced in the consumer
+            err.append(e)
+        finally:
+            cap.release()
+            put(done)
+
+    t = threading.Thread(target=produce, name="decode", daemon=True)
+    t.start()
+    try:
+        while True:
+            item = q.get()
+            if item is done:
+                break
+            yield item.result()
+    finally:
+        stop.set()
+        t.join(timeout=5)
+        pool.shutdown(wait=False, cancel_futures=True)
+    if err:
+        raise err[0]
+
+
+def _strips(shape, k):
+    edges = np.linspace(0, shape[0], k + 1).astype(int)
+    return [slice(a, b) for a, b in zip(edges[:-1], edges[1:]) if b > a]
+
+
 def mean_and_motion_mask(path, start, count):
     """Mean frame (blurred grey) and a mask of pixels whose temporal change no sub-pixel motion explains.
 
@@ -81,18 +147,27 @@ def mean_and_motion_mask(path, start, count):
     """
     acc = acc2 = None
     n = 0
-    for g in read_gray(path, start=start, count=count, blur=BLUR):
-        gm = float(g.mean())
-        gn = g * (1.0 / gm)
-        if acc is None:
-            acc, acc2, gsum = g.astype(np.float64), (gn.astype(np.float64)) ** 2, gm
-            gnsum = gn.astype(np.float64)
-        else:
-            acc += g
-            acc2 += gn.astype(np.float64) ** 2
-            gnsum += gn
-            gsum += gm
-        n += 1
+
+    def add(sl, g, inv):  # one horizontal strip; per pixel, the same operations in the same frame order
+        gn = g[sl] * inv
+        acc[sl] += g[sl]
+        acc2[sl] += gn.astype(np.float64) ** 2
+        gnsum[sl] += gn
+
+    with ThreadPoolExecutor(WORKERS, thread_name_prefix="mean") as ex:
+        strips = None
+        for g in frames_ahead(path, start, count):
+            gm = float(g.mean())
+            inv = 1.0 / gm
+            if acc is None:
+                gn = g * inv
+                acc, acc2, gsum = g.astype(np.float64), (gn.astype(np.float64)) ** 2, gm
+                gnsum = gn.astype(np.float64)
+                strips = _strips(g.shape, WORKERS)
+            else:
+                list(ex.map(add, strips, [g] * len(strips), [inv] * len(strips)))
+                gsum += gm
+            n += 1
     if n < 32:
         raise ValueError(f"only {n} frames in the window")
     ref = (acc / n).astype(np.float32)
@@ -227,8 +302,12 @@ class Scale:
         return cls(length_mm / px, f"{part} {axis} = {length_mm:g} mm over {px} px")
 
 
-def track(path, masks, start, count, exclude_rotating=True):
-    """Per-frame translation (px) of every part and of the background, over frames [start, start + count)."""
+def track(path, masks, start, count, exclude_rotating=True, workers=None):
+    """Per-frame translation (px) of every part and of the background, over frames [start, start + count).
+
+    Each frame is tracked against the fixed mean frame from zero, independently of every other frame, so frames
+    run in parallel threads (workers) with results identical to the sequential loop (workers=1)."""
+    workers = WORKERS if workers is None else workers
     ref, rotating, n, noise = mean_and_motion_mask(path, start, count)
     weights, bg = part_weights(masks, ref.shape, rotating if exclude_rotating else None)
     regions = {name: Region(w) for name, w in weights.items()}
@@ -236,9 +315,23 @@ def track(path, masks, start, count, exclude_rotating=True):
     for r in regions.values():
         r.set_ref(ref)
     series = {k: np.empty((n, 2)) for k in regions}
-    for i, g in enumerate(read_gray(path, start=start, count=n, blur=BLUR)):
+
+    def one(i, g):
         for k, r in regions.items():
             series[k][i] = r.track(g)
+
+    if workers <= 1:
+        for i, g in enumerate(read_gray(path, start=start, count=n, blur=BLUR)):
+            one(i, g)
+    else:
+        with ThreadPoolExecutor(workers, thread_name_prefix="track") as ex:
+            pending = deque()
+            for i, g in enumerate(frames_ahead(path, start, n)):
+                pending.append(ex.submit(one, i, g))
+                while len(pending) > 2 * workers:  # bound the frames held in memory
+                    pending.popleft().result()
+            for f in pending:
+                f.result()
     excluded = {name: int((_dilate(masks[name] > 0, PART_DILATE) & ~weights[name]).sum()) for name in masks}
     return series, {"ref": ref, "rotating": rotating, "weights": weights, "background": bg,
                     "pixel_noise": noise, "excluded_px": excluded}
@@ -273,13 +366,13 @@ def velocity_rms(peaks_x, peaks_y, mm_per_px):
 
 
 def measure(path, masks, fps, start=0, count=None, rpm=None, rpm_range=None, scale=None, exclude_rotating=True,
-            mains_hz=MAINS_HZ):
+            mains_hz=MAINS_HZ, workers=None):
     """Full measurement for one clip window. masks: {part name: HxW array, nonzero inside}.
 
     Returns (result dict, arrays dict). The result is JSON-ready; arrays holds series and spectra for plots.
     """
     scale = scale or Scale()
-    series, aux = track(path, masks, start, count, exclude_rotating)
+    series, aux = track(path, masks, start, count, exclude_rotating, workers)
     n = len(series["background"])
     rel = {k: series[k] - series["background"] for k in masks}
     # running speed from the summed power of every part, both axes
