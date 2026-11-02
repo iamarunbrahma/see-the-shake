@@ -1,0 +1,172 @@
+{
+ "verdict": "misalignment",
+ "confidence": "high",
+ "reason": "2x is 2.41 of 1x",
+ "lead_part": "washer front door",
+ "evidence": [
+  {
+   "axis": "x",
+   "hz": 16.638,
+   "order": 1.0,
+   "label": "1x",
+   "amp_px": 0.04447
+  },
+  {
+   "axis": "y",
+   "hz": 16.644,
+   "order": 1.0,
+   "label": "1x",
+   "amp_px": 0.03392
+  },
+  {
+   "axis": "x",
+   "hz": 33.289,
+   "order": 2.0,
+   "label": "2x",
+   "amp_px": 0.12581
+  },
+  {
+   "axis": "y",
+   "hz": 33.29,
+   "order": 2.0,
+   "label": "2x",
+   "amp_px": 0.04879
+  }
+ ],
+ "alert_level": 7.0,
+ "alert_unit": "mm/s",
+ "scaled": true,
+ "phase_1x_x_rad": {
+  "washing machine -> washer front door": -0.013
+ },
+ "parts": {
+  "washing machine": {
+   "features": {
+    "amp_1x_px": 0.04637,
+    "e1_share": 0.107,
+    "r21": 2.855,
+    "r31": 0.44,
+    "harmonics": [
+     "2x",
+     "3x",
+     "6x"
+    ],
+    "n_harmonics": 3,
+    "half_order": false,
+    "half_ratio": 0.024,
+    "h_over_v_1x": 0.882,
+    "velocity_rms": 36.963,
+    "velocity_unit": "mm/s",
+    "present": {
+     "1x": true,
+     "2x": true,
+     "3x": true,
+     "6x": true
+    }
+   },
+   "verdict": "looseness",
+   "confidence": "medium",
+   "reason": "3 harmonics (2x, 3x, 6x)",
+   "evidence": [
+    {
+     "axis": "x",
+     "hz": 16.637,
+     "order": 1.0,
+     "label": "1x",
+     "amp_px": 0.03068
+    },
+    {
+     "axis": "y",
+     "hz": 16.644,
+     "order": 1.0,
+     "label": "1x",
+     "amp_px": 0.03477
+    },
+    {
+     "axis": "x",
+     "hz": 33.288,
+     "order": 2.0,
+     "label": "2x",
+     "amp_px": 0.12413
+    },
+    {
+     "axis": "y",
+     "hz": 33.291,
+     "order": 2.0,
+     "label": "2x",
+     "amp_px": 0.04598
+    },
+    {
+     "axis": "x",
+     "hz": 49.936,
+     "order": 3.0,
+     "label": "3x",
+     "amp_px": 0.01785
+    },
+    {
+     "axis": "y",
+     "hz": 49.931,
+     "order": 3.0,
+     "label": "3x",
+     "amp_px": 0.00993
+    }
+   ]
+  },
+  "washer front door": {
+   "features": {
+    "amp_1x_px": 0.05593,
+    "e1_share": 0.144,
+    "r21": 2.413,
+    "r31": 0.354,
+    "harmonics": [
+     "2x",
+     "3x"
+    ],
+    "n_harmonics": 2,
+    "half_order": false,
+    "half_ratio": 0.018,
+    "h_over_v_1x": 1.311,
+    "velocity_rms": 37.75,
+    "velocity_unit": "mm/s",
+    "present": {
+     "1x": true,
+     "2x": true,
+     "3x": true
+    }
+   },
+   "verdict": "misalignment",
+   "confidence": "high",
+   "reason": "2x is 2.41 of 1x",
+   "evidence": [
+    {
+     "axis": "x",
+     "hz": 16.638,
+     "order": 1.0,
+     "label": "1x",
+     "amp_px": 0.04447
+    },
+    {
+     "axis": "y",
+     "hz": 16.644,
+     "order": 1.0,
+     "label": "1x",
+     "amp_px": 0.03392
+    },
+    {
+     "axis": "x",
+     "hz": 33.289,
+     "order": 2.0,
+     "label": "2x",
+     "amp_px": 0.12581
+    },
+    {
+     "axis": "y",
+     "hz": 33.29,
+     "order": 2.0,
+     "label": "2x",
+     "amp_px": 0.04879
+    }
+   ]
+  }
+ }
+}

@@ -1,0 +1,203 @@
+{
+ "headline": {
+  "fault": "misalignment",
+  "confidence": "high",
+  "reason": "2x is 3.14 of 1x",
+  "lead_part": "washing machine",
+  "evidence": [
+   {
+    "axis": "x",
+    "hz": 16.627,
+    "order": 1.0,
+    "label": "1x",
+    "amp_px": 0.0445
+   },
+   {
+    "axis": "y",
+    "hz": 16.644,
+    "order": 1.0,
+    "label": "1x",
+    "amp_px": 0.05243
+   },
+   {
+    "axis": "x",
+    "hz": 33.289,
+    "order": 2.0,
+    "label": "2x",
+    "amp_px": 0.20078
+   },
+   {
+    "axis": "y",
+    "hz": 33.289,
+    "order": 2.0,
+    "label": "2x",
+    "amp_px": 0.07984
+   }
+  ],
+  "source": "fixed rules"
+ },
+ "spark": {
+  "fault": "misalignment",
+  "fault_reported": "misalignment",
+  "confidence": "high",
+  "confidence_reported": "high",
+  "capped": false,
+  "cap_reasons": [],
+  "agrees": true,
+  "supported": true,
+  "evidence": [
+   {
+    "part": "washing machine",
+    "frequency_hz": 16.627,
+    "order": "1x",
+    "matched": {
+     "part": "washing machine",
+     "axis": "x",
+     "hz": 16.627,
+     "label": "1x",
+     "amp_px": 0.0445,
+     "snr": 171.8
+    },
+    "status": "context",
+    "reason": "a real 1x peak, but it is not what this fault rests on"
+   },
+   {
+    "part": "washing machine",
+    "frequency_hz": 33.289,
+    "order": "2x",
+    "matched": {
+     "part": "washing machine",
+     "axis": "x",
+     "hz": 33.289,
+     "label": "2x",
+     "amp_px": 0.20078,
+     "snr": 775.4
+    },
+    "status": "verified",
+    "reason": "matches the measured 2x peak"
+   },
+   {
+    "part": "washing machine",
+    "frequency_hz": 49.94,
+    "order": "3x",
+    "matched": {
+     "part": "washing machine",
+     "axis": "x",
+     "hz": 49.94,
+     "label": "3x",
+     "amp_px": 0.03001,
+     "snr": 115.9
+    },
+    "status": "context",
+    "reason": "a real 3x peak, but it is not what this fault rests on"
+   },
+   {
+    "part": "washer door",
+    "frequency_hz": 33.289,
+    "order": "2x",
+    "matched": {
+     "part": "washer door",
+     "axis": "x",
+     "hz": 33.289,
+     "label": "2x",
+     "amp_px": 0.1975,
+     "snr": 661.3
+    },
+    "status": "verified",
+    "reason": "matches the measured 2x peak"
+   }
+  ],
+  "counts": {
+   "verified": 2,
+   "context": 2,
+   "dropped": 0
+  },
+  "explanation": "The 2x peak is about three times taller than 1x on the cabinet and the same pattern shows on the door. That fits misalignment with a strong 2x plus 1x, not imbalance where 1x would dominate. There is no 0.5x and 4x is tiny, so looseness is less likely. I agree with the rule verdict.",
+  "fix": [
+   "Stop the machine and redistribute the laundry evenly",
+   "Level the cabinet front to back and side to side and lock the feet",
+   "Inspect suspension springs, dampers and motor mounts for wear or looseness",
+   "Check belt or direct drive and drum for play then test again"
+  ],
+  "check_next": [
+   "Run again with an even test load and compare 1x and 2x",
+   "Check level with a spirit level and check all feet touch the floor"
+  ],
+  "visual": {
+   "most_moving_part": "washing machine",
+   "direction": "both",
+   "description": "On the right the whole cabinet wobbles in a small loop around its rest outline in time with the spin.",
+   "status": "partly verified",
+   "checks": [
+    {
+     "claim": "most_moving_part",
+     "status": "not_verified",
+     "measured": {
+      "amplitude_px": {
+       "washing machine": 0.06877,
+       "washer door": 0.08539
+      }
+     },
+     "reason": "washing machine moves 0.0688 px in the band, but washer door moves 0.0854 px"
+    },
+    {
+     "claim": "direction",
+     "status": "verified",
+     "measured": {
+      "part": "washing machine",
+      "horizontal_share": 0.419
+     },
+     "reason": "measured motion of washing machine is both (42% horizontal)"
+    }
+   ]
+  }
+ },
+ "show_both": false,
+ "spark_raw": {
+  "check_next": [
+   "Run again with an even test load and compare 1x and 2x",
+   "Check level with a spirit level and check all feet touch the floor"
+  ],
+  "confidence": "high",
+  "evidence": [
+   {
+    "frequency_hz": 16.627,
+    "order": "1x",
+    "part": "washing machine"
+   },
+   {
+    "frequency_hz": 33.289,
+    "order": "2x",
+    "part": "washing machine"
+   },
+   {
+    "frequency_hz": 49.94,
+    "order": "3x",
+    "part": "washing machine"
+   },
+   {
+    "frequency_hz": 33.289,
+    "order": "2x",
+    "part": "washer door"
+   }
+  ],
+  "explanation": "The 2x peak is about three times taller than 1x on the cabinet and the same pattern shows on the door. That fits misalignment with a strong 2x plus 1x, not imbalance where 1x would dominate. There is no 0.5x and 4x is tiny, so looseness is less likely. I agree with the rule verdict.",
+  "fault": "misalignment",
+  "fix": [
+   "Stop the machine and redistribute the laundry evenly",
+   "Level the cabinet front to back and side to side and lock the feet",
+   "Inspect suspension springs, dampers and motor mounts for wear or looseness",
+   "Check belt or direct drive and drum for play then test again"
+  ],
+  "visual_observation": {
+   "description": "On the right the whole cabinet wobbles in a small loop around its rest outline in time with the spin.",
+   "direction": "both",
+   "most_moving_part": "washing machine"
+  }
+ },
+ "usd": 0.028621,
+ "usage": {
+  "input_tokens": 8134,
+  "output_tokens": 4342
+ }
+}

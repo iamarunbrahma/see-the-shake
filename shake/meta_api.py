@@ -21,6 +21,7 @@ import logging
 import os
 import random
 import re
+import threading
 import time
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -155,11 +156,13 @@ class _StreamFailed(Exception):
 # ---------------------------------------------------------------- record / replay
 
 class Cassette:
-    """Ordered record of API interactions. mode 'record' appends and saves; 'replay' serves them back in order.
+    """Record of API interactions. mode 'record' appends and saves; 'replay' serves them back.
 
     Each interaction is {"op", "model", "key", "request", "response"}. request is a summary (prompt text,
-    file ids, metadata), never headers or credentials. Replay checks op, model and key, so a test that drifts
-    from its recording fails loudly instead of using the wrong response.
+    file ids, metadata), never headers or credentials. Replay keeps the recorded order of steps but, within a run of
+    consecutive calls of the same op (the SAM phrases, which are requested concurrently), serves the unused call
+    with the same model and key in any order. A call out of step or never recorded fails loudly instead of using
+    the wrong response. Thread-safe.
     """
 
     def __init__(self, path, mode="replay"):
@@ -167,24 +170,45 @@ class Cassette:
             raise ValueError(mode)
         self.path, self.mode = Path(path), mode
         self.items = _read_json(self.path) if mode == "replay" else []
-        self.pos = 0
+        self.pos = 0  # index of the first unused recording; len(items) once all are replayed
+        self._used = set()
+        self._lock = threading.Lock()
 
     def add(self, op, model, key, request, response):
-        self.items.append({"op": op, "model": model, "key": key, "request": request, "response": response})
-        self.save()
+        with self._lock:
+            self.items.append({"op": op, "model": model, "key": key, "request": request, "response": response})
+            _write_json(self.path, self.items)
 
     def next(self, op, model, key):
-        if self.pos >= len(self.items):
-            raise APIError(f"cassette {self.path.name}: no recorded call left for {op} {model} {key!r}")
-        it = self.items[self.pos]
-        if (it["op"], it["model"], it["key"]) != (op, model, key):
-            raise APIError(f"cassette {self.path.name} call {self.pos}: recorded {it['op']} {it['model']} "
-                           f"{it['key']!r}, asked for {op} {model} {key!r}")
-        self.pos += 1
-        return it["response"]
+        with self._lock:
+            # candidates: the unused calls in the run of same-op calls that starts at the first unused one
+            i = self.pos
+            while i < len(self.items) and self.items[i]["op"] == op:
+                it = self.items[i]
+                if i not in self._used and (it["model"], it["key"]) == (model, key):
+                    self._used.add(i)
+                    while self.pos in self._used:
+                        self.pos += 1
+                    return it["response"]
+                i += 1
+            nxt = self.items[self.pos] if self.pos < len(self.items) else None
+            have = f"next unused is {nxt['op']} {nxt['model']} {nxt['key']!r}" if nxt else "none left"
+            raise APIError(f"cassette {self.path.name}: no recorded call for {op} {model} {key!r} ({have})")
+
+    def has(self, op, model, key):
+        """Whether next(op, model, key) would find a recording."""
+        with self._lock:
+            i = self.pos
+            while i < len(self.items) and self.items[i]["op"] == op:
+                it = self.items[i]
+                if i not in self._used and (it["model"], it["key"]) == (model, key):
+                    return True
+                i += 1
+            return False
 
     def save(self):
-        _write_json(self.path, self.items)
+        with self._lock:
+            _write_json(self.path, self.items)
 
 
 def _read_json(path):
@@ -225,13 +249,16 @@ class Ledger:
     path: Path = None
     calls: list = field(default_factory=list)
 
+    _lock: object = field(default_factory=threading.Lock, repr=False, compare=False)
+
     def add(self, entry):
         entry = {"ts": round(time.time(), 3), **entry}
-        self.calls.append(entry)
-        if self.path:
-            Path(self.path).parent.mkdir(parents=True, exist_ok=True)
-            with open(self.path, "a") as fh:
-                fh.write(json.dumps(entry) + "\n")
+        with self._lock:
+            self.calls.append(entry)
+            if self.path:
+                Path(self.path).parent.mkdir(parents=True, exist_ok=True)
+                with open(self.path, "a") as fh:
+                    fh.write(json.dumps(entry) + "\n")
 
     def total(self, **match):
         return round(sum(c.get("usd", 0.0) for c in self.calls if all(c.get(k) == v for k, v in match.items())), 6)
@@ -298,6 +325,12 @@ class MetaAPI:
         if self._client is None:
             self._client = make_client()
         return self._client
+
+    def will_call(self, op, key):
+        """Whether an optional call (a retry) should be made: always live; in replay, only if it was recorded."""
+        if self.mode != "replay":
+            return True
+        return self.cassette.has(op, {"sam": SAM, "spark": SPARK, "upload": "files"}[op], key)
 
     def _call(self, op, model, key, request, live_fn):
         if self.mode == "replay":

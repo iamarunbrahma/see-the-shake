@@ -1,0 +1,64 @@
+{
+ "verdict": "none",
+ "confidence": "medium",
+ "reason": "velocity 6.10 mm/s is below the alert level 7",
+ "lead_part": "washing machine",
+ "evidence": [],
+ "alert_level": 7.0,
+ "alert_unit": "mm/s",
+ "scaled": true,
+ "phase_1x_x_rad": {
+  "washing machine -> washer door": -0.006
+ },
+ "parts": {
+  "washing machine": {
+   "features": {
+    "amp_1x_px": 0.01867,
+    "e1_share": 0.844,
+    "r21": 0.033,
+    "r31": 0.074,
+    "harmonics": [
+     "5x",
+     "6x"
+    ],
+    "n_harmonics": 2,
+    "half_order": false,
+    "half_ratio": 0.031,
+    "h_over_v_1x": 3.365,
+    "velocity_rms": 6.097,
+    "velocity_unit": "mm/s",
+    "present": {
+     "1x": true,
+     "5x": true,
+     "6x": true
+    }
+   },
+   "verdict": "none",
+   "confidence": "medium",
+   "reason": "velocity 6.10 mm/s is below the alert level 7",
+   "evidence": []
+  },
+  "washer door": {
+   "features": {
+    "amp_1x_px": 0.01027,
+    "e1_share": 0.901,
+    "r21": 0.058,
+    "r31": 0.09,
+    "harmonics": [],
+    "n_harmonics": 0,
+    "half_order": false,
+    "half_ratio": 0.06,
+    "h_over_v_1x": 1.218,
+    "velocity_rms": 2.147,
+    "velocity_unit": "mm/s",
+    "present": {
+     "1x": true
+    }
+   },
+   "verdict": "none",
+   "confidence": "high",
+   "reason": "velocity 2.15 mm/s is below the alert level 7",
+   "evidence": []
+  }
+ }
+}

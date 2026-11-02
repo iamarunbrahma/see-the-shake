@@ -27,12 +27,13 @@ from pathlib import Path
 
 import numpy as np
 
-from .meta_api import SAM_MIN_FRAMES, MetaAPI
+from .meta_api import SAM_MIN_FRAMES, MetaAPI, _final_usage, sam_cost
 
 SUB_FRAMES = 60
 SUB_PLAYBACK_FPS = 30  # the sub-clip keeps every source frame; only its playback rate changes
 MAJORITY = 0.5
 MASK_FRAMES = 8  # frames decoded per phrase for the majority mask
+MAX_PARALLEL = 4  # SAM requests in flight at once (one per phrase; the plan has at most 4)
 MIN_PRESENT = 0.5  # warn when the chosen object is in fewer than this share of the sub-clip frames
 
 
@@ -49,7 +50,7 @@ def subclip(clip, out, start_frame, frames=SUB_FRAMES, playback_fps=SUB_PLAYBACK
         frames = SAM_MIN_FRAMES  # billed anyway
     vf = f"select='between(n\\,{start_frame}\\,{start_frame + frames - 1})',setpts=N/{playback_fps}/TB"
     cmd = ["ffmpeg", "-nostdin", "-y", "-loglevel", "error", "-i", str(clip), "-vf", vf, "-r", str(playback_fps),
-           "-frames:v", str(frames), "-c:v", "libx264", "-crf", "12", "-pix_fmt", "yuv420p",
+           "-frames:v", str(frames), "-c:v", "libx264", "-preset", "veryfast", "-crf", "16", "-pix_fmt", "yuv420p",
            "-movflags", "+faststart", "-an", str(out)]
     r = subprocess.run(cmd, capture_output=True, text=True, timeout=300)
     if r.returncode != 0:
@@ -295,16 +296,48 @@ def stable_mask(events, shape, frames_sent, mask_frames=MASK_FRAMES, workers=Non
 def segment_phrase(api: MetaAPI, file_id, phrase, shape, frames_sent):
     events = api.sam_video(file_id, phrase, frames_sent=frames_sent)
     mask, info = stable_mask(events, shape, frames_sent)
-    info["usd"] = api.ledger.calls[-1]["usd"]
-    info["frames_billed"] = api.ledger.calls[-1].get("frames_billed")
+    usage = _final_usage(events)
+    billed = usage.get("video_frames_processed") if usage else None
+    info["frames_billed"] = billed
+    info["usd"] = round(sam_cost(billed if billed is not None else frames_sent), 6)
     return mask, info
 
 
-def segment_file(api: MetaAPI, file_id, phrases, shape, frames_sent, fallback_phrase=None):
-    """Masks for each phrase on an uploaded sub-clip. Returns ({phrase: mask}, {phrase: info})."""
+def _run_phrases(api, file_id, phrases, shape, frames_sent, parallel):
+    if parallel > 1 and len(phrases) > 1:
+        from concurrent.futures import ThreadPoolExecutor
+        with ThreadPoolExecutor(min(parallel, len(phrases)), thread_name_prefix="sam") as ex:
+            futs = [(p, ex.submit(segment_phrase, api, file_id, p, shape, frames_sent)) for p in phrases]
+            return [(p, f.result()) for p, f in futs]  # a 402 (or any error) is raised here, in phrase order
+    return [(p, segment_phrase(api, file_id, p, shape, frames_sent)) for p in phrases]
+
+
+def retry_phrase(phrase, machine):
+    """The phrase with the machine's name in front, or None when it already has it. SAM often finds a part
+    named with its machine ("washing machine front door") when the bare part ("front door") finds nothing."""
+    if not machine or phrase == machine or machine in phrase:
+        return None
+    return f"{machine} {phrase}"
+
+
+def segment_file(api: MetaAPI, file_id, phrases, shape, frames_sent, fallback_phrase=None, parallel=MAX_PARALLEL):
+    """Masks for each phrase on an uploaded sub-clip. Returns ({phrase: mask}, {phrase: info}).
+
+    The phrases' requests run concurrently (each waits mostly on the network, then decodes in a process pool).
+    A part that finds nothing is tried once more with the machine's name in front (fallback_phrase is the
+    machine); its mask keeps the planned phrase as its name. A replay retries only where the recording did."""
     masks, infos = {}, {}
-    for p in phrases:
-        m, info = segment_phrase(api, file_id, p, shape, frames_sent)
+    for p, (m, info) in _run_phrases(api, file_id, phrases, shape, frames_sent, parallel):
+        infos[p] = info
+        if m is not None:
+            masks[p] = m
+    retry = {p: retry_phrase(p, fallback_phrase) for p in phrases if p not in masks}
+    retry = {p: q for p, q in retry.items() if q and api.will_call("sam", q)}
+    for (p, q), (_, (m, info)) in zip(retry.items(),
+                                      _run_phrases(api, file_id, list(retry.values()), shape, frames_sent, parallel)):
+        info["retried_as"] = q
+        info["first_try"] = {k: infos[p].get(k) for k in ("found", "objects", "usd")}
+        info["usd"] = round(info["usd"] + infos[p].get("usd", 0.0), 6)
         infos[p] = info
         if m is not None:
             masks[p] = m
