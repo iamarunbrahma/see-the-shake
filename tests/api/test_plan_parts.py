@@ -53,4 +53,4 @@ def test_user_parts_override():
 
 
 def test_prompt_has_no_em_dash():
-    assert "—" not in plan_parts.PROMPT
+    assert "\u2014" not in plan_parts.PROMPT

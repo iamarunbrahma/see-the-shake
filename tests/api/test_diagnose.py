@@ -115,11 +115,11 @@ def test_flicker_peak_is_dropped():
 
 
 def test_none_verdict_needs_no_evidence_and_text_has_no_em_dash():
-    card = diagnose.verify(_claim("healthy", [], "medium", explanation="Fine — nothing to do",
-                                  fix=["Keep — as is"]), IMB, _fp("none"))
+    card = diagnose.verify(_claim("healthy", [], "medium", explanation="Fine \u2014 nothing to do",
+                                  fix=["Keep \u2014 as is"]), IMB, _fp("none"))
     sp = card["spark"]
     assert sp["fault"] == "none" and sp["agrees"] and sp["supported"] and sp["confidence"] == "medium"
-    assert "—" not in sp["explanation"] and "—" not in sp["fix"][0]
+    assert "\u2014" not in sp["explanation"] and "\u2014" not in sp["fix"][0]
 
 
 def test_order_parsing_and_fault_synonyms():
@@ -147,4 +147,4 @@ def test_peak_table_lists_every_peak():
     fx = load_fixture("imbalance")
     text = diagnose.peak_table(fx["measured"], fx["fingerprint"])
     n = sum(len(e["axes"][a]["peaks"]) for e in fx["measured"]["parts"].values() for a in "xy")
-    assert text.count(" | ") >= 5 * n and "Official rule verdict" in text and "—" not in text
+    assert text.count(" | ") >= 5 * n and "Official rule verdict" in text and "\u2014" not in text
