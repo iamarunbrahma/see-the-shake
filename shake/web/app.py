@@ -1,7 +1,8 @@
 """See the Shake web app: upload a clip or pick a twin clip, follow the seven steps, see the results.
 
 usage: uvicorn shake.web.app:app --port 8000      (runs are stored under $SHAKE_RUNS, default ./runs)
-No model calls happen here; the Muse Spark and SAM 3.1 steps show as slots until they are connected.
+Muse Spark and SAM 3.1 run only when the request asks for them: "live" calls the Meta Model API (and records
+the run), "replay" serves a recorded live twin run at no cost, "off" uses supplied or renderer masks.
 """
 import hashlib
 import os
@@ -34,6 +35,7 @@ class TwinRequest(BaseModel):
     seconds: float = 4.0
     scale: float = 0.5
     alpha: str = "auto"
+    api: str = "off"  # off, replay (recorded live run, no cost), live (costs money)
 
 
 def _alpha(v):
@@ -89,7 +91,9 @@ def create_app(runs_dir=None):
 
     @app.get("/api/samples")
     def samples():
-        return {"twin_faults": [{"key": k, "label": FAULT_LABELS[k]} for k in twin.FAULTS],
+        return {"twin_faults": [{"key": k, "label": FAULT_LABELS[k],
+                                 "recorded": pipeline.recording(k).exists()} for k in twin.FAULTS],
+                "recorded_twin": pipeline.RECORDED_TWIN,
                 "twin_defaults": TwinRequest(fault="imbalance").model_dump(),
                 "steps": [{"key": k, "label": label} for k, label in pipeline.STEPS]}
 
@@ -99,17 +103,20 @@ def create_app(runs_dir=None):
             raise HTTPException(400, f"Unknown fault {req.fault}")
         if not (0.5 <= req.seconds <= 10 and 0.2 <= req.scale <= 1.0):
             raise HTTPException(400, "Twin clips are 0.5 to 10 s long at a scale of 0.2 to 1")
+        if req.api not in ("off", "replay", "live"):
+            raise HTTPException(400, "Muse Spark and SAM 3.1 must be off, replay or live")
+        if req.api == "replay" and not pipeline.recording(req.fault).exists():
+            raise HTTPException(400, f"There is no recorded live run for {req.fault}")
+        if req.api == "replay" and req.seconds > pipeline.RECORDED_TWIN["seconds"]:
+            raise HTTPException(400, "A recorded run covers at most 6 s")
         alpha = _alpha(req.alpha)
         job_id = uuid.uuid4().hex[:12]
 
         def fn():
             update(job_id, phase="rendering the twin clip")
-            clip, masks, truth = pipeline.twin_clip(req.fault, runs, req.seed, req.seconds, req.scale)
-            opts = pipeline.twin_options(truth, alpha=alpha)
-            rid = pipeline.run_id(clip, pipeline.load_masks(masks), opts, "twin renderer", truth)
-            update(job_id, run_id=rid)
-            return pipeline.run(clip, masks, runs, opts, truth=truth, mask_source="twin renderer",
-                                progress=progress_for(job_id, None))
+            return pipeline.run_twin(req.fault, runs, req.seed, req.seconds, req.scale, api=req.api, alpha=alpha,
+                                     progress=progress_for(job_id, None),
+                                     on_start=lambda rid: update(job_id, run_id=rid))
         submit(job_id, fn)
         return {"job_id": job_id}
 
@@ -118,7 +125,10 @@ def create_app(runs_dir=None):
                            mask_names: str = Form(""), boxes: str = Form(""), capture_fps: str = Form(""),
                            rpm: str = Form(""), rpm_min: str = Form(""), rpm_max: str = Form(""),
                            ref_part: str = Form(""), ref_mm: str = Form(""), alpha: str = Form("auto"),
-                           min_seconds: str = Form("4"), verify: bool = Form(False)):
+                           min_seconds: str = Form("4"), verify: bool = Form(False), api: str = Form("off"),
+                           parts: str = Form("")):
+        if api not in ("off", "live"):
+            raise HTTPException(400, "Muse Spark and SAM 3.1 must be off or live for an uploaded clip")
         # store the clip under its hash, so the same file always maps to the same run
         tmp = runs / "uploads" / f"incoming_{uuid.uuid4().hex}"
         h, size = hashlib.sha256(), 0
@@ -164,25 +174,25 @@ def create_app(runs_dir=None):
             box = np.zeros((H, W), np.uint8)
             box[y:y + hh, x:x + w] = 255
             part_masks[m["name"]] = box
-        if not part_masks:
-            raise HTTPException(400, "Add at least one part: a mask image or a box. "
-                                     "SAM 3.1 will find parts automatically once it is connected.")
+        if not part_masks and api == "off":
+            raise HTTPException(400, "Add at least one part: a mask image or a box, "
+                                     "or turn on Muse Spark and SAM 3.1 to find the parts.")
         rmin, rmax = _opt_float(rpm_min, "Lowest rpm"), _opt_float(rpm_max, "Highest rpm")
         ref = None
         if ref_part.strip() and ref_mm.strip():
-            if ref_part.strip() not in part_masks:
+            if api == "off" and ref_part.strip() not in part_masks:
                 raise HTTPException(400, f"The reference part '{ref_part}' is not one of the parts")
             ref = (ref_part.strip(), _opt_float(ref_mm, "Reference length"))
         opts = pipeline.Options(capture_fps=_opt_float(capture_fps, "Capture fps"), rpm=_opt_float(rpm, "Rpm"),
                                 rpm_range=(rmin, rmax) if rmin and rmax else None, reference=ref,
                                 alpha=_alpha(alpha), min_seconds=_opt_float(min_seconds, "Shortest window") or 4.0,
-                                verify=verify)
+                                verify=verify, api="record" if api == "live" else "off",
+                                user_parts=[s.strip() for s in parts.split(",") if s.strip()] or None)
         job_id = uuid.uuid4().hex[:12]
 
         def fn():
-            update(job_id, run_id=pipeline.run_id(dest, pipeline.load_masks(part_masks), opts, "uploaded"))
             return pipeline.run(dest, part_masks, runs, opts, mask_source="uploaded",
-                                progress=progress_for(job_id, None))
+                                progress=progress_for(job_id, None), on_start=lambda rid: update(job_id, run_id=rid))
         submit(job_id, fn)
         return {"job_id": job_id}
 
