@@ -5,6 +5,8 @@ Files API and passed as an input_file. It returns strict JSON; code validates an
 - the running-speed range is sorted, widened if implausibly narrow, and clamped to what the clip can measure
   (above F_MIN, below Nyquist); a range entirely outside that band is dropped with a warning, and running speed
   then falls back to the strongest peak;
+- Spark marks each part's visibility, and only parts it can clearly see as separate objects are kept (each SAM
+  request costs money, and faint parts such as a strip of control panel come back empty);
 - part phrases are normalised to short noun phrases, de-duplicated and capped at four, with the whole machine
   first (SAM's fallback phrase);
 - rotating parts (blades, drums, rotors...) are dropped while a non-rotating part remains: they are measured
@@ -35,6 +37,7 @@ ROTATING = {"blade", "blades", "rotor", "rotors", "impeller", "propeller", "drum
 STATIC_HINTS = {"housing", "cover", "guard", "mount", "mounting", "bracket", "casing", "case", "downrod", "frame",
                 "cabinet", "base", "panel", "door", "canopy", "stand", "body", "shroud"}
 FILLER = {"the", "a", "an", "its", "this", "that", "visible", "front-loading"}
+VISIBILITY = ("clear", "partial", "unsure")  # only "clear" parts are segmented (each SAM request costs $0.012)
 
 SCHEMA = {
     "type": "object",
@@ -43,7 +46,10 @@ SCHEMA = {
         "rpm_min": {"type": "number"},
         "rpm_max": {"type": "number"},
         "rpm_reason": {"type": "string"},
-        "parts": {"type": "array", "items": {"type": "string"}},
+        "parts": {"type": "array", "items": {
+            "type": "object",
+            "properties": {"phrase": {"type": "string"}, "visibility": {"type": "string", "enum": list(VISIBILITY)}},
+            "required": ["phrase", "visibility"], "additionalProperties": False}},
         "rotating_parts_seen": {"type": "array", "items": {"type": "string"}},
     },
     "required": ["machine_type", "rpm_min", "rpm_max", "rpm_reason", "parts", "rotating_parts_seen"],
@@ -59,7 +65,10 @@ Return JSON with:
 - rpm_min, rpm_max: a deliberately wide range of running speeds, in revolutions per minute, for this type of machine running as shown. It only tells the measurement which spectral peak is the running speed, so wide is safe and too narrow is not. Base it on what the machine is and visible clues (model, size, motor, mode), for example roughly 400 to 1600 for a washing machine on spin, or 150 to 400 for a ceiling fan.
   This copy is too slow to judge rotation from: the machine turns faster than its frame rate can show, so how fast or which way a part appears to turn is meaningless. Do not estimate speed from apparent rotation.
 - rpm_reason: one short sentence on how you chose the range.
-- parts: 1 to 4 short noun phrases (2 to 4 words, common nouns), each naming one distinct part that is clearly visible in the video. The first must be the whole machine (its machine_type). Then add visible parts that do not rotate, such as a door, control panel, motor housing or downrod. Never name rotating parts (fan blades, drum, rotor, pulley, belt): they are measured through the static part that holds them. Do not name hidden parts or sides that are out of view.
+- parts: 1 to 4 parts to measure, each with:
+  - phrase: a short noun phrase (2 to 4 words, common nouns) that a segmentation model could match to one object.
+  - visibility: "clear" only if the part is a distinct object with its own visible outline that stands out from what surrounds it; "partial" if it is small, faint, blends into a larger surface or is partly hidden; "unsure" otherwise.
+  The first must be the whole machine (its machine_type), marked "clear". Add another part only if it is clearly visible as a separate object, such as a door with a visible rim, a motor housing or a downrod. A flat area or strip of a larger surface is not a separate part. Fewer parts are better than a doubtful one: the whole machine alone is fine. Never name rotating parts (fan blades, drum, rotor, pulley, belt): they are measured through the static part that holds them. Do not name hidden parts or sides that are out of view.
 - rotating_parts_seen: rotating parts you can see, so they can be excluded.
 Do not use em dashes."""
 
@@ -146,6 +155,20 @@ def clean_parts(parts, machine_type, warnings):
     return out
 
 
+def clear_phrases(parts, warnings):
+    """Phrases Spark marked as clearly visible. Plain strings (earlier recordings) count as clear."""
+    keep, unclear = [], []
+    for p in parts or []:
+        if isinstance(p, dict):
+            phrase, vis = p.get("phrase", ""), str(p.get("visibility", "unsure")).strip().lower()
+        else:
+            phrase, vis = p, "clear"
+        (keep if vis == "clear" else unclear).append(phrase)
+    if unclear:
+        warnings.append(f"skipped parts Spark could not clearly see: {[normalise_phrase(u) for u in unclear]}")
+    return keep, [normalise_phrase(u) for u in unclear]
+
+
 def validate(raw, capture_fps, user_parts=None):
     """Validated plan from Spark's JSON (raw dict)."""
     if not isinstance(raw, dict):
@@ -153,13 +176,14 @@ def validate(raw, capture_fps, user_parts=None):
     warnings = []
     machine = normalise_phrase(raw.get("machine_type", "")) or "machine"
     rpm = clamp_rpm(raw.get("rpm_min"), raw.get("rpm_max"), capture_fps, warnings)
-    parts = clean_parts(raw.get("parts"), machine, warnings)
+    clear, unclear = clear_phrases(raw.get("parts"), warnings)
+    parts = clean_parts(clear, machine, warnings)
     source = "spark"
     if user_parts:
         parts = clean_parts(user_parts, user_parts[0], warnings)
         source = "user"
     return {"machine_type": machine, "rpm_range": list(rpm) if rpm else None, "rpm_reason": str(raw.get("rpm_reason", ""))[:300],
-            "parts": parts, "parts_source": source, "fallback_phrase": machine,
+            "parts": parts, "parts_source": source, "fallback_phrase": machine, "parts_not_clear": unclear,
             "rotating_parts_seen": [normalise_phrase(p) for p in raw.get("rotating_parts_seen") or []][:8],
             "warnings": warnings, "spark_raw": raw}
 
