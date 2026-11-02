@@ -110,6 +110,7 @@
         <div><label for="clip_api">Muse Spark and SAM 3.1</label>
           <select id="clip_api"><option value="live">Live: find the parts and explain, costs money</option>
             <option value="off">Off: use my masks or boxes</option></select></div>
+        <div><label for="blades">Fan blades (fans only)</label><input id="blades" placeholder="for example 3"></div>
         <div><label for="parts">Part phrases (optional, replace Spark's)</label><input id="parts" placeholder="ceiling fan motor housing"></div>
         <div><button type="submit">Analyse</button></div>
       </div>
@@ -187,7 +188,8 @@
 
 <script>
 const $ = (id) => document.getElementById(id);
-const VERDICT = { none: "No fault found", imbalance: "Imbalance", looseness: "Looseness", misalignment: "Misalignment", unclear: "Unclear" };
+const VERDICT = { none: "No fault found", imbalance: "Imbalance", looseness: "Looseness", misalignment: "Misalignment", unclear: "Unclear",
+                  blade_pass: "High vibration at blade pass" };
 const STATUS = { pending: "waiting", running: "running", done: "done", skipped: "off", fallback: "fell back", failed: "failed" };
 const EVIDENCE = { verified: "verified", context: "context", dropped: "dropped", not_verified: "not verified",
                    unverifiable: "unverifiable", "not verified": "not verified", "partly verified": "partly verified" };
@@ -468,7 +470,7 @@ $("form-clip").onsubmit = (e) => {
   fd.append("clip", $("clip").files[0]);
   for (const f of $("masks").files) fd.append("masks", f);
   $("capture_fps").classList.remove("needs");
-  for (const k of ["mask_names", "boxes", "capture_fps", "rpm", "rpm_min", "rpm_max", "ref_part", "ref_mm", "alpha", "parts"]) fd.append(k, $(k).value);
+  for (const k of ["mask_names", "boxes", "capture_fps", "rpm", "rpm_min", "rpm_max", "ref_part", "ref_mm", "alpha", "parts", "blades"]) fd.append(k, $(k).value);
   fd.append("api", $("clip_api").value);
   start("/api/runs", { method: "POST", body: fd });
 };

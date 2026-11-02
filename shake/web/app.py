@@ -51,6 +51,18 @@ def _alpha(v):
         raise HTTPException(400, "Magnification must be a number or auto")
 
 
+def _blades(v):
+    if v is None or str(v).strip() == "":
+        return None
+    try:
+        n = int(str(v).strip())
+    except ValueError:
+        raise HTTPException(400, "Fan blades must be a whole number")
+    if not 2 <= n <= 12:
+        raise HTTPException(400, "Fan blades must be between 2 and 12")
+    return n
+
+
 def _opt_float(v, name):
     if v is None or str(v).strip() == "":
         return None
@@ -140,7 +152,7 @@ def create_app(runs_dir=None):
                            rpm: str = Form(""), rpm_min: str = Form(""), rpm_max: str = Form(""),
                            ref_part: str = Form(""), ref_mm: str = Form(""), alpha: str = Form("auto"),
                            min_seconds: str = Form("4"), verify: bool = Form(False), api: str = Form("off"),
-                           parts: str = Form("")):
+                           parts: str = Form(""), blades: str = Form("")):
         if api not in ("off", "live"):
             raise HTTPException(400, "Muse Spark and SAM 3.1 must be off or live for an uploaded clip")
         # store the clip under its hash, so the same file always maps to the same run
@@ -204,7 +216,8 @@ def create_app(runs_dir=None):
                                 rpm_range=(rmin, rmax) if rmin and rmax else None, reference=ref,
                                 alpha=_alpha(alpha), min_seconds=_opt_float(min_seconds, "Shortest window") or 4.0,
                                 verify=verify, api="record" if api == "live" else "off",
-                                user_parts=[s.strip() for s in parts.split(",") if s.strip()] or None)
+                                user_parts=[s.strip() for s in parts.split(",") if s.strip()] or None,
+                                blades=_blades(blades))
         job_id = uuid.uuid4().hex[:12]
 
         def fn():
