@@ -11,7 +11,8 @@ from .conftest import CACHE, twin_clip
 def _ffmpeg(*args):
     out = args[-1]
     if not out.exists() or out.stat().st_mtime < args[args.index("-i") + 1].stat().st_mtime:
-        subprocess.run(["ffmpeg", "-y", "-loglevel", "error", *map(str, args)], check=True)
+        subprocess.run(["ffmpeg", "-nostdin", "-y", "-loglevel", "error", *map(str, args)], check=True,
+                       stdin=subprocess.DEVNULL, timeout=180)
 
 
 @pytest.fixture(scope="module")

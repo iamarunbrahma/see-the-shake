@@ -11,4 +11,5 @@ uvicorn>=0.29
 python-multipart>=0.0.9
 # Tests
 pytest>=8
+pytest-timeout>=2.3
 # System: ffmpeg and ffprobe (apt install ffmpeg)

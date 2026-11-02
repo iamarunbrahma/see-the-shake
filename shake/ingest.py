@@ -51,8 +51,11 @@ class ClipInfo:
 
 def probe(path):
     """ffprobe JSON for the file: format and streams."""
-    r = subprocess.run(["ffprobe", "-v", "error", "-print_format", "json", "-show_format", "-show_streams", str(path)],
-                       capture_output=True, text=True)
+    try:
+        r = subprocess.run(["ffprobe", "-v", "error", "-print_format", "json", "-show_format", "-show_streams",
+                            str(path)], capture_output=True, text=True, stdin=subprocess.DEVNULL, timeout=60)
+    except subprocess.TimeoutExpired:
+        raise IngestError(f"ffprobe timed out on {path}")
     if r.returncode != 0:
         raise IngestError(f"ffprobe could not read {path}: {r.stderr.strip()}")
     return json.loads(r.stdout)
