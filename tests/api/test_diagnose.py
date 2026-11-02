@@ -1,6 +1,8 @@
 """Code verification of Spark's diagnosis, offline: evidence within one bin, orders that fit the claimed fault,
 rule verdict as the headline, confidence capped at low on disagreement, dropped evidence or no support."""
 import copy
+import json
+from pathlib import Path
 
 import pytest
 
@@ -148,3 +150,57 @@ def test_peak_table_lists_every_peak():
     text = diagnose.peak_table(fx["measured"], fx["fingerprint"])
     n = sum(len(e["axes"][a]["peaks"]) for e in fx["measured"]["parts"].values() for a in "xy")
     assert text.count(" | ") >= 5 * n and "Official rule verdict" in text and "\u2014" not in text
+
+
+def _obs(part, direction):
+    return {"most_moving_part": part, "direction": direction, "description": "It sways — mostly sideways."}
+
+
+def test_visual_observation_checked_against_in_band_motion():
+    r = _result([_peak(1, 0.30), _peak(2, 0.05)], [_peak(1, 0.10)])  # in band: x 0.30, y 0.10 -> horizontal
+    r["parts"]["door"]["axes"]["x"]["peaks"] = [_peak(1, 0.10)]
+    v = diagnose.verify_visual(_obs("washing machine", "horizontal"), r)
+    assert v["status"] == "verified" and [c["status"] for c in v["checks"]] == ["verified", "verified"]
+    assert "—" not in v["description"]
+    wrong = diagnose.verify_visual(_obs("door", "vertical"), r)
+    assert wrong["status"] == "not verified"
+    rock = diagnose.verify_visual(_obs("washing machine", "rocking"), r)
+    assert [c["status"] for c in rock["checks"]] == ["verified", "unverifiable"] and rock["status"] == "partly verified"
+
+
+def test_visual_observation_ignores_peaks_outside_the_band():
+    # a big 2x is outside the magnified band, so the video shows the 1x motion: mostly vertical here
+    r = _result([_peak(1, 0.05), _peak(2, 0.4)], [_peak(1, 0.2)])
+    v = diagnose.verify_visual(_obs("washing machine", "vertical"), r)
+    assert v["checks"][1]["status"] == "verified" and v["checks"][1]["measured"]["horizontal_share"] < 0.4
+
+
+def test_visual_observation_missing_or_unknown_part():
+    assert diagnose.verify_visual(None, IMB)["status"] == "not provided"
+    v = diagnose.verify_visual(_obs("drum", "horizontal"), IMB)
+    assert v["checks"][0]["status"] == "not_verified"
+
+
+def test_video_schema_only_when_the_video_is_sent():
+    assert "visual_observation" not in diagnose.SCHEMA["properties"]
+    assert "visual_observation" in diagnose.SCHEMA_WITH_VIDEO["required"]
+    from shake import magnify
+    assert diagnose.BAND_ORDERS == tuple(magnify.DEFAULT_BAND)
+
+
+VISUAL = Path(__file__).parent / "fixtures" / "visual"
+
+
+@pytest.mark.parametrize("fault", ["imbalance", "looseness", "misalignment"])
+def test_replay_diagnosis_with_video(fault):
+    """Recorded live diagnoses that sent the magnified clip: the visual observation and its checks replay."""
+    d = VISUAL / fault
+    if not (d / "card.json").exists():
+        pytest.skip("no recording")
+    load = lambda n: json.loads((d / n).read_text())  # noqa: E731
+    api = MetaAPI("replay", cassette=d / "cassette.json.gz")
+    card = diagnose.diagnose(api, load("measured.json"), load("fingerprint.json"), plan=load("plan.json"),
+                             magnified_clip=Path("side_by_side.mp4"), label=f"{fault}:diagnose")
+    want = load("card.json")
+    assert card["spark"] == want["spark"] and card["spark"]["visual"]["checks"]
+    assert card["spark"]["visual"]["checks"][1]["status"] == "verified"  # direction, read from the video

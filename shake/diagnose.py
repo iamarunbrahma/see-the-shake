@@ -44,6 +44,24 @@ SCHEMA = {
     "additionalProperties": False,
 }
 
+DIRECTIONS = ("horizontal", "vertical", "both", "rocking", "unclear")
+VISUAL_SCHEMA = {
+    "type": "object",
+    "properties": {"most_moving_part": {"type": "string"}, "direction": {"type": "string", "enum": list(DIRECTIONS)},
+                   "description": {"type": "string"}},
+    "required": ["most_moving_part", "direction", "description"], "additionalProperties": False,
+}
+SCHEMA_WITH_VIDEO = {**SCHEMA, "properties": {**SCHEMA["properties"], "visual_observation": VISUAL_SCHEMA},
+                     "required": SCHEMA["required"] + ["visual_observation"]}
+BAND_ORDERS = (0.8, 1.25)  # magnify.DEFAULT_BAND: the magnified video shows motion in this band around 1x
+TOP_PART = 0.9  # a part "moves most" if its in-band amplitude is within 10% of the largest
+H_SHARE = 0.6  # horizontal when x holds at least this share of in-band motion energy; vertical at most 1 - this
+VIDEO_PROMPT = """
+- visual_observation: what you see in the magnified (right) half of the attached video, judged from the video itself, not from the table. The motion is magnified in a band around running speed and slowed down; outlines show each part at rest.
+  - most_moving_part: the part that visibly moves most, using a part name from the table.
+  - direction: its dominant motion: horizontal, vertical, both (diagonal or circular), rocking (tilting about its base), or unclear.
+  - description: one short sentence on what you see."""
+
 PROMPT = """You are a vibration analyst helping a maintenance technician at a small plant who has no sensors.
 A phone filmed a running {machine} in slow motion. Our code measured how each part vibrates (sub-pixel tracking, camera shake removed) and ran fixed rules on the spectrum. The attached image shows each part's spectrum with peaks labelled as orders of running speed{clip_note}.
 
@@ -57,7 +75,7 @@ Return JSON:
 - evidence: the peaks your diagnosis rests on, copied from the table above: part name exactly as listed, frequency_hz exactly as listed, and its order label (for example "1x"). Cite only peaks that are in the table.
 - explanation: 2 to 4 plain sentences for the technician. If you disagree with the rule verdict, say why.
 - fix: 2 to 5 short, practical steps.
-- check_next: 1 to 3 short things to check or measure next.
+- check_next: 1 to 3 short things to check or measure next.{video_prompt}
 Do not use em dashes."""
 
 
@@ -201,10 +219,71 @@ def verify(claim, result, fp):
     return {"headline": headline, "spark": spark, "show_both": bool(reasons)}
 
 
+# ---------------------------------------------------------------- what Spark saw in the video
+
+def band_motion(result, band_orders=BAND_ORDERS):
+    """{part: (x amplitude, y amplitude)} in px of the motion the magnified video shows: the peaks inside the
+    magnification band (light flicker excluded), or the 1x order amplitude when no peak falls in the band."""
+    f1 = result["running_speed"]["hz"]
+    lo, hi = band_orders[0] * f1, band_orders[1] * f1
+    out = {}
+    for name, entry in result["parts"].items():
+        amp = []
+        for ax in "xy":
+            a = entry["axes"][ax]
+            inband = [p["amp_px"] for p in a["peaks"] if lo <= p["hz"] <= hi and p["label"] != "flicker"]
+            amp.append(float(sum(v * v for v in inband) ** 0.5) if inband else float(a["orders"]["1x"]["amp_px"]))
+        out[name] = tuple(amp)
+    return out
+
+
+def verify_visual(obs, result, band_orders=BAND_ORDERS):
+    """Check Spark's visual observation of the magnified clip against the measured in-band motion."""
+    if not isinstance(obs, dict):
+        return {"status": "not provided", "checks": []}
+    motion = band_motion(result, band_orders)
+    size = {p: (x * x + y * y) ** 0.5 for p, (x, y) in motion.items()}
+    top = max(size, key=size.get)
+    checks = []
+    part = _match_part(obs.get("most_moving_part"), result["parts"])
+    measured = {p: round(v, 5) for p, v in size.items()}
+    if part is None:
+        checks.append({"claim": "most_moving_part", "status": "not_verified", "measured": {"amplitude_px": measured},
+                       "reason": f"no measured part named {obs.get('most_moving_part')!r}"})
+    elif size[part] >= TOP_PART * size[top]:
+        checks.append({"claim": "most_moving_part", "status": "verified", "measured": {"amplitude_px": measured},
+                       "reason": f"{part} moves {size[part]:.4f} px in the band; the most is {size[top]:.4f} px ({top})"})
+    else:
+        checks.append({"claim": "most_moving_part", "status": "not_verified", "measured": {"amplitude_px": measured},
+                       "reason": f"{part} moves {size[part]:.4f} px in the band, but {top} moves {size[top]:.4f} px"})
+    ref = part or top
+    x, y = motion[ref]
+    share = x * x / (x * x + y * y) if x or y else 0.5
+    truth = "horizontal" if share >= H_SHARE else "vertical" if share <= 1 - H_SHARE else "both"
+    d = str(obs.get("direction", "")).strip().lower()
+    m = {"part": ref, "horizontal_share": round(share, 3)}
+    if d == "rocking":
+        checks.append({"claim": "direction", "status": "unverifiable", "measured": m,
+                       "reason": "translation tracking cannot confirm a rotation; measured motion is "
+                                 f"{truth} ({share:.0%} horizontal)"})
+    elif d not in DIRECTIONS or d == "unclear":
+        checks.append({"claim": "direction", "status": "unverifiable", "measured": m,
+                       "reason": f"no direction given; measured motion is {truth} ({share:.0%} horizontal)"})
+    else:
+        ok = d == truth
+        checks.append({"claim": "direction", "status": "verified" if ok else "not_verified", "measured": m,
+                       "reason": f"measured motion of {ref} is {truth} ({share:.0%} horizontal)"})
+    st = [c["status"] for c in checks]
+    status = ("verified" if all(s == "verified" for s in st) else
+              "not verified" if all(s == "not_verified" for s in st) else "partly verified")
+    return {"most_moving_part": obs.get("most_moving_part"), "direction": d,
+            "description": no_em_dash(obs.get("description", "")), "status": status, "checks": checks}
+
+
 # ---------------------------------------------------------------- the call
 
 def diagnose(api: MetaAPI, result, fp, spectrum_png=None, magnified_clip=None, magnified_file_id=None, plan=None,
-             label="diagnose"):
+             label="diagnose", band_orders=BAND_ORDERS):
     """Ask Spark, verify its claim, and return the card (with cost). A failed Spark call still returns the
     rule verdict as the headline; only a 402 propagates."""
     machine = (plan or {}).get("machine_type") or "machine"
@@ -212,14 +291,16 @@ def diagnose(api: MetaAPI, result, fp, spectrum_png=None, magnified_clip=None, m
         magnified_file_id = api.upload(magnified_clip, label=f"{label}:magnified")
     clip_note = (", and the attached video shows the original and a magnified copy side by side"
                  if magnified_file_id else "")
-    text = PROMPT.format(machine=machine, clip_note=clip_note, table=peak_table(result, fp, plan))
+    text = PROMPT.format(machine=machine, clip_note=clip_note, table=peak_table(result, fp, plan),
+                         video_prompt=VIDEO_PROMPT if magnified_file_id else "")
     content = [{"type": "input_text", "text": text}]
     if spectrum_png:
         content.append(image_block(spectrum_png))
     if magnified_file_id:
         content.append({"type": "input_file", "file_id": magnified_file_id})
     try:
-        reply = api.spark(content, label=label, schema=SCHEMA, schema_name="diagnosis")
+        reply = api.spark(content, label=label, schema=SCHEMA_WITH_VIDEO if magnified_file_id else SCHEMA,
+                          schema_name="diagnosis")
         claim = reply.json()
     except CreditExhausted:
         raise
@@ -230,6 +311,8 @@ def diagnose(api: MetaAPI, result, fp, spectrum_png=None, magnified_clip=None, m
         card["usd"] = round(api.ledger.total(op="spark", label=label), 6)
         return card
     card = verify(claim, result, fp)
+    if magnified_file_id:
+        card["spark"]["visual"] = verify_visual(claim.get("visual_observation"), result, band_orders)
     card["spark_raw"] = claim
     card["usd"] = round(reply.usd, 6)
     card["usage"] = {k: reply.usage.get(k) for k in ("input_tokens", "output_tokens")}
