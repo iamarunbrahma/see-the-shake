@@ -92,7 +92,7 @@ def test_cassette_replays_in_order_and_checks_calls(tmp_path):
     c.add("sam", "sam-3.1", "door", {}, [{"type": "response.completed", "response": {"usage": {}}}])
     api = MetaAPI("replay", cassette=tmp_path / "c.json.gz")
     assert api.upload(tmp_path / "a.mp4") == "file-1"
-    with pytest.raises(APIError, match="recorded sam"):
+    with pytest.raises(APIError, match="no recorded call for sam sam-3.1 'washing machine'"):
         api.sam_video("file-1", "washing machine")
     api = MetaAPI("replay", cassette=tmp_path / "c.json.gz")
     api.upload(tmp_path / "a.mp4")
@@ -150,3 +150,24 @@ def test_live_key_reaches_api():
     r = api.spark([{"type": "input_text", "text": "Reply with exactly: ok"}], label="live_check",
                   max_output_tokens=4096)
     assert r.status == "completed" and "ok" in r.text.lower()
+
+
+def test_cassette_replays_concurrent_calls_in_any_order(tmp_path):
+    c = Cassette(tmp_path / "c.json", "record")
+    for k in ("a", "b", "c"):
+        c.add("sam", "sam-3.1", k, {}, [{"type": "response.completed", "response": {"usage": {}}, "k": k}])
+    r = Cassette(tmp_path / "c.json", "replay")
+    assert r.next("sam", "sam-3.1", "c")[0]["k"] == "c" and r.pos == 0
+    assert r.next("sam", "sam-3.1", "a")[0]["k"] == "a" and r.pos == 1
+    assert r.next("sam", "sam-3.1", "b")[0]["k"] == "b" and r.pos == 3
+    with pytest.raises(APIError, match="none left"):
+        r.next("sam", "sam-3.1", "a")
+
+
+def test_cassette_keeps_step_order_across_ops(tmp_path):
+    c = Cassette(tmp_path / "c.json", "record")
+    c.add("sam", "sam-3.1", "a", {}, [])
+    c.add("spark", meta_api.SPARK, "diag", {}, {})
+    r = Cassette(tmp_path / "c.json", "replay")
+    with pytest.raises(APIError, match="next unused is sam"):
+        r.next("spark", meta_api.SPARK, "diag")  # SAM was skipped: the diagnosis is out of step
