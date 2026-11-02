@@ -148,8 +148,11 @@ def create_app(runs_dir=None):
         else:
             shutil.move(tmp, dest)
         try:
-            info = ingest.clip_info(dest, capture_fps=_opt_float(capture_fps, "Capture fps"), min_fps=1)
+            # the real check, before any job starts: a slowed slow-motion file needs its capture rate
+            info = ingest.clip_info(dest, capture_fps=_opt_float(capture_fps, "Capture fps"))
         except ingest.IngestError as e:
+            if e.field:
+                raise HTTPException(400, {"message": str(e), "field": e.field})
             raise HTTPException(400, str(e))
         H, W = info.height, info.width
         names = [n.strip() for n in mask_names.split(",") if n.strip()]
