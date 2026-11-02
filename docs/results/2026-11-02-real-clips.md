@@ -223,3 +223,23 @@ Verdicts:
 | rotor, 8 runs with the disc only (user-parts bug) | $0.406 | 87 to 113 s each |
 | rotor, 8 runs with disc and shaft | $0.557 | 86 to 146 s each |
 | total | $1.168 | |
+
+## Sanity check on main 54492b8 (after the measurement fixes)
+
+Both clips run again live, in the cloud, on merged main. Recordings: `tests/api/fixtures/real/aeg-washer-54492b8/`
+and `tests/api/fixtures/real/rotor-2000rpm-Unb2-54492b8/`, kept for the demo and replayed by
+`tests/api/test_replay_real.py`.
+
+| run | frames check | verdict | Spark | visual check | warnings | wall | cost |
+|---|---|---|---|---|---|---|---|
+| AEG washer, `--ref "washing machine=600"` | inconclusive (VP9 removes the sensor noise) | imbalance (high), 1x holds 95% | imbalance, high, agrees | front door, vertical: verified | only the inconclusive frames check | 190 s | $0.065 |
+| rotor 2000 rpm Unb2, `--rpm 2000 --ref "large metal disc=150:height" --parts "large metal disc, long metal shaft"` | inconclusive (MPEG-4) | imbalance (high), 1x holds 100% | imbalance, high, agrees | disc, vertical: verified | 1 s clip; 2x to 6x near the 100 Hz flicker count only at 50% of 1x or more; the shaft's horizontal axis left out | 92 s | $0.070 |
+
+- **Washer:** no codec warning and no "synthesised" flag. Running speed is 22.76 Hz, as before. The whole machine
+  is the plan's first part, so it is segmented as a part and no separate whole-machine call is needed.
+- **Rotor:** the whole-machine call fired ("rotor test rig", because the parts were given), but SAM 3.1 found
+  nothing for it, so it added nothing to the background exclusion. That cost one more SAM request ($0.012).
+- **Rotor against the probes:** the scale now comes from the pipeline itself (150 mm over 245 px, 0.612 mm/px).
+  The shaft's vertical 1x is 407.1 µm against probe #1's 407.4 µm, and the disc reads 437.5 µm. Both are within
+  1.2% of the earlier run (402.0 and 435.3 µm), whose scale was set outside the pipeline. 1x is 33.35 Hz against
+  the probes' 33.33 Hz.
