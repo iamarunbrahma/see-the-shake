@@ -30,7 +30,12 @@ def test_replay_real_recording(name):
     fid = api.upload(Path("sam_subclip.mp4"), label=f"{label}:segment:subclip")
     seg = r["segment"]
     shape = tuple(r["ingest"]["clip"][k] for k in ("height", "width"))
-    masks, infos = segment.segment_file(api, fid, plan["parts"], shape, seg["subclip"]["frames"], plan["fallback_phrase"])
+    # the pipeline also segments the whole machine when it is not one of the parts (recordings from 54492b8 on)
+    machine = plan["fallback_phrase"]
+    context = [machine] if machine not in plan["parts"] and any(
+        c["op"] == "sam" and c["key"] == machine for c in cas) else []
+    masks, infos = segment.segment_file(api, fid, plan["parts"] + context, shape, seg["subclip"]["frames"],
+                                        plan["fallback_phrase"])
     for p, info in seg["parts"].items():
         if info.get("found"):
             assert infos[p]["area_px"] == info["area_px"], p

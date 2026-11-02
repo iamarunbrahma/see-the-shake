@@ -9,3 +9,7 @@ Recorded Meta Model API responses (Muse Spark and SAM 3.1) and the pipeline resu
 - `rotor-*/` are derived from Kang, Zheng, Liu, Pei, "Vibration Displacement Dataset of Rotors under Various
   Operational Conditions", Mendeley Data, V1, 2024, doi:10.17632/47y7rwc2yg.1, licensed CC BY 4.0
   (https://creativecommons.org/licenses/by/4.0/).
+
+`aeg-washer-54492b8/` and `rotor-2000rpm-Unb2-54492b8/` were recorded on main 54492b8 (after the measurement fixes),
+for the demo: the real washer (imbalance, frames check inconclusive for VP9) and the rotor at 2000 rpm with the
+scale from the disc's 150 mm height (`--ref "large metal disc=150:height"`), against the probes.
