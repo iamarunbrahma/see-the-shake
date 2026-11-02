@@ -51,7 +51,11 @@ CAMERA_WALK_SIGMA = 0.004  # px per frame random-walk step
 FLICKER_HZ, FLICKER_DEPTH = 100.0, 0.015  # LED flicker from 50 Hz mains
 NOISE_SIGMA = 1.3
 NOISE_BANK = 16
-CRF, PRESET = 16, "medium"
+# Baseline was libx264 crf 16 preset medium. x264's default psychovisual tuning (deadzones, mbtree) discards the
+# tiny inter-frame changes that sub-pixel vibration makes (the tracker read 60 to 85% of the true motion, the
+# background 13%). Phone hardware encoders have no such tuning and run at 40+ Mbit/s in slow motion, so the twin
+# uses -tune grain, which keeps them (90 to 100% read back, close to lossless).
+CRF, PRESET, TUNE = 16, "veryfast", "grain"
 
 PARTS = ("washing machine", "door")
 
@@ -64,6 +68,7 @@ class TwinConfig:
     rpm: float = 1000.0
     fps: int = FPS
     preset: str = PRESET  # x264 preset; tests may use a faster one
+    out_scale: float = 1.0  # resize each rendered frame before noise and encoding (0.5 gives 960x540 test clips)
     components: list = field(default=None)
 
     def __post_init__(self):
@@ -269,9 +274,11 @@ def render(cfg, out_dir, encode=True):
     drum = draw_drum()
     bg = draw_background()
     # same noise on every channel, as in the spike; stored 3-channel so cv2 can add it in one pass
-    noise_bank = []
+    sc = float(cfg.out_scale)
+    OW, OH = int(round(W * sc)), int(round(H * sc))
+    noise_bank = []  # sensor noise is added at the output resolution
     for _ in range(NOISE_BANK):
-        g = rng.standard_normal((H, W), dtype=np.float32) * np.float32(NOISE_SIGMA)
+        g = rng.standard_normal((OH, OW), dtype=np.float32) * np.float32(NOISE_SIGMA)
         noise_bank.append(cv2.merge([g, g, g]))
     gx, gy = np.meshgrid(np.arange(2 * GLASS_R), np.arange(2 * GLASS_R))
     glass_mask = (((gx - GLASS_R + 0.5) ** 2 + (gy - GLASS_R + 0.5) ** 2) <= (GLASS_R - 0.5) ** 2)
@@ -283,8 +290,8 @@ def render(cfg, out_dir, encode=True):
     sh_, sw_ = sprite.shape[:2]
     clip = out / "clip.mp4"
     ff = subprocess.Popen(
-        ["ffmpeg", "-y", "-loglevel", "error", "-f", "rawvideo", "-pix_fmt", "bgr24", "-s", f"{W}x{H}",
-         "-r", str(cfg.fps), "-i", "-", "-c:v", "libx264", "-preset", cfg.preset, "-crf", str(CRF),
+        ["ffmpeg", "-y", "-loglevel", "error", "-f", "rawvideo", "-pix_fmt", "bgr24", "-s", f"{OW}x{OH}",
+         "-r", str(cfg.fps), "-i", "-", "-c:v", "libx264", "-preset", cfg.preset, "-tune", TUNE, "-crf", str(CRF),
          "-pix_fmt", "yuv420p", "-movflags", "+faststart", str(clip)], stdin=subprocess.PIPE) if encode else None
     gx0, gy0 = DOOR_C[0] - GLASS_R, DOOR_C[1] - GLASS_R
     ys, xs = Y0 - PAD, X0 - PAD
@@ -312,6 +319,8 @@ def render(cfg, out_dir, encode=True):
             roi[:] = roi_bg * (1 - a) + moved[..., :3] * a
             Mc = np.float32([[1, 0, mo["cam_x"][i]], [0, 1, mo["cam_y"][i]]])
             frame = cv2.warpAffine(scene, Mc, (W, H), flags=cv2.INTER_LINEAR, borderMode=cv2.BORDER_REFLECT)
+            if sc != 1.0:
+                frame = cv2.resize(frame, (OW, OH), interpolation=cv2.INTER_AREA)
             frame = cv2.scaleAdd(frame, float(mo["gain"][i]), noise_bank[i % NOISE_BANK])  # flicker, then noise
             if ff:
                 ff.stdin.write(cv2.convertScaleAbs(frame).tobytes())  # saturating cast to uint8
@@ -321,6 +330,16 @@ def render(cfg, out_dir, encode=True):
             ff.wait()
 
     masks, glass = part_masks(sprite_u8)
+    parts = part_truth(cfg, masks)  # at full resolution, then scaled to the output
+    if sc != 1.0:
+        rs = lambda m: ((cv2.resize(m, (OW, OH), interpolation=cv2.INTER_AREA) > 127) * 255).astype(np.uint8)
+        masks = {k: rs(m) for k, m in masks.items()}
+        glass = rs(glass)
+        for pt in parts.values():
+            pt["centroid_px"] = [round(v * sc, 2) for v in pt["centroid_px"]]
+            for c in pt["components"]:
+                c["x_amp_px"] = round(c["x_amp_px"] * sc, 6)
+                c["y_amp_px"] = round(c["y_amp_px"] * sc, 6)
     for name, m in masks.items():
         cv2.imwrite(str(out / f"mask_{slug(name)}.png"), m)
     cv2.imwrite(str(out / "mask_glass.png"), glass)
@@ -332,11 +351,13 @@ def render(cfg, out_dir, encode=True):
         "fps": cfg.fps,
         "seconds": cfg.seconds,
         "frames": n,
-        "size": [W, H],
+        "size": [OW, OH],
+        "out_scale": sc,
+        "series_units": "truth_series.npz motions are in full-resolution (1920x1080) px; multiply by out_scale",
         "rpm": cfg.rpm,
         "f_rot_hz": round(cfg.rpm / 60, 5),
-        "mm_per_px": MM_PER_PX,
-        "reference": {"part": "washing machine", "width_mm": MACHINE_WIDTH_MM, "width_px": MACH_W},
+        "mm_per_px": MM_PER_PX / sc,
+        "reference": {"part": "washing machine", "width_mm": MACHINE_WIDTH_MM, "width_px": MACH_W * sc},
         "cabinet": {
             "translation": [{"order": o, "hz": round(o * cfg.rpm / 60, 4), "x_amp_px": ax, "y_amp_px": ay,
                              "phase": ph, "y_phase_offset": round(np.pi / 2, 6)} for o, ax, ay, ph in cfg.components],
@@ -348,8 +369,8 @@ def render(cfg, out_dir, encode=True):
                    "series": "truth_series.npz:cam_x,cam_y"},
         "flicker": {"hz": FLICKER_HZ, "depth": FLICKER_DEPTH},
         "noise": {"sigma": NOISE_SIGMA, "bank": NOISE_BANK},
-        "encoding": {"codec": "libx264", "crf": CRF, "preset": cfg.preset, "pix_fmt": "yuv420p"} if encode else None,
-        "parts": part_truth(cfg, masks),
+        "encoding": {"codec": "libx264", "crf": CRF, "preset": cfg.preset, "tune": TUNE, "pix_fmt": "yuv420p"} if encode else None,
+        "parts": parts,
         "rotating_mask": "mask_glass.png",
     }
     (out / "truth.json").write_text(json.dumps(truth, indent=2))
@@ -364,9 +385,10 @@ def main(argv=None):
     p.add_argument("--seconds", type=float, default=6.0)
     p.add_argument("--seed", type=int, default=11)
     p.add_argument("--rpm", type=float, default=1000.0)
-    p.add_argument("--preset", default=PRESET, help="x264 preset (baseline: medium)")
+    p.add_argument("--preset", default=PRESET, help="x264 preset")
+    p.add_argument("--scale", type=float, default=1.0, help="output scale (0.5 gives 960x540)")
     a = p.parse_args(argv)
-    render(TwinConfig(a.fault, a.seconds, a.seed, a.rpm, preset=a.preset), a.out_dir)
+    render(TwinConfig(a.fault, a.seconds, a.seed, a.rpm, preset=a.preset, out_scale=a.scale), a.out_dir)
     print("wrote", Path(a.out_dir) / "clip.mp4")
 
 
