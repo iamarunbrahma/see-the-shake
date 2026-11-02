@@ -1,0 +1,171 @@
+{
+ "headline": {
+  "fault": "imbalance",
+  "confidence": "high",
+  "reason": "1x holds 99% of the vibration energy",
+  "lead_part": "washer front door",
+  "evidence": [
+   {
+    "axis": "x",
+    "hz": 16.643,
+    "order": 1.0,
+    "label": "1x",
+    "amp_px": 0.25165
+   },
+   {
+    "axis": "y",
+    "hz": 16.643,
+    "order": 1.0,
+    "label": "1x",
+    "amp_px": 0.12008
+   }
+  ],
+  "source": "fixed rules"
+ },
+ "spark": {
+  "fault": "imbalance",
+  "fault_reported": "imbalance",
+  "confidence": "high",
+  "confidence_reported": "high",
+  "capped": false,
+  "cap_reasons": [],
+  "agrees": true,
+  "supported": true,
+  "evidence": [
+   {
+    "part": "washer front door",
+    "frequency_hz": 16.643,
+    "order": "1x",
+    "matched": {
+     "part": "washer front door",
+     "axis": "x",
+     "hz": 16.643,
+     "label": "1x",
+     "amp_px": 0.25165,
+     "snr": 794.8
+    },
+    "status": "verified",
+    "reason": "matches the measured 1x peak"
+   },
+   {
+    "part": "washer front door",
+    "frequency_hz": 33.32,
+    "order": "2x",
+    "matched": {
+     "part": "washer front door",
+     "axis": "x",
+     "hz": 33.32,
+     "label": "2x",
+     "amp_px": 0.02302,
+     "snr": 72.7
+    },
+    "status": "context",
+    "reason": "a real 2x peak, but it is not what this fault rests on"
+   },
+   {
+    "part": "washing machine",
+    "frequency_hz": 16.642,
+    "order": "1x",
+    "matched": {
+     "part": "washing machine",
+     "axis": "x",
+     "hz": 16.642,
+     "label": "1x",
+     "amp_px": 0.22941,
+     "snr": 837.6
+    },
+    "status": "verified",
+    "reason": "matches the measured 1x peak"
+   }
+  ],
+  "counts": {
+   "verified": 2,
+   "context": 1,
+   "dropped": 0
+  },
+  "explanation": "The 1x peak holds 99 percent of the vibration energy and is about ten times larger than the 2x peak. There is no 0.5x peak and no row of harmonics, so looseness and misalignment are unlikely. The in phase side to side motion at running speed agrees with the rule verdict of imbalance from an unbalanced spin load.",
+  "fix": [
+   "Stop the machine and redistribute clothes evenly in the drum",
+   "Confirm the machine is level with all feet firmly on the floor",
+   "Run a small balanced test load to confirm the shake drops",
+   "Inspect suspension springs and dampers if high 1x persists"
+  ],
+  "check_next": [
+   "Recheck 1x amplitude after redistributing the load",
+   "Check leveling feet and floor firmness",
+   "Inspect drum suspension and dampers if shake persists"
+  ],
+  "visual": {
+   "most_moving_part": "washer front door",
+   "direction": "horizontal",
+   "description": "The washer cabinet and front door shift side to side once per spin while the drum turns.",
+   "status": "verified",
+   "checks": [
+    {
+     "claim": "most_moving_part",
+     "status": "verified",
+     "measured": {
+      "amplitude_px": {
+       "washing machine": 0.26072,
+       "washer front door": 0.27883
+      }
+     },
+     "reason": "washer front door moves 0.2788 px in the band; the most is 0.2788 px (washer front door)"
+    },
+    {
+     "claim": "direction",
+     "status": "verified",
+     "measured": {
+      "part": "washer front door",
+      "horizontal_share": 0.815
+     },
+     "reason": "measured motion of washer front door is horizontal (81% horizontal)"
+    }
+   ]
+  }
+ },
+ "show_both": false,
+ "spark_raw": {
+  "check_next": [
+   "Recheck 1x amplitude after redistributing the load",
+   "Check leveling feet and floor firmness",
+   "Inspect drum suspension and dampers if shake persists"
+  ],
+  "confidence": "high",
+  "evidence": [
+   {
+    "frequency_hz": 16.643,
+    "order": "1x",
+    "part": "washer front door"
+   },
+   {
+    "frequency_hz": 33.32,
+    "order": "2x",
+    "part": "washer front door"
+   },
+   {
+    "frequency_hz": 16.642,
+    "order": "1x",
+    "part": "washing machine"
+   }
+  ],
+  "explanation": "The 1x peak holds 99 percent of the vibration energy and is about ten times larger than the 2x peak. There is no 0.5x peak and no row of harmonics, so looseness and misalignment are unlikely. The in phase side to side motion at running speed agrees with the rule verdict of imbalance from an unbalanced spin load.",
+  "fault": "imbalance",
+  "fix": [
+   "Stop the machine and redistribute clothes evenly in the drum",
+   "Confirm the machine is level with all feet firmly on the floor",
+   "Run a small balanced test load to confirm the shake drops",
+   "Inspect suspension springs and dampers if high 1x persists"
+  ],
+  "visual_observation": {
+   "description": "The washer cabinet and front door shift side to side once per spin while the drum turns.",
+   "direction": "horizontal",
+   "most_moving_part": "washer front door"
+  }
+ },
+ "usd": 0.019646,
+ "usage": {
+  "input_tokens": 8009,
+  "output_tokens": 2267
+ }
+}
