@@ -198,7 +198,8 @@ def validate(raw, capture_fps, user_parts=None):
     parts = clean_parts(clear, machine, warnings, trusted=smooth)
     source = "spark"
     if user_parts:
-        parts = clean_parts(user_parts, user_parts[0], warnings)
+        # the user named these parts: none is dropped for sounding like a rotating part
+        parts = clean_parts(user_parts, user_parts[0], warnings, trusted={normalise_phrase(u) for u in user_parts})
         source = "user"
     return {"machine_type": machine, "rpm_range": list(rpm) if rpm else None, "rpm_reason": str(raw.get("rpm_reason", ""))[:300],
             "parts": parts, "parts_source": source, "fallback_phrase": machine, "parts_not_clear": unclear,

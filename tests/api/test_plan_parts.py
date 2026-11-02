@@ -97,3 +97,8 @@ def test_smooth_rotating_parts_are_kept_and_changing_ones_dropped():
 def test_schema_asks_for_rotation():
     item = plan_parts.SCHEMA["properties"]["parts"]["items"]
     assert item["properties"]["rotation"]["enum"] == ["none", "smooth", "changing"] and "rotation" in item["required"]
+
+
+def test_user_parts_are_never_dropped_for_sounding_rotating():
+    p = validate(raw(["door"]), 500, user_parts=["large metal disc", "long metal shaft"])
+    assert p["parts"] == ["large metal disc", "long metal shaft"] and p["parts_source"] == "user"
