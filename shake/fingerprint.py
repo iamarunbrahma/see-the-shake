@@ -7,6 +7,10 @@ Rules, first match wins, applied to the part that vibrates most:
 3. misalignment  2x at least half of 1x
 4. imbalance     1x holds at least 60% of the vibration energy
 5. unclear       anything else
+When the blade count of a fan is known, blades x running speed is blade pass: it stays in the velocity (severity is
+overall vibration) but is left out of every pattern feature (energy share, 2x/1x, harmonics), so it cannot push a
+verdict toward imbalance, misalignment or looseness. If the velocity crosses the alert only because of blade pass,
+the verdict is blade_pass: high vibration at blade pass, check the blades and the guard.
 Each verdict cites the measured peaks it rests on. Thresholds are the builder's calls, tuned on the twin and
 documented here; they are not ISO limits.
 """
@@ -87,7 +91,7 @@ def _wrap(a):
     return float((a + np.pi) % (2 * np.pi) - np.pi)
 
 
-def part_features(entry, scale_mm_per_px, result=None):
+def part_features(entry, scale_mm_per_px, result=None, blades=None):
     axes = entry["axes"]
     artifacts = []
     if result is not None:
@@ -95,7 +99,7 @@ def part_features(entry, scale_mm_per_px, result=None):
         for ax in "xy":
             for p in axes[ax]["peaks"]:
                 kind = artifact_kind(p, result, ax, pattern)
-                if kind and kind != "flicker":
+                if kind:  # flicker too: an order that sits on it (6x at 100 Hz) must not count as present
                     artifacts.append({"axis": ax, "hz": p["hz"], "label": p["label"], "amp_px": p["amp_px"],
                                       "bg_amp_px": p.get("bg_amp_px"), "kind": kind})
     bin_hz = result["bin_hz"] if result is not None else 0.0
@@ -107,13 +111,29 @@ def part_features(entry, scale_mm_per_px, result=None):
     a1 = amp["1x"]
     flagged = {(a["axis"], a["hz"]) for a in artifacts}
     peaks = [p for ax in "xy" for p in axes[ax]["peaks"] if p["label"] != "flicker" and (ax, p["hz"]) not in flagged]
-    # energy: every non-flicker peak, with orders counted once from the order table
-    sync = [p for p in peaks if p["order"] is not None]
-    nonsync_energy = sum(p["amp_px"] ** 2 for p in peaks if p["order"] is None)
-    order_keys = {f"{p['order']:g}x" for p in sync}
-    energy = sum(amp[k] ** 2 for k in order_keys if k in amp) + nonsync_energy
     k = scale_mm_per_px or 1.0
-    vel = float(np.sqrt(sum((2 * np.pi * p["hz"] * p["amp_px"] * k) ** 2 / 2 for p in peaks)))
+    vel_of = lambda ps: float(np.sqrt(sum((2 * np.pi * p["hz"] * p["amp_px"] * k) ** 2 / 2 for p in ps)))  # noqa: E731
+    blade_pass = None
+    if blades:
+        bp_key = f"{float(blades):g}x"
+        bp_peaks = [p for p in peaks if p["order"] is not None and abs(p["order"] - blades) < 1e-6]
+        if bp_peaks or amp.get(bp_key):
+            blade_pass = {"blades": int(blades), "order": bp_key,
+                          "hz": round(bp_peaks[0]["hz"] if bp_peaks else blades * result["running_speed"]["hz"], 3),
+                          "amp_px": round(amp.get(bp_key, 0.0) or max(p["amp_px"] for p in bp_peaks), 5),
+                          "velocity_rms": round(vel_of(bp_peaks), 3)}
+        # out of every pattern feature, kept in the velocity
+        if bp_key in amp:
+            amp[bp_key], present[bp_key] = 0.0, False
+        pattern_peaks = [p for p in peaks if p not in bp_peaks]
+    else:
+        pattern_peaks = peaks
+    # energy: every non-flicker peak, with orders counted once from the order table
+    sync = [p for p in pattern_peaks if p["order"] is not None]
+    nonsync_energy = sum(p["amp_px"] ** 2 for p in pattern_peaks if p["order"] is None)
+    order_keys = {f"{p['order']:g}x" for p in sync}
+    energy = sum(amp[k_] ** 2 for k_ in order_keys if k_ in amp) + nonsync_energy
+    vel = vel_of(peaks)
     a_max = max(amp[k] for k in ["1x"] + HARMONIC_ORDERS)
     harmonics = [h for h in HARMONIC_ORDERS if present.get(h) and amp[h] >= HARMONIC_MIN_RATIO * a_max]
     faint = [h for h in HARMONIC_ORDERS if present.get(h) and h not in harmonics]
@@ -133,6 +153,8 @@ def part_features(entry, scale_mm_per_px, result=None):
         "velocity_unit": "mm/s" if scale_mm_per_px else "px/s",
         "present": {k2: v for k2, v in present.items() if v},
         "artifacts": artifacts,
+        "blade_pass": blade_pass,
+        "velocity_without_blade_pass": round(vel_of(pattern_peaks), 3) if blade_pass else None,
     }
 
 
@@ -159,6 +181,13 @@ def classify(feat, alert):
     if v < alert:
         conf = "high" if v < 0.5 * alert else "medium"
         return "none", conf, f"velocity {v:.2f} {feat['velocity_unit']} is below the alert level {alert:g}"
+    bp = feat.get("blade_pass")
+    if bp and feat["velocity_without_blade_pass"] < alert:
+        rest = feat["velocity_without_blade_pass"]
+        conf = "high" if rest < 0.5 * alert else "medium"
+        return "blade_pass", conf, (f"high vibration at blade pass ({bp['blades']} blades x running speed, "
+                                    f"{bp['hz']:.1f} Hz): {v:.2f} {feat['velocity_unit']}, {rest:.2f} without it; "
+                                    "check the blades and the guard")
     if feat["half_order"] or feat["n_harmonics"] >= MIN_HARMONICS:
         why = []
         if feat["half_order"]:
@@ -176,16 +205,18 @@ def classify(feat, alert):
     return "unclear", "low", "no rule matched"
 
 
-def fingerprint(result, alert=None):
-    """Features for every part, the rule verdict for each, and the official verdict."""
+def fingerprint(result, alert=None, blades=None):
+    """Features for every part, the rule verdict for each, and the official verdict.
+    blades: a fan's blade count when known (entered, or from the plan); None for machines without blades."""
     mm = result["scale"]["mm_per_px"]
     alert = alert if alert is not None else (ALERT_MM_S if mm else ALERT_PX_S)
     parts = {}
     for name, entry in result["parts"].items():
-        feat = part_features(entry, mm, result)
+        feat = part_features(entry, mm, result, blades)
         verdict, conf, reason = classify(feat, alert)
         labels = {"none": set(), "imbalance": {"1x"}, "misalignment": {"1x", "2x"},
-                  "looseness": {"0.5x", "1x"} | set(feat["harmonics"]), "unclear": set()}[verdict]
+                  "looseness": {"0.5x", "1x"} | set(feat["harmonics"]), "unclear": set(),
+                  "blade_pass": {feat["blade_pass"]["order"]} if feat.get("blade_pass") else set()}[verdict]
         parts[name] = {"features": feat, "verdict": verdict, "confidence": conf, "reason": reason,
                        "evidence": _evidence(entry, labels, feat["artifacts"])}
     names = list(parts)
@@ -194,4 +225,5 @@ def fingerprint(result, alert=None):
               for i, a in enumerate(names) for b in names[i + 1:] if phase_between(result, a, b) is not None}
     return {"verdict": parts[lead]["verdict"], "confidence": parts[lead]["confidence"], "reason": parts[lead]["reason"],
             "lead_part": lead, "evidence": parts[lead]["evidence"], "alert_level": alert,
-            "alert_unit": "mm/s" if mm else "px/s", "scaled": bool(mm), "phase_1x_x_rad": phases, "parts": parts}
+            "alert_unit": "mm/s" if mm else "px/s", "scaled": bool(mm), "phase_1x_x_rad": phases,
+            "blades": int(blades) if blades else None, "parts": parts}
