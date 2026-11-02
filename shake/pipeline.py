@@ -244,6 +244,16 @@ def _workers_can_start():
             main.__file__ = path
 
 
+def _recorded_rule_verdict(api, label):
+    """In replay: the rule verdict Spark was shown when the diagnosis was recorded (from the recorded prompt)."""
+    import re
+    for it in getattr(api.cassette, "items", []):
+        if it.get("op") == "spark" and it.get("key") == label:
+            m = re.search(r"Official rule verdict \(.*?\): ([a-z]+) \(", json.dumps(it.get("request")))
+            return m.group(1) if m else None
+    return None
+
+
 def _iou_table(sam_masks, ref_masks):
     """For each reference (renderer) part, the SAM phrase with the best IoU."""
     from .segment import iou
@@ -454,6 +464,10 @@ def run(clip, masks=None, runs_dir="runs", options=None, plan=None, segment=None
                                      band_orders=tuple(options.band))
             usd["diagnose"] = card.get("usd", 0.0)
             results["diagnosis"] = {"status": "done" if "error" not in card["spark"] else "failed", **card}
+            if options.api == "replay":
+                then = _recorded_rule_verdict(api, f"{options.api_label}:diagnose")
+                if then and then != fp["verdict"]:
+                    results["diagnosis"]["recorded_against"] = {"rule_verdict": then, "rule_verdict_now": fp["verdict"]}
             sp = card["spark"]
             if "error" in sp:
                 st.set(step, "fallback", "Muse Spark diagnosis failed; the rule verdict stands")

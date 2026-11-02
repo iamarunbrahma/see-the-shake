@@ -121,3 +121,11 @@ def test_worker_processes_start_from_stdin():
     r = subprocess.run([sys.executable, "-"], input=code, capture_output=True, text=True, cwd=ROOT, timeout=60)
     assert r.returncode == 0, r.stderr
     assert r.stdout.splitlines() == ["[1, 2, 3]", "<stdin>"] and "Traceback" not in r.stderr
+
+
+def test_recorded_rule_verdict_is_read_from_the_recording():
+    """A replayed diagnosis carries the rule verdict Spark was shown; the page notes when today's rules differ."""
+    from shake.meta_api import MetaAPI
+    seen = {f: pipeline._recorded_rule_verdict(MetaAPI("replay", cassette=pipeline.recording(f)), f"{f}:diagnose")
+            for f in ("imbalance", "misalignment")}
+    assert seen == {"imbalance": "imbalance", "misalignment": "looseness"}  # misalignment predates the rule fix
