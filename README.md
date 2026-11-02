@@ -142,6 +142,7 @@ components, with small components reading low.
 
 Live runs with SAM 3.1 and Muse Spark on the twin: [docs/results/2026-11-02-live-twin.md](docs/results/2026-11-02-live-twin.md).
 SAM 3.1's masks overlap the renderer's at IoU 0.955 to 0.982, and a full run costs about 6 to 7 cents.
+Re-scored with the current rules, including the compression and flicker artifact rule: [docs/accuracy/live-rescore.md](docs/accuracy/live-rescore.md).
 
 Regenerate:
 
