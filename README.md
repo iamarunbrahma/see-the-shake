@@ -121,6 +121,10 @@ and replayed, so the test suite runs offline. A full run costs about 5 to 8 cent
   2024, doi:10.17632/47y7rwc2yg.1, CC BY 4.0.
 - Details and changes: [samples/real/README.md](samples/real/README.md).
 
+## License
+
+The code is MIT licensed; see [LICENSE](LICENSE). The clips in `samples/real/` keep their own licenses, listed above.
+
 ## Reference
 
 **Environment variables:** `MODEL_API_KEY` (live runs only), `MODEL_API_BASE` (default `https://api.meta.ai/v1`),
