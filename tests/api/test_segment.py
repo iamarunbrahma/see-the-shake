@@ -55,3 +55,23 @@ def test_iou():
     b = np.zeros((10, 10), np.uint8)
     b[:, :5] = 255
     assert segment.iou(a, a) == 1.0 and segment.iou(a, b) == pytest.approx(25 / 75)
+
+
+def test_mask_shape_must_match_what_sam_saw(door_events):
+    with pytest.raises(segment.SegmentError, match="SAM saw 1920x1080"):
+        segment.stable_mask(door_events, (1920, 1080), 60)  # transposed, as a rotated phone clip would be
+
+
+def test_rotated_clip_decodes_the_same_in_subclip_and_measurement(tmp_path):
+    """Phones store portrait clips as landscape plus rotation metadata. The SAM sub-clip (ffmpeg) and measurement
+    (OpenCV) must both apply it, so masks and frames line up."""
+    import subprocess
+
+    from shake.ingest import read_gray
+    src, rot = tmp_path / "src.mp4", tmp_path / "rot.mp4"
+    subprocess.run(["ffmpeg", "-nostdin", "-y", "-loglevel", "error", "-f", "lavfi", "-i",
+                    "testsrc=size=320x180:rate=30", "-frames:v", "60", "-pix_fmt", "yuv420p", str(src)], check=True)
+    subprocess.run(["ffmpeg", "-nostdin", "-y", "-loglevel", "error", "-display_rotation", "90", "-i", str(src),
+                    "-c", "copy", str(rot)], check=True)
+    sub = segment.subclip(rot, tmp_path / "sub.mp4", 0, 50)
+    assert segment.decoded_shape(sub["path"]) == next(read_gray(rot)).shape == (320, 180)

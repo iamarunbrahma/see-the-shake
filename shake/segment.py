@@ -81,6 +81,7 @@ def _lanes_closed(events):
 
 
 _HEADER = re.compile(r"^<([0-9]+)f(?:;[^>]*)?>")
+_SOURCE_SIZE = re.compile(r"<\|box;[^|]*?\bw=([0-9]+);h=([0-9]+)")  # SAM's source frame size, every box
 _OBJECT = re.compile(r"(?:^|,|>)([0-9]+)<\|box;([^|]*)\|>")
 
 
@@ -252,7 +253,11 @@ def object_masks(records, shape):
 
 def stable_mask(events, shape, frames_sent, mask_frames=MASK_FRAMES, workers=None):
     """(uint8 0/255 mask or None, info) for one phrase's stream."""
-    stats = frame_stats(stream_text(events))
+    text = stream_text(events)
+    m = _SOURCE_SIZE.search(text)
+    if m and (int(m.group(2)), int(m.group(1))) != tuple(shape):
+        raise SegmentError(f"SAM saw {m.group(1)}x{m.group(2)} frames but masks must be {shape[1]}x{shape[0]}")
+    stats = frame_stats(text)
     info = {"objects": len(stats), "frames_sent": frames_sent, "per_object": {
         oid: {"frames": len(o["frames"]), "confidence": round(float(np.mean(o["conf"])), 4) if o["conf"] else None}
         for oid, o in stats.items()}}
@@ -316,11 +321,33 @@ def segment_file(api: MetaAPI, file_id, phrases, shape, frames_sent, fallback_ph
     return masks, infos
 
 
-def segment_parts(api: MetaAPI, clip, phrases, shape, start_frame=0, frames=SUB_FRAMES, fallback_phrase=None,
+def decoded_shape(path):
+    """(rows, cols) of the first decoded frame, after any rotation metadata is applied (as measurement sees it)."""
+    import cv2
+    cap = cv2.VideoCapture(str(path))
+    try:
+        ok, f = cap.read()
+    finally:
+        cap.release()
+    if not ok:
+        raise SegmentError(f"cannot read a frame of {path}")
+    return f.shape[:2]
+
+
+def segment_parts(api: MetaAPI, clip, phrases, shape=None, start_frame=0, frames=SUB_FRAMES, fallback_phrase=None,
                   workdir=None, label="segment"):
-    """Cut the sub-clip, upload it once, and run one SAM 3.1 request per phrase."""
+    """Cut the sub-clip, upload it once, and run one SAM 3.1 request per phrase.
+
+    shape is the (rows, cols) the masks must match: the frames measurement reads. It defaults to the decoded
+    sub-clip's. Phone clips often carry rotation metadata: ffmpeg and OpenCV both apply it, but ffprobe's width
+    and height are the stored, unrotated size, so never take shape from them."""
     with tempfile.TemporaryDirectory(dir=workdir) as td:
         sub = subclip(clip, Path(td) / "sam_subclip.mp4", start_frame, frames)
+        got = decoded_shape(sub["path"])
+        if shape is not None and tuple(shape) != tuple(got):
+            raise SegmentError(f"masks must be {tuple(shape)} but the sub-clip decodes as {tuple(got)} "
+                               "(rotation metadata, or a shape taken from ffprobe?)")
+        shape = got
         fid = api.upload(sub["path"], label=f"{label}:subclip")
     masks, infos = segment_file(api, fid, phrases, shape, sub["frames"], fallback_phrase)
     return masks, {"file_id": fid, "subclip": {k: sub[k] for k in ("start_frame", "frames")}, "parts": infos,

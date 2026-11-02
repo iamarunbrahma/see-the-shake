@@ -11,7 +11,8 @@ Every API response is recorded to <fixtures>/<fault>/cassette.json.gz with the m
 suite replays the run offline.
 
 usage: python scripts/live_twin.py [--faults imbalance ...] [--seed 1] [--seconds 6] [--out out/live]
-                                    [--fixtures tests/api/fixtures/live] [--max-usd 2.0]
+                                    [--encoding grain|phone] [--fixtures DIR] [--overwrite] [--max-usd 2.0]
+Existing recordings are never replaced unless --overwrite is given.
 """
 import argparse
 import faulthandler
@@ -28,16 +29,24 @@ from shake import diagnose, fingerprint, ingest, measure, plan_parts, segment, t
 from shake.meta_api import CreditExhausted, Ledger, MetaAPI  # noqa: E402
 
 IOU_MATCH = 0.5  # below this, no Spark phrase is taken to cover the renderer part
+IOU_PHRASE = {"washing machine": "washing machine", "door": "round front door"}  # bare "door" finds nothing
 
 
-def clip_dir(out, fault, seed, seconds):
-    return out / "clips" / f"{fault}_seed{seed}_{seconds:g}s"
+ENCODINGS = {  # name: (twin encoding, output scale, default fixtures dir)
+    "grain": ("grain", 1.0, "live"),
+    "phone": ("phone", twin.PHONE_SCALE, "live_phone"),  # 1280x720, default x264 tuning at a fixed bitrate
+}
 
 
-def run_fault(fault, seed, seconds, out, fixtures, ledger_path):
-    d = clip_dir(out, fault, seed, seconds)
+def clip_dir(out, fault, seed, seconds, encoding="grain"):
+    return out / "clips" / (f"{fault}_seed{seed}_{seconds:g}s" + ("" if encoding == "grain" else f"_{encoding}"))
+
+
+def run_fault(fault, seed, seconds, out, fixtures, ledger_path, encoding="grain", overwrite=False):
+    enc, scale, _ = ENCODINGS[encoding]
+    d = clip_dir(out, fault, seed, seconds, encoding)
     if not (d / "truth.json").exists():
-        twin.render(twin.TwinConfig(fault, seconds=seconds, seed=seed), d)
+        twin.render(twin.TwinConfig(fault, seconds=seconds, seed=seed, out_scale=scale, encoding=enc), d)
     truth = json.loads((d / "truth.json").read_text())
     gt = {n: cv2.imread(str(d / truth["parts"][n]["mask"]), 0) for n in truth["parts"]}
     clip = d / "clip.mp4"
@@ -47,6 +56,8 @@ def run_fault(fault, seed, seconds, out, fixtures, ledger_path):
     fx.mkdir(parents=True, exist_ok=True)
     cassette = fx / "cassette.json.gz"
     if cassette.exists():
+        if not overwrite:  # other tests replay recordings: never replace one by accident
+            raise SystemExit(f"{cassette} exists; pass --overwrite to re-record it")
         cassette.unlink()
     api = MetaAPI("record", cassette=cassette, ledger=Ledger(ledger_path))
     t0 = time.time()
@@ -64,15 +75,16 @@ def run_fault(fault, seed, seconds, out, fixtures, ledger_path):
     iou = {}
     for part, m in gt.items():
         best = max(((segment.iou(sm, m), p) for p, sm in masks.items()), default=(0.0, None))
-        if best[0] < IOU_MATCH and part not in seg["parts"]:
-            sm, info = segment.segment_phrase(api, seg["file_id"], part, shape, seg["subclip"]["frames"])
+        phrase = IOU_PHRASE.get(part, part)
+        if best[0] < IOU_MATCH and phrase not in seg["parts"]:
+            sm, info = segment.segment_phrase(api, seg["file_id"], phrase, shape, seg["subclip"]["frames"])
             info["added_for_iou"] = True
-            seg["parts"][part] = info
-            added.append(part)
+            seg["parts"][phrase] = info
+            added.append(phrase)
             if sm is not None:
-                masks.setdefault(part, sm)
-                best = max(best, (segment.iou(sm, m), part))
-        iou[part] = {"iou": round(best[0], 4), "phrase": best[1], "added_for_iou": part in added}
+                masks.setdefault(phrase, sm)
+                best = max(best, (segment.iou(sm, m), phrase))
+        iou[part] = {"iou": round(best[0], 4), "phrase": best[1], "added_for_iou": best[1] in added}
     seg["usd"] = round(sum(i.get("usd", 0.0) for i in seg["parts"].values()), 6)
     for p, m in masks.items():
         cv2.imwrite(str(d / f"sam_{twin.slug(p)}.png"), m)
@@ -93,9 +105,10 @@ def run_fault(fault, seed, seconds, out, fixtures, ledger_path):
     sp = card["spark"]
     report = {
         "fault": fault, "seed": seed, "seconds": seconds, "expected_verdict": truth["expected_verdict"],
+        "encoding": truth["encoding"], "size": truth["size"], "out_scale": truth["out_scale"],
         "window": {"start_frame": start, "frames": count}, "fps": fps,
-        "plan": {k: plan[k] for k in ("machine_type", "rpm_range", "rpm_reason", "parts", "rotating_parts_seen",
-                                      "warnings")},
+        "plan": {k: plan.get(k) for k in ("machine_type", "rpm_range", "rpm_reason", "parts", "parts_not_clear",
+                                          "rotating_parts_seen", "warnings")},
         "true_rpm": truth["rpm"],
         "rpm_in_plan_range": bool(plan["rpm_range"]) and plan["rpm_range"][0] <= truth["rpm"] <= plan["rpm_range"][1],
         "segment": {"subclip": seg["subclip"], "missing": seg["missing"], "added_for_iou": added,
@@ -123,12 +136,14 @@ def rng(r):
 
 
 def table(reports):
+    w, h = reports[0]["size"] if reports and reports[0].get("size") else (1920, 1080)
     lines = ["# Live twin runs: SAM 3.1 and Muse Spark", "",
-             "One full run per twin fault (6 s, 1920x1080, 240 fps). Spark plans the parts, SAM 3.1 masks them on a "
+             f"One full run per twin fault (6 s, {w}x{h}, 240 fps). Spark plans the parts, SAM 3.1 masks them on a "
              "60-frame sub-clip, measurement and rules run on the SAM masks, Spark diagnoses and code verifies it.",
-             "", "| fault | Spark phrases | IoU washing machine | IoU door | rpm range (true 1000) | rule verdict "
-             "(SAM masks) | Spark fault | Spark agrees | evidence v/c/d | Spark confidence | cost |",
-             "|---|---|---|---|---|---|---|---|---|---|---|"]
+             "", "| fault | Spark phrases | skipped as not clear | SAM missed | IoU washing machine | IoU door | "
+             "rpm range (true 1000) | rule verdict (SAM masks) | Spark fault | Spark agrees | evidence v/c/d | "
+             "Spark confidence | cost |",
+             "|---|---|---|---|---|---|---|---|---|---|---|---|---|"]
     for r in reports:
         io = r["iou"]
 
@@ -144,7 +159,8 @@ def table(reports):
         c = sp.get("counts") or {}
         conf = f"{sp.get('confidence_reported')} -> {sp.get('confidence')}" if sp.get("confidence") != sp.get(
             "confidence_reported") else str(sp.get("confidence"))
-        lines.append(f"| {r['fault']} | {', '.join(r['plan']['parts'])} | {cell('washing machine')} | {cell('door')} | "
+        lines.append(f"| {r['fault']} | {', '.join(r['plan']['parts'])} | {', '.join(r['plan'].get('parts_not_clear') or []) or '-'} | "
+                     f"{', '.join(r['segment']['missing']) or '-'} | {cell('washing machine')} | {cell('door')} | "
                      f"{rng(r)} | {r['rule_verdict']} "
                      f"({'ok' if r['rule_ok'] else 'expected ' + r['expected_verdict']}) | {sp.get('fault')} | "
                      f"{'yes' if sp.get('agrees') else 'no'} | {c.get('verified', 0)}/{c.get('context', 0)}/"
@@ -165,10 +181,14 @@ def main(argv=None):
     p.add_argument("--seed", type=int, default=1)
     p.add_argument("--seconds", type=float, default=6.0)
     p.add_argument("--out", default="out/live")
-    p.add_argument("--fixtures", default=str(ROOT / "tests" / "api" / "fixtures" / "live"))
+    p.add_argument("--encoding", choices=sorted(ENCODINGS), default="grain",
+                   help="grain: 1920x1080, near-lossless (main rows); phone: 1280x720 at a phone-like bitrate")
+    p.add_argument("--fixtures", default=None, help="recordings dir (default tests/api/fixtures/live or live_phone)")
+    p.add_argument("--overwrite", action="store_true", help="re-record a fault whose recording already exists")
     p.add_argument("--max-usd", type=float, default=2.0, help="stop before a fault once the run has spent this much")
     a = p.parse_args(argv)
     faulthandler.enable()
+    fixtures = Path(a.fixtures or ROOT / "tests" / "api" / "fixtures" / ENCODINGS[a.encoding][2])
     out = Path(a.out)
     out.mkdir(parents=True, exist_ok=True)
     reports, spent = [], 0.0
@@ -177,7 +197,7 @@ def main(argv=None):
             print(f"stopping: spent ${spent:.4f} >= --max-usd {a.max_usd}")
             break
         try:
-            r = run_fault(fault, a.seed, a.seconds, out, Path(a.fixtures), out / "ledger.jsonl")
+            r = run_fault(fault, a.seed, a.seconds, out, fixtures, out / "ledger.jsonl", a.encoding, a.overwrite)
         except CreditExhausted as e:
             print(f"STOP: {e}")
             return 3
@@ -187,7 +207,7 @@ def main(argv=None):
               f"spark {r['spark']['fault']} ({'agrees' if r['spark']['agrees'] else 'disagrees'}), "
               f"${r['costs_usd']['total']:.4f}, {r['seconds_elapsed']} s", flush=True)
     md = table(reports)
-    (out / "live_rows.md").write_text(md)
+    (out / f"live_rows{'' if a.encoding == 'grain' else '_' + a.encoding}.md").write_text(md)
     print(md)
     return 0
 

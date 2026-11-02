@@ -53,4 +53,30 @@ def test_user_parts_override():
 
 
 def test_prompt_has_no_em_dash():
-    assert "—" not in plan_parts.PROMPT
+    assert "\u2014" not in plan_parts.PROMPT
+
+
+def test_only_clearly_visible_parts_are_kept():
+    p = validate(raw([{"phrase": "washing machine", "visibility": "clear"},
+                      {"phrase": "round front door", "visibility": "clear"},
+                      {"phrase": "front control panel", "visibility": "partial"},
+                      {"phrase": "kick panel", "visibility": "unsure"}]), 240)
+    assert p["parts"] == ["washing machine", "round front door"]
+    assert p["parts_not_clear"] == ["front control panel", "kick panel"]
+    assert any("could not clearly see" in w for w in p["warnings"])
+
+
+def test_machine_kept_even_if_not_marked_clear():
+    p = validate(raw([{"phrase": "washing machine", "visibility": "partial"}]), 240)
+    assert p["parts"] == ["washing machine"]
+
+
+def test_plain_string_parts_from_earlier_recordings_still_validate():
+    p = validate(raw(["washing machine", "front door"]), 240)
+    assert p["parts"] == ["washing machine", "front door"] and p["parts_not_clear"] == []
+
+
+def test_schema_asks_for_visibility():
+    item = plan_parts.SCHEMA["properties"]["parts"]["items"]
+    assert item["properties"]["visibility"]["enum"] == ["clear", "partial", "unsure"]
+    assert "control panel" not in plan_parts.PROMPT

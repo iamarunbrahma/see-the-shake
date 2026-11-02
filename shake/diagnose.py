@@ -132,7 +132,7 @@ def _match_part(name, parts):
 
 
 def no_em_dash(s):
-    return re.sub(r"\s*—\s*", ", ", str(s))
+    return re.sub(r"\s*\u2014\s*", ", ", str(s))
 
 
 def check_item(ev, result, need):

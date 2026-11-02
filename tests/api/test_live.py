@@ -18,11 +18,13 @@ def api(tmp_path):
 def test_live_sam_masks_the_twin(api):
     d = twin_clip("imbalance")
     gt = load_masks(d, json.loads((d / "truth.json").read_text()))
-    masks, seg = segment.segment_parts(api, d / "clip.mp4", ["washing machine", "door"], gt["door"].shape,
+    # the bare phrase "door" finds nothing on the twin; Spark's phrases ("round front door") do
+    door = "round front door"
+    masks, seg = segment.segment_parts(api, d / "clip.mp4", ["washing machine", door], gt["door"].shape,
                                        start_frame=60)
     assert segment.iou(masks["washing machine"], gt["washing machine"]) > 0.9
-    assert segment.iou(masks["door"], gt["door"]) > 0.85
-    assert seg["parts"]["door"]["frames_billed"] == segment.SUB_FRAMES
+    assert segment.iou(masks[door], gt["door"]) > 0.85
+    assert seg["parts"][door]["frames_billed"] == segment.SUB_FRAMES
     assert seg["usd"] == pytest.approx(2 * segment.SUB_FRAMES * 0.0002)
 
 
