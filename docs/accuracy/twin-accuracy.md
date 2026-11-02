@@ -33,9 +33,15 @@ Closer to what a phone saves: 720p and an encoder that discards small changes. T
 
 | Fault | Seed | Rule verdict | Correct | Components passed | Max freq err (bins) | Max amp err | Missed | Noise floor (px) |
 |---|---|---|---|---|---|---|---|---|
-| healthy | 1 | none (medium) | yes | 0/4 | 0.20 | 45.2% | 0 | 0.00023 |
+| healthy | 1 | none (high) | yes | 0/4 | 0.20 | 45.2% | 0 | 0.00023 |
 | imbalance | 1 | imbalance (high) | yes | 6/8 | 0.36 | 25.1% | 0 | 0.00032 |
 | looseness | 1 | looseness (high) | yes | 14/16 | 0.43 | 24.9% | 0 | 0.00031 |
 | misalignment | 1 | misalignment (high) | yes | 11/12 | 0.41 | 21.3% | 0 | 0.00031 |
 
 **Verdicts correct: 4/4. Components within tolerance: 31/40.**
+**Regenerated after the artifact rule (Nov 2, evening).** The rules now leave out peaks that are compression or
+flicker artifacts: a peak the background moves with too (at 30% of its amplitude or more), or, when flicker
+shows, a peak on the flicker pattern (multiples of 20 Hz at 240 fps) or its sidebands with running speed; never
+1x, and orders below 5x never count as sidebands. Every component and every verdict above is unchanged. Only
+the velocities moved: phone-like healthy 5.41 to 2.36 mm/s (confidence medium to high, the alert is 7 mm/s);
+the other phone-like runs by 0.1 to 0.9%; the 1080p runs by at most 1%.
