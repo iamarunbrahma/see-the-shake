@@ -237,7 +237,8 @@ def run(clip, masks, runs_dir="runs", options=None, plan=None, segment=None, dia
         results["measurement"] = res
         results["files"]["spectra"] = _spectrum_pngs(res, arrays, out)
         rs = res["running_speed"]
-        st.set(step, "done", f"running speed {rs['hz']:.2f} Hz ({rs['rpm']:.0f} rpm, from {rs['source']})")
+        st.set(step, "done", f"running speed {rs['hz']:.2f} Hz ({rs['rpm']:.0f} rpm, from the "
+                             f"{rs['source'].replace('_', ' ')})")
 
         step = "fingerprint"
         st.set(step, "running")
