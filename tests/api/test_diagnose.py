@@ -204,3 +204,70 @@ def test_replay_diagnosis_with_video(fault):
     want = load("card.json")
     assert card["spark"] == want["spark"] and card["spark"]["visual"]["checks"]
     assert card["spark"]["visual"]["checks"][1]["status"] == "verified"  # direction, read from the video
+
+
+# ---------------------------------------------------------------- compression and flicker artifacts
+
+def _fp_with_artifacts(verdict, artifacts, part="washing machine"):
+    fp = _fp(verdict)
+    fp["parts"] = {part: {"features": {"artifacts": artifacts}}}
+    return fp
+
+
+ART_RESULT = _result([_peak(1, 0.3), _peak(5, 0.01, hz=83.36)], [_peak(1, 0.1)])
+
+
+def test_claim_on_an_artifact_peak_is_not_verified():
+    fp = _fp_with_artifacts("imbalance", [{"axis": "x", "hz": 83.36, "label": "5x", "amp_px": 0.01,
+                                           "bg_amp_px": 0.008, "kind": "whole frame"}])
+    card = diagnose.verify(_claim("imbalance", [ev(16.667, "1x"), ev(83.36, "5x")]), ART_RESULT, fp)
+    item = card["spark"]["evidence"][1]
+    assert item["status"] == "dropped" and item["matched"]["artifact"] == "whole frame"
+    assert "background moves the same way" in item["reason"]
+    assert card["spark"]["confidence"] == "low" and "1 evidence item(s) dropped" in card["spark"]["cap_reasons"]
+
+
+def test_a_real_peak_in_the_same_bin_still_counts():
+    # the artifact is on the horizontal axis; the vertical peak at the same frequency is real
+    r = _result([_peak(1, 0.3), _peak(5, 0.01, hz=83.36)], [_peak(1, 0.1), _peak(5, 0.02, hz=83.36)])
+    fp = _fp_with_artifacts("imbalance", [{"axis": "x", "hz": 83.36, "label": "5x", "amp_px": 0.01,
+                                           "kind": "flicker sideband"}])
+    item = diagnose.verify(_claim("imbalance", [ev(83.36, "5x")]), r, fp)["spark"]["evidence"][0]
+    assert item["status"] == "context" and item["matched"]["axis"] == "y"
+
+
+def test_prompt_lists_artifacts_apart_without_order_labels():
+    fp = _fp_with_artifacts("imbalance", [{"axis": "x", "hz": 83.36, "label": "5x", "amp_px": 0.01,
+                                           "kind": "flicker sideband"}])
+    fp["parts"]["washing machine"].update(verdict="imbalance", confidence="high", reason="r", features={
+        "artifacts": fp["parts"]["washing machine"]["features"]["artifacts"], "velocity_rms": 9.0,
+        "velocity_unit": "mm/s", "e1_share": 0.9, "r21": 0.1, "r31": 0.0, "harmonics": [], "half_order": False,
+        "half_ratio": 0.0, "h_over_v_1x": 3.0})
+    text = diagnose.peak_table(ART_RESULT, {**fp, "phase_1x_x_rad": {}})
+    labelled = text.split("Left out by the rules")[0]
+    assert "washing machine | x (horizontal) | 83.360 | 5x" not in labelled
+    assert "door | x (horizontal) | 83.360 | 5x" in labelled  # the door's peak was not left out
+    assert "washing machine | x (horizontal) | 83.360 | flicker sideband" in text
+
+
+def test_visual_check_ignores_artifacts_in_the_band():
+    r = _result([_peak(1, 0.1), _peak(None, 0.5, "non-synchronous", hz=18.0)], [_peak(1, 0.2)])
+    obs = {"most_moving_part": "washing machine", "direction": "vertical", "description": ""}
+    art = {"washing machine": {("x", 18.0): "whole frame"}}
+    assert diagnose.verify_visual(obs, r)["checks"][1]["status"] == "not_verified"  # the artifact dominates x
+    assert diagnose.verify_visual(obs, r, artifacts=art)["checks"][1]["status"] == "verified"
+
+
+def test_live_upload_artifact_citations_are_dropped():
+    """A live diagnosis of the phone-like healthy clip (Nov 2) cited encoder peaks labelled 5x and 7x. With the
+    artifact rules, they are dropped and Spark's confidence is capped; its 1x items stay context."""
+    from shake import fingerprint
+    d = Path(__file__).parent / "fixtures" / "artifacts"
+    res = json.loads((d / "healthy_phone_upload_measured.json").read_text())
+    claim = json.loads((d / "healthy_phone_upload_spark.json").read_text())
+    fp = fingerprint.fingerprint(res)
+    assert fp["verdict"] == "none" and fp["parts"][fp["lead_part"]]["features"]["velocity_rms"] < 0.5 * 7.0
+    sp = diagnose.verify(claim, res, fp)["spark"]
+    status = {round(e["frequency_hz"]): e["status"] for e in sp["evidence"]}
+    assert status[83] == status[117] == "dropped" and status[17] == "context"
+    assert sp["confidence"] == "low" and sp["agrees"]

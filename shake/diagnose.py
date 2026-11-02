@@ -7,6 +7,8 @@ explanation, fix steps and what to check next.
 verify() then checks the claim against the measurement:
 - each evidence item must match a measured peak of that part within one FFT bin, and its cited order must be the
   measured peak's order; otherwise it is dropped (kept in the card, marked dropped, with the reason);
+- a peak the rules left out as a compression or flicker artifact (fingerprint features "artifacts") is not
+  vibration: an item that matches only such a peak is dropped, with the reason;
 - a matched item counts as support only when its order fits the claimed fault (imbalance 1x, misalignment 2x,
   looseness 0.5x or harmonics); a real peak cited for the wrong fault is shown as context and does not count;
 - the claim must be supported: imbalance needs a verified 1x, misalignment a verified 2x, looseness a verified
@@ -92,11 +94,20 @@ def peak_table(result, fp, plan=None):
              f"Nyquist {result['nyquist_hz']:g} Hz; light flicker lands at {result['flicker_hz']:g} Hz.",
              f"Scale: {result['scale']['basis']}." if mm else "Scale: pixels (no reference length).", "",
              "Measured peaks (part | axis | frequency_hz | order | amplitude | SNR):"]
+    art = artifact_peaks(fp)
+    left_out = []
     for name, entry in result["parts"].items():
         for ax in "xy":
             for p in entry["axes"][ax]["peaks"]:
-                lines.append(f"{name} | {ax} ({'horizontal' if ax == 'x' else 'vertical'}) | {p['hz']:.3f} | "
-                             f"{p['label']} | {_fmt_amp(p, mm)} | {p['snr']}")
+                axis = "horizontal" if ax == "x" else "vertical"
+                kind = art.get(name, {}).get((ax, p["hz"]))
+                if kind:
+                    left_out.append(f"{name} | {ax} ({axis}) | {p['hz']:.3f} | {kind}")
+                    continue
+                lines.append(f"{name} | {ax} ({axis}) | {p['hz']:.3f} | {p['label']} | {_fmt_amp(p, mm)} | {p['snr']}")
+    if left_out:
+        lines += ["", "Left out by the rules as compression or flicker artifacts, not vibration (do not cite these; "
+                  "part | axis | frequency_hz | why):"] + left_out
     lines += ["", "Features per part:"]
     for name, pf in fp["parts"].items():
         f = pf["features"]
@@ -153,8 +164,25 @@ def no_em_dash(s):
     return re.sub(r"\s*\u2014\s*", ", ", str(s))
 
 
-def check_item(ev, result, need):
-    """One evidence item: status verified, context or dropped, with the reason and the matched peak."""
+ARTIFACT_WHY = {"whole frame": "the background moves the same way at this frequency (a compression or whole-frame "
+                               "artifact)",
+                "flicker sideband": "it sits on the light flicker pattern or its sidebands"}
+
+
+def artifact_peaks(fp):
+    """{part: {(axis, hz): kind}} of the peaks the rules left out as compression or flicker artifacts
+    (fingerprint features "artifacts"; empty for measurements made before artifact discounting)."""
+    out = {}
+    for name, pf in ((fp or {}).get("parts") or {}).items():
+        for a in pf.get("features", {}).get("artifacts") or []:
+            out.setdefault(name, {})[(a["axis"], a["hz"])] = a.get("kind") or "artifact"
+    return out
+
+
+def check_item(ev, result, need, artifacts=None):
+    """One evidence item: status verified, context or dropped, with the reason and the matched peak.
+    artifacts: {(axis, hz): kind} of this part's peaks that the rules left out; citing only such a peak drops
+    the item."""
     bin_hz = result["bin_hz"]
     item = {"part": ev.get("part"), "frequency_hz": ev.get("frequency_hz"), "order": ev.get("order")}
     part = _match_part(ev.get("part"), result["parts"])
@@ -164,14 +192,21 @@ def check_item(ev, result, need):
         return {**item, "status": "dropped", "reason": "no frequency given"}
     if part is None:
         return {**item, "status": "dropped", "reason": f"no measured part named {ev.get('part')!r}"}
+    art = (artifacts or {}).get(part, {})
     peaks = [(ax, p) for ax in "xy" for p in result["parts"][part]["axes"][ax]["peaks"]]
     near = [(ax, p) for ax, p in peaks if abs(p["hz"] - hz) <= bin_hz + 1e-9]
     if not near:
         return {**item, "status": "dropped",
                 "reason": f"no measured peak of {part} within one bin ({bin_hz:.3f} Hz) of {hz:g} Hz"}
-    ax, p = min(near, key=lambda q: (abs(q[1]["hz"] - hz), -q[1]["amp_px"]))
+    real = [(ax, p) for ax, p in near if (ax, p["hz"]) not in art]
+    ax, p = min(real or near, key=lambda q: (abs(q[1]["hz"] - hz), -q[1]["amp_px"]))
     item["matched"] = {"part": part, "axis": ax, "hz": p["hz"], "label": p["label"], "amp_px": p["amp_px"],
                        "snr": p["snr"]}
+    if not real:
+        kind = art[(ax, p["hz"])]
+        item["matched"]["artifact"] = kind
+        return {**item, "status": "dropped", "reason": f"the rules left out the peak at {p['hz']:g} Hz: "
+                f"{ARTIFACT_WHY.get(kind, kind)}, so it is not vibration"}
     if p["label"] == "flicker":
         return {**item, "status": "dropped", "reason": f"the peak at {p['hz']:g} Hz is light flicker, not vibration"}
     cited = parse_order(ev.get("order"))
@@ -197,7 +232,8 @@ def verify(claim, result, fp):
     """The diagnosis card: rule verdict as the headline, Spark's claim checked and capped beside it."""
     fault = normalise_fault(claim.get("fault"))
     need = fingerprint.FAULT_ORDERS.get(fault, set())
-    items = [check_item(ev, result, need) for ev in claim.get("evidence") or [] if isinstance(ev, dict)]
+    art = artifact_peaks(fp)
+    items = [check_item(ev, result, need, art) for ev in claim.get("evidence") or [] if isinstance(ev, dict)]
     counts = {s: sum(i["status"] == s for i in items) for s in ("verified", "context", "dropped")}
     ok = supported(fault, items)
     reasons = []
@@ -221,7 +257,7 @@ def verify(claim, result, fp):
 
 # ---------------------------------------------------------------- what Spark saw in the video
 
-def band_motion(result, band_orders=BAND_ORDERS):
+def band_motion(result, band_orders=BAND_ORDERS, artifacts=None):
     """{part: (x amplitude, y amplitude)} in px of the motion the magnified video shows: the peaks inside the
     magnification band (light flicker excluded), or the 1x order amplitude when no peak falls in the band."""
     f1 = result["running_speed"]["hz"]
@@ -231,17 +267,19 @@ def band_motion(result, band_orders=BAND_ORDERS):
         amp = []
         for ax in "xy":
             a = entry["axes"][ax]
-            inband = [p["amp_px"] for p in a["peaks"] if lo <= p["hz"] <= hi and p["label"] != "flicker"]
+            art = (artifacts or {}).get(name, {})
+            inband = [p["amp_px"] for p in a["peaks"] if lo <= p["hz"] <= hi and p["label"] != "flicker"
+                      and (ax, p["hz"]) not in art]
             amp.append(float(sum(v * v for v in inband) ** 0.5) if inband else float(a["orders"]["1x"]["amp_px"]))
         out[name] = tuple(amp)
     return out
 
 
-def verify_visual(obs, result, band_orders=BAND_ORDERS):
+def verify_visual(obs, result, band_orders=BAND_ORDERS, artifacts=None):
     """Check Spark's visual observation of the magnified clip against the measured in-band motion."""
     if not isinstance(obs, dict):
         return {"status": "not provided", "checks": []}
-    motion = band_motion(result, band_orders)
+    motion = band_motion(result, band_orders, artifacts)
     size = {p: (x * x + y * y) ** 0.5 for p, (x, y) in motion.items()}
     top = max(size, key=size.get)
     checks = []
@@ -312,7 +350,8 @@ def diagnose(api: MetaAPI, result, fp, spectrum_png=None, magnified_clip=None, m
         return card
     card = verify(claim, result, fp)
     if magnified_file_id:
-        card["spark"]["visual"] = verify_visual(claim.get("visual_observation"), result, band_orders)
+        card["spark"]["visual"] = verify_visual(claim.get("visual_observation"), result, band_orders,
+                                                artifact_peaks(fp))
     card["spark_raw"] = claim
     card["usd"] = round(reply.usd, 6)
     card["usage"] = {k: reply.usage.get(k) for k in ("input_tokens", "output_tokens")}
