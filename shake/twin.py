@@ -56,6 +56,20 @@ NOISE_BANK = 16
 # background 13%). Phone hardware encoders have no such tuning and run at 40+ Mbit/s in slow motion, so the twin
 # uses -tune grain, which keeps them (90 to 100% read back, close to lossless).
 CRF, PRESET, TUNE = 16, "veryfast", "grain"
+# Phone-like encoding for an honest extra row: default x264 tuning (psy and mbtree on) at a fixed bitrate, 720p.
+# The Redmi's own slow-motion bitrate is not measured yet; 24 Mbit/s is an assumption to replace with ffprobe's
+# reading of Arun's clips.
+PHONE_SCALE, PHONE_BITRATE, PHONE_PRESET = 2 / 3, "24M", "medium"
+ENCODE_WAIT_S = 300  # after the last frame, ffmpeg must finish within this
+
+
+def encoder_args(encoding, preset):
+    if encoding == "grain":
+        return ["-preset", preset, "-tune", TUNE, "-crf", str(CRF)], {"crf": CRF, "preset": preset, "tune": TUNE}
+    if encoding == "phone":
+        return (["-preset", PHONE_PRESET, "-b:v", PHONE_BITRATE, "-maxrate", PHONE_BITRATE, "-bufsize", PHONE_BITRATE],
+                {"bitrate": PHONE_BITRATE, "preset": PHONE_PRESET, "tune": None, "note": "assumed phone-like bitrate"})
+    raise ValueError(f"unknown encoding {encoding!r}")
 
 PARTS = ("washing machine", "door")
 
@@ -69,6 +83,7 @@ class TwinConfig:
     fps: int = FPS
     preset: str = PRESET  # x264 preset; tests may use a faster one
     out_scale: float = 1.0  # resize each rendered frame before noise and encoding (0.5 gives 960x540 test clips)
+    encoding: str = "grain"  # "grain" (main table) or "phone" (default x264 tuning at a fixed bitrate)
     components: list = field(default=None)
 
     def __post_init__(self):
@@ -328,8 +343,8 @@ def render(cfg, out_dir, encode=True):
     sh_, sw_ = sprite.shape[:2]
     clip = out / "clip.mp4"
     ff = subprocess.Popen(
-        ["ffmpeg", "-y", "-loglevel", "error", "-f", "rawvideo", "-pix_fmt", "bgr24", "-s", f"{OW}x{OH}",
-         "-r", str(cfg.fps), "-i", "-", "-c:v", "libx264", "-preset", cfg.preset, "-tune", TUNE, "-crf", str(CRF),
+        ["ffmpeg", "-nostdin", "-y", "-loglevel", "error", "-f", "rawvideo", "-pix_fmt", "bgr24", "-s", f"{OW}x{OH}",
+         "-r", str(cfg.fps), "-i", "-", "-c:v", "libx264", *encoder_args(cfg.encoding, cfg.preset)[0],
          "-pix_fmt", "yuv420p", "-movflags", "+faststart", str(clip)], stdin=subprocess.PIPE) if encode else None
     gx0, gy0 = DOOR_C[0] - GLASS_R, DOOR_C[1] - GLASS_R
     ys, xs = Y0 - PAD, X0 - PAD
@@ -337,6 +352,7 @@ def render(cfg, out_dir, encode=True):
     scene = bg.copy()  # only the machine's roi changes per frame, and it is fully rewritten each time
     roi_bg = bg[ys:ys + canvas.shape[0], xs:xs + canvas.shape[1]]
     roi = scene[ys:ys + canvas.shape[0], xs:xs + canvas.shape[1]]
+    ok = False
     try:
         for i in range(n):
             spr = sprite.copy()
@@ -362,10 +378,22 @@ def render(cfg, out_dir, encode=True):
             frame = cv2.scaleAdd(frame, float(mo["gain"][i]), noise_bank[i % NOISE_BANK])  # flicker, then noise
             if ff:
                 ff.stdin.write(cv2.convertScaleAbs(frame).tobytes())  # saturating cast to uint8
+        ok = True
     finally:
         if ff:
-            ff.stdin.close()
-            ff.wait()
+            # never leave an encoder waiting on a pipe: close it, bound the wait, kill on error or timeout
+            try:
+                ff.stdin.close()
+            except BrokenPipeError:
+                pass
+            try:
+                ff.wait(timeout=ENCODE_WAIT_S if ok else 5)
+            except subprocess.TimeoutExpired:
+                ff.kill()
+                ff.wait()
+                raise RuntimeError(f"ffmpeg did not finish encoding {clip} within {ENCODE_WAIT_S} s")
+            if ok and ff.returncode != 0:
+                raise RuntimeError(f"ffmpeg exited with code {ff.returncode} while encoding {clip}")
 
     masks, glass = part_masks(sprite_u8)
     # truth at full resolution, then scaled to the output; the lever uses the tracker's weights (mask dilated 5x5,
@@ -418,7 +446,8 @@ def render(cfg, out_dir, encode=True):
                    "series": "truth_series.npz:cam_x,cam_y"},
         "flicker": {"hz": FLICKER_HZ, "depth": FLICKER_DEPTH},
         "noise": {"sigma": NOISE_SIGMA, "bank": NOISE_BANK},
-        "encoding": {"codec": "libx264", "crf": CRF, "preset": cfg.preset, "tune": TUNE, "pix_fmt": "yuv420p"} if encode else None,
+        "encoding": {"name": cfg.encoding, "codec": "libx264", **encoder_args(cfg.encoding, cfg.preset)[1],
+                     "pix_fmt": "yuv420p"} if encode else None,
         "parts": parts,
         "rotating_mask": "mask_glass.png",
     }
