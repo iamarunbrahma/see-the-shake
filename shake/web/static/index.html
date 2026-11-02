@@ -29,6 +29,7 @@
            color: var(--accent-ink); cursor: pointer; }
   button:disabled { opacity: 0.5; cursor: progress; }
   label { display: block; font-size: 13px; color: var(--muted); margin-bottom: 4px; }
+  .needs { outline: 2px solid var(--warn); }
   input, select, textarea { font: inherit; color: var(--ink); background: var(--bg); border: 1px solid var(--line);
                             border-radius: 6px; padding: 6px 8px; width: 100%; }
   textarea { min-height: 60px; }
@@ -98,7 +99,7 @@
       <div style="margin-top:12px"><label for="boxes">Or parts as boxes, one per line: name: x, y, width, height</label>
         <textarea id="boxes" placeholder="ceiling fan motor housing: 820, 140, 260, 180"></textarea></div>
       <div class="grid" style="margin-top:12px">
-        <div><label for="capture_fps">Captured at (fps)</label><input id="capture_fps" placeholder="from the file"></div>
+        <div><label for="capture_fps">Captured at (fps)</label><input id="capture_fps" placeholder="from the file, or 240"></div>
         <div><label for="rpm">Running speed (rpm)</label><input id="rpm" placeholder="optional"></div>
         <div><label for="rpm_min">Or rpm range, lowest</label><input id="rpm_min" placeholder="optional"></div>
         <div><label for="rpm_max">Highest</label><input id="rpm_max" placeholder="optional"></div>
@@ -113,7 +114,7 @@
       </div>
       <p class="hint">With Muse Spark and SAM 3.1 on, Spark names the parts to measure and SAM 3.1 masks them; any masks or boxes you
         add are the fallback if SAM finds nothing. With them off, mark the parts yourself. Prefer parts that do not rotate:
-        measure a fan through its motor housing, not its blades. A full run costs a few cents.</p>
+        measure a fan through its motor housing, not its blades. A full run costs a few cents. Phones often save slow motion as a slowed 30 fps file: if the clip was filmed at 240 fps, enter 240 under Captured at.</p>
     </form>
   </section>
 
@@ -247,7 +248,15 @@ async function start(url, init) {
   $("error").textContent = ""; $("phase").textContent = "Queued"; showSteps(null);
   const r = await fetch(url, init);
   const body = await r.json();
-  if (!r.ok) { $("error").textContent = body.detail || "The request failed"; busy(false); return; }
+  if (!r.ok) {
+    const d = body.detail;
+    $("error").textContent = (d && d.message) || d || "The request failed";
+    if (d && d.field && $(d.field)) {  // point at the input that fixes it, for example the capture rate
+      selectTab("clip"); $(d.field).classList.add("needs"); $(d.field).focus();
+      $("progress").classList.remove("hidden");
+    }
+    busy(false); return;
+  }
   poll(body.job_id);
 }
 
@@ -441,6 +450,7 @@ $("form-clip").onsubmit = (e) => {
   const fd = new FormData();
   fd.append("clip", $("clip").files[0]);
   for (const f of $("masks").files) fd.append("masks", f);
+  $("capture_fps").classList.remove("needs");
   for (const k of ["mask_names", "boxes", "capture_fps", "rpm", "rpm_min", "rpm_max", "ref_part", "ref_mm", "alpha", "parts"]) fd.append(k, $(k).value);
   fd.append("api", $("clip_api").value);
   start("/api/runs", { method: "POST", body: fd });
