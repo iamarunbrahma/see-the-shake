@@ -1,0 +1,110 @@
+{
+ "verdict": "imbalance",
+ "confidence": "high",
+ "reason": "1x holds 99% of the vibration energy",
+ "lead_part": "circular front door",
+ "evidence": [
+  {
+   "axis": "x",
+   "hz": 16.643,
+   "order": 1.0,
+   "label": "1x",
+   "amp_px": 0.25153
+  },
+  {
+   "axis": "y",
+   "hz": 16.643,
+   "order": 1.0,
+   "label": "1x",
+   "amp_px": 0.1201
+  }
+ ],
+ "alert_level": 7.0,
+ "alert_unit": "mm/s",
+ "scaled": true,
+ "phase_1x_x_rad": {
+  "washing machine -> circular front door": -0.002
+ },
+ "parts": {
+  "washing machine": {
+   "features": {
+    "amp_1x_px": 0.26073,
+    "e1_share": 0.991,
+    "r21": 0.097,
+    "r31": 0.007,
+    "harmonics": [
+     "2x"
+    ],
+    "n_harmonics": 1,
+    "half_order": false,
+    "half_ratio": 0.003,
+    "h_over_v_1x": 1.852,
+    "velocity_rms": 23.753,
+    "velocity_unit": "mm/s",
+    "present": {
+     "1x": true,
+     "2x": true
+    }
+   },
+   "verdict": "imbalance",
+   "confidence": "high",
+   "reason": "1x holds 99% of the vibration energy",
+   "evidence": [
+    {
+     "axis": "x",
+     "hz": 16.642,
+     "order": 1.0,
+     "label": "1x",
+     "amp_px": 0.22942
+    },
+    {
+     "axis": "y",
+     "hz": 16.644,
+     "order": 1.0,
+     "label": "1x",
+     "amp_px": 0.12388
+    }
+   ]
+  },
+  "circular front door": {
+   "features": {
+    "amp_1x_px": 0.27873,
+    "e1_share": 0.992,
+    "r21": 0.092,
+    "r31": 0.007,
+    "harmonics": [
+     "2x"
+    ],
+    "n_harmonics": 1,
+    "half_order": false,
+    "half_ratio": 0.003,
+    "h_over_v_1x": 2.094,
+    "velocity_rms": 25.376,
+    "velocity_unit": "mm/s",
+    "present": {
+     "1x": true,
+     "2x": true
+    }
+   },
+   "verdict": "imbalance",
+   "confidence": "high",
+   "reason": "1x holds 99% of the vibration energy",
+   "evidence": [
+    {
+     "axis": "x",
+     "hz": 16.643,
+     "order": 1.0,
+     "label": "1x",
+     "amp_px": 0.25153
+    },
+    {
+     "axis": "y",
+     "hz": 16.643,
+     "order": 1.0,
+     "label": "1x",
+     "amp_px": 0.1201
+    }
+   ]
+  }
+ }
+}

@@ -1,0 +1,223 @@
+{
+ "verdict": "looseness",
+ "confidence": "medium",
+ "reason": "3 harmonics (2x, 3x, 4x)",
+ "lead_part": "washing machine",
+ "evidence": [
+  {
+   "axis": "x",
+   "hz": 16.627,
+   "order": 1.0,
+   "label": "1x",
+   "amp_px": 0.04457
+  },
+  {
+   "axis": "y",
+   "hz": 16.644,
+   "order": 1.0,
+   "label": "1x",
+   "amp_px": 0.0524
+  },
+  {
+   "axis": "x",
+   "hz": 33.289,
+   "order": 2.0,
+   "label": "2x",
+   "amp_px": 0.20032
+  },
+  {
+   "axis": "y",
+   "hz": 33.289,
+   "order": 2.0,
+   "label": "2x",
+   "amp_px": 0.07981
+  },
+  {
+   "axis": "x",
+   "hz": 49.94,
+   "order": 3.0,
+   "label": "3x",
+   "amp_px": 0.03006
+  },
+  {
+   "axis": "y",
+   "hz": 49.929,
+   "order": 3.0,
+   "label": "3x",
+   "amp_px": 0.01443
+  },
+  {
+   "axis": "x",
+   "hz": 66.278,
+   "order": 4.0,
+   "label": "4x",
+   "amp_px": 0.00509
+  }
+ ],
+ "alert_level": 7.0,
+ "alert_unit": "mm/s",
+ "scaled": true,
+ "phase_1x_x_rad": {
+  "washing machine -> round glass door": -0.0
+ },
+ "parts": {
+  "washing machine": {
+   "features": {
+    "amp_1x_px": 0.06879,
+    "e1_share": 0.09,
+    "r21": 3.135,
+    "r31": 0.485,
+    "harmonics": [
+     "2x",
+     "3x",
+     "4x"
+    ],
+    "n_harmonics": 3,
+    "half_order": false,
+    "half_ratio": 0.009,
+    "h_over_v_1x": 0.851,
+    "velocity_rms": 40.119,
+    "velocity_unit": "mm/s",
+    "present": {
+     "1x": true,
+     "2x": true,
+     "3x": true,
+     "4x": true
+    }
+   },
+   "verdict": "looseness",
+   "confidence": "medium",
+   "reason": "3 harmonics (2x, 3x, 4x)",
+   "evidence": [
+    {
+     "axis": "x",
+     "hz": 16.627,
+     "order": 1.0,
+     "label": "1x",
+     "amp_px": 0.04457
+    },
+    {
+     "axis": "y",
+     "hz": 16.644,
+     "order": 1.0,
+     "label": "1x",
+     "amp_px": 0.0524
+    },
+    {
+     "axis": "x",
+     "hz": 33.289,
+     "order": 2.0,
+     "label": "2x",
+     "amp_px": 0.20032
+    },
+    {
+     "axis": "y",
+     "hz": 33.289,
+     "order": 2.0,
+     "label": "2x",
+     "amp_px": 0.07981
+    },
+    {
+     "axis": "x",
+     "hz": 49.94,
+     "order": 3.0,
+     "label": "3x",
+     "amp_px": 0.03006
+    },
+    {
+     "axis": "y",
+     "hz": 49.929,
+     "order": 3.0,
+     "label": "3x",
+     "amp_px": 0.01443
+    },
+    {
+     "axis": "x",
+     "hz": 66.278,
+     "order": 4.0,
+     "label": "4x",
+     "amp_px": 0.00509
+    }
+   ]
+  },
+  "round glass door": {
+   "features": {
+    "amp_1x_px": 0.0855,
+    "e1_share": 0.137,
+    "r21": 2.477,
+    "r31": 0.39,
+    "harmonics": [
+     "2x",
+     "3x",
+     "4x"
+    ],
+    "n_harmonics": 3,
+    "half_order": false,
+    "half_ratio": 0.006,
+    "h_over_v_1x": 1.318,
+    "velocity_rms": 39.71,
+    "velocity_unit": "mm/s",
+    "present": {
+     "1x": true,
+     "2x": true,
+     "3x": true,
+     "4x": true
+    }
+   },
+   "verdict": "looseness",
+   "confidence": "medium",
+   "reason": "3 harmonics (2x, 3x, 4x)",
+   "evidence": [
+    {
+     "axis": "x",
+     "hz": 16.63,
+     "order": 1.0,
+     "label": "1x",
+     "amp_px": 0.06811
+    },
+    {
+     "axis": "y",
+     "hz": 16.643,
+     "order": 1.0,
+     "label": "1x",
+     "amp_px": 0.05168
+    },
+    {
+     "axis": "x",
+     "hz": 33.289,
+     "order": 2.0,
+     "label": "2x",
+     "amp_px": 0.19734
+    },
+    {
+     "axis": "y",
+     "hz": 33.29,
+     "order": 2.0,
+     "label": "2x",
+     "amp_px": 0.07679
+    },
+    {
+     "axis": "x",
+     "hz": 49.941,
+     "order": 3.0,
+     "label": "3x",
+     "amp_px": 0.03024
+    },
+    {
+     "axis": "y",
+     "hz": 49.928,
+     "order": 3.0,
+     "label": "3x",
+     "amp_px": 0.01399
+    },
+    {
+     "axis": "x",
+     "hz": 66.279,
+     "order": 4.0,
+     "label": "4x",
+     "amp_px": 0.00502
+    }
+   ]
+  }
+ }
+}

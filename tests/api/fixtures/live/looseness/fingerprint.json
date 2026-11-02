@@ -1,0 +1,365 @@
+{
+ "verdict": "looseness",
+ "confidence": "high",
+ "reason": "0.5x at 0.19 of 1x; 3 harmonics (2x, 3x, 4x)",
+ "lead_part": "top control panel",
+ "evidence": [
+  {
+   "axis": "x",
+   "hz": 8.326,
+   "order": 0.5,
+   "label": "0.5x",
+   "amp_px": 0.05229
+  },
+  {
+   "axis": "y",
+   "hz": 8.321,
+   "order": 0.5,
+   "label": "0.5x",
+   "amp_px": 0.0324
+  },
+  {
+   "axis": "x",
+   "hz": 16.642,
+   "order": 1.0,
+   "label": "1x",
+   "amp_px": 0.3127
+  },
+  {
+   "axis": "y",
+   "hz": 16.645,
+   "order": 1.0,
+   "label": "1x",
+   "amp_px": 0.10988
+  },
+  {
+   "axis": "x",
+   "hz": 33.295,
+   "order": 2.0,
+   "label": "2x",
+   "amp_px": 0.08952
+  },
+  {
+   "axis": "y",
+   "hz": 33.287,
+   "order": 2.0,
+   "label": "2x",
+   "amp_px": 0.07317
+  },
+  {
+   "axis": "x",
+   "hz": 49.934,
+   "order": 3.0,
+   "label": "3x",
+   "amp_px": 0.05463
+  },
+  {
+   "axis": "y",
+   "hz": 49.931,
+   "order": 3.0,
+   "label": "3x",
+   "amp_px": 0.04888
+  },
+  {
+   "axis": "y",
+   "hz": 66.499,
+   "order": 4.0,
+   "label": "4x",
+   "amp_px": 0.00308
+  }
+ ],
+ "alert_level": 7.0,
+ "alert_unit": "mm/s",
+ "scaled": true,
+ "phase_1x_x_rad": {
+  "washing machine -> round front door": -0.01,
+  "washing machine -> top control panel": 0.008,
+  "round front door -> top control panel": 0.017
+ },
+ "parts": {
+  "washing machine": {
+   "features": {
+    "amp_1x_px": 0.19879,
+    "e1_share": 0.654,
+    "r21": 0.557,
+    "r31": 0.355,
+    "harmonics": [
+     "2x",
+     "3x",
+     "4x"
+    ],
+    "n_harmonics": 3,
+    "half_order": true,
+    "half_ratio": 0.304,
+    "h_over_v_1x": 1.639,
+    "velocity_rms": 32.787,
+    "velocity_unit": "mm/s",
+    "present": {
+     "0.5x": true,
+     "1x": true,
+     "1.5x": true,
+     "2x": true,
+     "3x": true,
+     "4x": true
+    }
+   },
+   "verdict": "looseness",
+   "confidence": "high",
+   "reason": "0.5x at 0.30 of 1x; 3 harmonics (2x, 3x, 4x)",
+   "evidence": [
+    {
+     "axis": "x",
+     "hz": 8.326,
+     "order": 0.5,
+     "label": "0.5x",
+     "amp_px": 0.05189
+    },
+    {
+     "axis": "y",
+     "hz": 8.32,
+     "order": 0.5,
+     "label": "0.5x",
+     "amp_px": 0.03104
+    },
+    {
+     "axis": "x",
+     "hz": 16.641,
+     "order": 1.0,
+     "label": "1x",
+     "amp_px": 0.16969
+    },
+    {
+     "axis": "y",
+     "hz": 16.645,
+     "order": 1.0,
+     "label": "1x",
+     "amp_px": 0.10355
+    },
+    {
+     "axis": "x",
+     "hz": 33.293,
+     "order": 2.0,
+     "label": "2x",
+     "amp_px": 0.08629
+    },
+    {
+     "axis": "y",
+     "hz": 33.288,
+     "order": 2.0,
+     "label": "2x",
+     "amp_px": 0.06936
+    },
+    {
+     "axis": "x",
+     "hz": 49.932,
+     "order": 3.0,
+     "label": "3x",
+     "amp_px": 0.05371
+    },
+    {
+     "axis": "y",
+     "hz": 49.931,
+     "order": 3.0,
+     "label": "3x",
+     "amp_px": 0.04575
+    },
+    {
+     "axis": "y",
+     "hz": 66.487,
+     "order": 4.0,
+     "label": "4x",
+     "amp_px": 0.00205
+    }
+   ]
+  },
+  "round front door": {
+   "features": {
+    "amp_1x_px": 0.13051,
+    "e1_share": 0.457,
+    "r21": 0.835,
+    "r31": 0.533,
+    "harmonics": [
+     "2x",
+     "3x",
+     "4x"
+    ],
+    "n_harmonics": 3,
+    "half_order": true,
+    "half_ratio": 0.453,
+    "h_over_v_1x": 0.805,
+    "velocity_rms": 29.536,
+    "velocity_unit": "mm/s",
+    "present": {
+     "0.5x": true,
+     "1x": true,
+     "1.5x": true,
+     "2x": true,
+     "3x": true,
+     "4x": true
+    }
+   },
+   "verdict": "looseness",
+   "confidence": "high",
+   "reason": "0.5x at 0.45 of 1x; 3 harmonics (2x, 3x, 4x)",
+   "evidence": [
+    {
+     "axis": "x",
+     "hz": 8.324,
+     "order": 0.5,
+     "label": "0.5x",
+     "amp_px": 0.05059
+    },
+    {
+     "axis": "y",
+     "hz": 8.319,
+     "order": 0.5,
+     "label": "0.5x",
+     "amp_px": 0.03068
+    },
+    {
+     "axis": "x",
+     "hz": 16.642,
+     "order": 1.0,
+     "label": "1x",
+     "amp_px": 0.08186
+    },
+    {
+     "axis": "y",
+     "hz": 16.645,
+     "order": 1.0,
+     "label": "1x",
+     "amp_px": 0.10164
+    },
+    {
+     "axis": "x",
+     "hz": 33.291,
+     "order": 2.0,
+     "label": "2x",
+     "amp_px": 0.08529
+    },
+    {
+     "axis": "y",
+     "hz": 33.288,
+     "order": 2.0,
+     "label": "2x",
+     "amp_px": 0.06783
+    },
+    {
+     "axis": "x",
+     "hz": 49.932,
+     "order": 3.0,
+     "label": "3x",
+     "amp_px": 0.05312
+    },
+    {
+     "axis": "y",
+     "hz": 49.931,
+     "order": 3.0,
+     "label": "3x",
+     "amp_px": 0.04481
+    },
+    {
+     "axis": "y",
+     "hz": 66.491,
+     "order": 4.0,
+     "label": "4x",
+     "amp_px": 0.00288
+    }
+   ]
+  },
+  "top control panel": {
+   "features": {
+    "amp_1x_px": 0.33144,
+    "e1_share": 0.83,
+    "r21": 0.349,
+    "r31": 0.221,
+    "harmonics": [
+     "2x",
+     "3x",
+     "4x"
+    ],
+    "n_harmonics": 3,
+    "half_order": true,
+    "half_ratio": 0.186,
+    "h_over_v_1x": 2.846,
+    "velocity_rms": 41.263,
+    "velocity_unit": "mm/s",
+    "present": {
+     "0.5x": true,
+     "1x": true,
+     "2x": true,
+     "3x": true,
+     "4x": true
+    }
+   },
+   "verdict": "looseness",
+   "confidence": "high",
+   "reason": "0.5x at 0.19 of 1x; 3 harmonics (2x, 3x, 4x)",
+   "evidence": [
+    {
+     "axis": "x",
+     "hz": 8.326,
+     "order": 0.5,
+     "label": "0.5x",
+     "amp_px": 0.05229
+    },
+    {
+     "axis": "y",
+     "hz": 8.321,
+     "order": 0.5,
+     "label": "0.5x",
+     "amp_px": 0.0324
+    },
+    {
+     "axis": "x",
+     "hz": 16.642,
+     "order": 1.0,
+     "label": "1x",
+     "amp_px": 0.3127
+    },
+    {
+     "axis": "y",
+     "hz": 16.645,
+     "order": 1.0,
+     "label": "1x",
+     "amp_px": 0.10988
+    },
+    {
+     "axis": "x",
+     "hz": 33.295,
+     "order": 2.0,
+     "label": "2x",
+     "amp_px": 0.08952
+    },
+    {
+     "axis": "y",
+     "hz": 33.287,
+     "order": 2.0,
+     "label": "2x",
+     "amp_px": 0.07317
+    },
+    {
+     "axis": "x",
+     "hz": 49.934,
+     "order": 3.0,
+     "label": "3x",
+     "amp_px": 0.05463
+    },
+    {
+     "axis": "y",
+     "hz": 49.931,
+     "order": 3.0,
+     "label": "3x",
+     "amp_px": 0.04888
+    },
+    {
+     "axis": "y",
+     "hz": 66.499,
+     "order": 4.0,
+     "label": "4x",
+     "amp_px": 0.00308
+    }
+   ]
+  }
+ }
+}

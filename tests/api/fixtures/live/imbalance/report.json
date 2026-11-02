@@ -1,0 +1,297 @@
+{
+ "fault": "imbalance",
+ "seed": 1,
+ "seconds": 6.0,
+ "expected_verdict": "imbalance",
+ "window": {
+  "start_frame": 0,
+  "frames": 1440
+ },
+ "fps": 240.0,
+ "plan": {
+  "machine_type": "washing machine",
+  "rpm_range": [
+   126.0,
+   1600.0
+  ],
+  "rpm_reason": "Standard front loader range covers slow wash tumble through high speed spin.",
+  "parts": [
+   "washing machine",
+   "circular front door",
+   "front control panel"
+  ],
+  "rotating_parts_seen": [
+   "wash drum",
+   "laundry load"
+  ],
+  "warnings": [
+   "rpm range clamped from 30-1600 to 126-1600 (measurable band)"
+  ]
+ },
+ "true_rpm": 1000.0,
+ "rpm_in_plan_range": true,
+ "segment": {
+  "subclip": {
+   "start_frame": 690,
+   "frames": 60
+  },
+  "missing": [
+   "front control panel"
+  ],
+  "added_for_iou": [],
+  "parts": {
+   "washing machine": {
+    "objects": 1,
+    "frames_sent": 60,
+    "found": true,
+    "object_id": "0",
+    "frames_returned": 60,
+    "frames_decoded": 8,
+    "present_share": 1.0,
+    "confidence": 0.9494,
+    "area_px": 344537,
+    "bbox": [
+     712,
+     187,
+     1208,
+     886
+    ],
+    "unstable_share": 0.0117,
+    "usd": 0.012,
+    "frames_billed": 60
+   },
+   "circular front door": {
+    "objects": 1,
+    "frames_sent": 60,
+    "found": true,
+    "object_id": "0",
+    "frames_returned": 60,
+    "frames_decoded": 8,
+    "present_share": 1.0,
+    "confidence": 0.8476,
+    "area_px": 92514,
+    "bbox": [
+     788,
+     403,
+     1125,
+     749
+    ],
+    "unstable_share": 0.0197,
+    "usd": 0.012,
+    "frames_billed": 60
+   },
+   "front control panel": {
+    "objects": 0,
+    "frames_sent": 60,
+    "found": false,
+    "usd": 0.012,
+    "frames_billed": 60
+   }
+  }
+ },
+ "iou": {
+  "washing machine": {
+   "iou": 0.9818,
+   "phrase": "washing machine",
+   "added_for_iou": false
+  },
+  "door": {
+   "iou": 0.9616,
+   "phrase": "circular front door",
+   "added_for_iou": false
+  }
+ },
+ "measured_parts": [
+  "washing machine",
+  "circular front door"
+ ],
+ "scale_basis": "washing machine width = 600 mm over 496 px",
+ "running_speed": {
+  "hz": 16.6427,
+  "rpm": 998.6,
+  "source": "rpm_range"
+ },
+ "rule_verdict": "imbalance",
+ "rule_confidence": "high",
+ "rule_reason": "1x holds 99% of the vibration energy",
+ "rule_ok": true,
+ "spark": {
+  "fault": "imbalance",
+  "confidence_reported": "high",
+  "confidence": "high",
+  "agrees": true,
+  "supported": true,
+  "cap_reasons": [],
+  "counts": {
+   "verified": 2,
+   "context": 2,
+   "dropped": 0
+  },
+  "error": null
+ },
+ "card": {
+  "headline": {
+   "fault": "imbalance",
+   "confidence": "high",
+   "reason": "1x holds 99% of the vibration energy",
+   "lead_part": "circular front door",
+   "evidence": [
+    {
+     "axis": "x",
+     "hz": 16.643,
+     "order": 1.0,
+     "label": "1x",
+     "amp_px": 0.25153
+    },
+    {
+     "axis": "y",
+     "hz": 16.643,
+     "order": 1.0,
+     "label": "1x",
+     "amp_px": 0.1201
+    }
+   ],
+   "source": "fixed rules"
+  },
+  "spark": {
+   "fault": "imbalance",
+   "fault_reported": "imbalance",
+   "confidence": "high",
+   "confidence_reported": "high",
+   "capped": false,
+   "cap_reasons": [],
+   "agrees": true,
+   "supported": true,
+   "evidence": [
+    {
+     "part": "circular front door",
+     "frequency_hz": 16.643,
+     "order": "1x",
+     "matched": {
+      "part": "circular front door",
+      "axis": "x",
+      "hz": 16.643,
+      "label": "1x",
+      "amp_px": 0.25153,
+      "snr": 797.7
+     },
+     "status": "verified",
+     "reason": "matches the measured 1x peak"
+    },
+    {
+     "part": "washing machine",
+     "frequency_hz": 16.642,
+     "order": "1x",
+     "matched": {
+      "part": "washing machine",
+      "axis": "x",
+      "hz": 16.642,
+      "label": "1x",
+      "amp_px": 0.22942,
+      "snr": 836.2
+     },
+     "status": "verified",
+     "reason": "matches the measured 1x peak"
+    },
+    {
+     "part": "circular front door",
+     "frequency_hz": 33.319,
+     "order": "2x",
+     "matched": {
+      "part": "circular front door",
+      "axis": "x",
+      "hz": 33.319,
+      "label": "2x",
+      "amp_px": 0.02326,
+      "snr": 73.8
+     },
+     "status": "context",
+     "reason": "a real 2x peak, but it is not what this fault rests on"
+    },
+    {
+     "part": "washing machine",
+     "frequency_hz": 33.316,
+     "order": "2x",
+     "matched": {
+      "part": "washing machine",
+      "axis": "x",
+      "hz": 33.316,
+      "label": "2x",
+      "amp_px": 0.02279,
+      "snr": 83.1
+     },
+     "status": "context",
+     "reason": "a real 2x peak, but it is not what this fault rests on"
+    }
+   ],
+   "counts": {
+    "verified": 2,
+    "context": 2,
+    "dropped": 0
+   },
+   "explanation": "Both the body and the door shake strongest at running speed with 99 percent of energy at 1x. The 2x peak is under 10 percent of 1x and there is no 0.5x or row of harmonics. This matches imbalance so I agree with the rule verdict.",
+   "fix": [
+    "Stop and redistribute the laundry load evenly",
+    "Check the machine is level and all feet sit firmly on the floor",
+    "Run an empty spin test to see if shake stays",
+    "Tighten loose panels and check drum counterweights if shake stays high"
+   ],
+   "check_next": [
+    "Recheck horizontal vibration after reloading and leveling",
+    "Run brief empty spin to see if 1x remains high",
+    "Watch if 2x grows or knocking appears which would point away from pure imbalance"
+   ]
+  },
+  "show_both": false,
+  "spark_raw": {
+   "check_next": [
+    "Recheck horizontal vibration after reloading and leveling",
+    "Run brief empty spin to see if 1x remains high",
+    "Watch if 2x grows or knocking appears which would point away from pure imbalance"
+   ],
+   "confidence": "high",
+   "evidence": [
+    {
+     "frequency_hz": 16.643,
+     "order": "1x",
+     "part": "circular front door"
+    },
+    {
+     "frequency_hz": 16.642,
+     "order": "1x",
+     "part": "washing machine"
+    },
+    {
+     "frequency_hz": 33.319,
+     "order": "2x",
+     "part": "circular front door"
+    },
+    {
+     "frequency_hz": 33.316,
+     "order": "2x",
+     "part": "washing machine"
+    }
+   ],
+   "explanation": "Both the body and the door shake strongest at running speed with 99 percent of energy at 1x. The 2x peak is under 10 percent of 1x and there is no 0.5x or row of harmonics. This matches imbalance so I agree with the rule verdict.",
+   "fault": "imbalance",
+   "fix": [
+    "Stop and redistribute the laundry load evenly",
+    "Check the machine is level and all feet sit firmly on the floor",
+    "Run an empty spin test to see if shake stays",
+    "Tighten loose panels and check drum counterweights if shake stays high"
+   ]
+  },
+  "usd": 0.012526,
+  "usage": {
+   "input_tokens": 1932,
+   "output_tokens": 2379
+  }
+ },
+ "costs_usd": {
+  "plan": 0.014095,
+  "segment": 0.036,
+  "diagnose": 0.012526,
+  "total": 0.062621
+ },
+ "seconds_elapsed": 196.1
+}
