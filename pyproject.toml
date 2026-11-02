@@ -9,9 +9,11 @@ dependencies = [
   "opencv-python-headless>=4.8",
   "matplotlib>=3.8",
   "openai>=1.40",
+  "meta_sam_parser>=0.0.6",
 ]
 
 [project.optional-dependencies]
+web = ["fastapi>=0.110", "uvicorn>=0.29", "python-multipart>=0.0.9"]
 dev = ["pytest>=8"]
 
 [build-system]
