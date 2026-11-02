@@ -450,7 +450,8 @@ def run(clip, masks=None, runs_dir="runs", options=None, plan=None, segment=None
             st.set(step, "running")
             video = out / info["files"]["side_by_side"] if options.spark_video else None
             card = diag_mod.diagnose(api, res, fp, spectrum_png=out / "spectrum.png", magnified_clip=video,
-                                     plan=plan_info, label=f"{options.api_label}:diagnose")
+                                     plan=plan_info, label=f"{options.api_label}:diagnose",
+                                     band_orders=tuple(options.band))
             usd["diagnose"] = card.get("usd", 0.0)
             results["diagnosis"] = {"status": "done" if "error" not in card["spark"] else "failed", **card}
             sp = card["spark"]
