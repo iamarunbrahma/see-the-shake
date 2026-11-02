@@ -55,3 +55,34 @@ def test_features_are_reported(twin_runs):
     f = fp["parts"][fp["lead_part"]]["features"]
     assert f["half_order"] and f["n_harmonics"] >= 2 and f["velocity_unit"] == "mm/s"
     assert "washing machine -> door" in fp["phase_1x_x_rad"]
+
+
+FIXTURES = __import__("pathlib").Path(__file__).parent / "api" / "fixtures"
+
+
+def _recorded(kind, fault):
+    import json
+    return json.loads((FIXTURES / kind / fault / "measured.json").read_text())
+
+
+def test_compression_and_flicker_artifacts_are_discounted():
+    """The live phone-like healthy run (720p, default x264): flicker sidebands near 5x and 7x and the 20 Hz flicker
+    pattern read 6.1 mm/s against the 7 mm/s alert. Discounted, the reading is the real 1x motion."""
+    m = _recorded("live_phone", "healthy")
+    fp = fingerprint.fingerprint(m)
+    f = fp["parts"][fp["lead_part"]]["features"]
+    assert fp["verdict"] == "none" and f["velocity_rms"] < 3.5
+    kinds = {round(a["hz"]): a["kind"] for a in f["artifacts"]}
+    assert kinds[83] == kinds[117] == "flicker sideband" and "5x" not in f["harmonics"]
+
+
+@pytest.mark.parametrize("kind", ["live", "live_phone"])
+def test_artifacts_never_touch_running_speed_or_low_orders(kind):
+    for fault in twin.FAULTS:
+        fp = fingerprint.fingerprint(_recorded(kind, fault))
+        assert fp["verdict"] == twin.EXPECTED_VERDICT[fault]
+        for part in fp["parts"].values():
+            for a in part["features"]["artifacts"]:
+                assert a["label"] != "1x"
+                if a["kind"] == "flicker sideband":
+                    assert a["label"] in ("non-synchronous",) or float(a["label"][:-1]) >= fingerprint.FLICKER_SAFE_ORDER
