@@ -5,11 +5,13 @@ from pathlib import Path
 
 import pytest
 
-LIVE = Path(__file__).parent / "fixtures" / "live"
+LIVE = Path(__file__).parent / "fixtures" / "live"  # 1920x1080, near-lossless encoding
+LIVE_PHONE = Path(__file__).parent / "fixtures" / "live_phone"  # 1280x720, phone-like bitrate
+SETS = {"grain": LIVE, "phone": LIVE_PHONE}
 
 
-def load_fixture(fault):
-    d = LIVE / fault
+def load_fixture(fault, kind="grain"):
+    d = SETS[kind] / fault
     if not (d / "report.json").exists():
         pytest.skip(f"no live recording for {fault}; run scripts/live_twin.py")
     return {"dir": d, "cassette_path": d / "cassette.json.gz",

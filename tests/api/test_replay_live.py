@@ -3,22 +3,36 @@ the plan, the SAM masks' IoU against the renderer's masks, and the verified diag
 import json
 from pathlib import Path
 
+import cv2
+import numpy as np
 import pytest
 
 from shake import diagnose, plan_parts, segment, twin
 from shake.meta_api import MetaAPI
-from tests.api.live_fixtures import LIVE, load_fixture
+from tests.api.live_fixtures import SETS, load_fixture
 
 
 @pytest.fixture(scope="module")
-def renderer_masks():
+def full_res_masks():
     return twin.part_masks()[0]
 
 
+def renderer_masks(full, size):
+    """The renderer's masks at the clip's output size, scaled as twin.render scales them."""
+    w, h = size
+    if (w, h) == (twin.W, twin.H):
+        return full
+    return {k: ((cv2.resize(m, (w, h), interpolation=cv2.INTER_AREA) > 127) * 255).astype(np.uint8)
+            for k, m in full.items()}
+
+
+@pytest.mark.parametrize("kind", list(SETS))
 @pytest.mark.parametrize("fault", list(twin.FAULTS))
-def test_replay_live_run(fault, renderer_masks):
-    fx = load_fixture(fault)
+def test_replay_live_run(fault, kind, full_res_masks):
+    fx = load_fixture(fault, kind)
     rep = fx["report"]
+    size = rep.get("size", [twin.W, twin.H])
+    gt_masks = renderer_masks(full_res_masks, size)
     api = MetaAPI("replay", cassette=fx["cassette_path"])
 
     fid = api.upload(Path("preview.mp4"), label=f"{fault}:plan:preview")
@@ -26,13 +40,13 @@ def test_replay_live_run(fault, renderer_masks):
     assert plan["parts"] == rep["plan"]["parts"] and plan["rpm_range"] == rep["plan"]["rpm_range"]
 
     fid = api.upload(Path("sam_subclip.mp4"), label=f"{fault}:segment:subclip")
-    shape, frames = (twin.H, twin.W), rep["segment"]["subclip"]["frames"]
+    shape, frames = (size[1], size[0]), rep["segment"]["subclip"]["frames"]
     masks, infos = segment.segment_file(api, fid, plan["parts"], shape, frames, plan["fallback_phrase"])
     for p in rep["segment"]["added_for_iou"]:
         m, _ = segment.segment_phrase(api, fid, p, shape, frames)
         if m is not None:
             masks.setdefault(p, m)
-    for part, gt in renderer_masks.items():
+    for part, gt in gt_masks.items():
         want = rep["iou"][part]
         got = max((segment.iou(m, gt) for m in masks.values()), default=0.0)
         assert got == pytest.approx(want["iou"], abs=2e-3), part
@@ -50,7 +64,8 @@ def test_live_rows_meet_the_design():
     """The recorded runs: masks close to the renderer's, the rule verdict as the headline, Spark capped at low
     whenever it disagrees or evidence was dropped, and a small cost per run. (Whether the rule verdict is right
     is reported in the live table, not asserted: see rule_ok in report.json.)"""
-    reps = [json.loads((LIVE / f / "report.json").read_text()) for f in twin.FAULTS if (LIVE / f / "report.json").exists()]
+    reps = [json.loads((d / f / "report.json").read_text()) for d in SETS.values() for f in twin.FAULTS
+            if (d / f / "report.json").exists()]
     if not reps:
         pytest.skip("no live recordings")
     for r in reps:
