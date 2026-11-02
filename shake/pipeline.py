@@ -19,6 +19,7 @@ the run's context, so a repeat run returns at once.
 usage: python -m shake.pipeline clip.mp4 [--mask "washing machine=mask.png"] [--api live] [--rpm-range 900 1100]
            [--ref "washing machine=600"] [--capture-fps 240] [--runs runs]
        python -m shake.pipeline --twin imbalance [--api replay] [--seed 1] [--seconds 4] [--scale 0.5]
+       python -m shake.pipeline --twin fan-looseness [--seconds 6] [--scale 1]
 """
 import argparse
 import contextlib
@@ -36,7 +37,7 @@ from pathlib import Path
 import cv2
 import numpy as np
 
-from . import evaluate, fingerprint, ingest, magnify, measure, twin
+from . import evaluate, fingerprint, ingest, magnify, measure, twin, twin_fan
 
 ROOT = Path(__file__).resolve().parents[1]
 STEPS = [
@@ -65,7 +66,7 @@ class Options:
     capture_fps: float = None
     rpm: float = None
     rpm_range: tuple = None
-    reference: tuple = None  # (part, length_mm): the part's mask width is this long
+    reference: tuple = None  # (part, length_mm[, axis]): the part's mask width (or "height") is this long
     alpha: object = "auto"
     band: tuple = magnify.DEFAULT_BAND
     video_seconds: float = magnify.VIDEO_SECONDS
@@ -123,7 +124,7 @@ def code_version():
     return h.hexdigest()[:10]
 
 
-def run_id(clip, masks, options, mask_source="supplied", truth=None):
+def run_id(clip, masks, options, mask_source="supplied", truth=None, ignore=None, magnify_masks=None):
     """Hash of everything a run depends on, including its context (where the masks came from, which truth)."""
     h = hashlib.sha1()
     h.update(_sha_file(clip).encode())
@@ -135,7 +136,12 @@ def run_id(clip, masks, options, mask_source="supplied", truth=None):
     h.update(code_version().encode())
     h.update(mask_source.encode())
     if truth is not None:
-        h.update(json.dumps([truth["fault"], truth["seed"], truth["rpm"], truth["seconds"]]).encode())
+        h.update(json.dumps([truth["fault"], truth["seed"], truth["rpm"], truth["seconds"]]
+                            + ([truth["machine"]] if "machine" in truth else [])).encode())
+    if ignore is not None:
+        h.update(b"ignore" + hashlib.sha1(np.ascontiguousarray(ignore).tobytes()).digest())
+    for name in sorted(magnify_masks or {}):
+        h.update(b"magnify" + name.encode() + hashlib.sha1(np.ascontiguousarray(magnify_masks[name]).tobytes()).digest())
     return h.hexdigest()[:12]
 
 
@@ -265,7 +271,7 @@ def _iou_table(sam_masks, ref_masks):
 
 
 def run(clip, masks=None, runs_dir="runs", options=None, plan=None, segment=None, diagnose=None, truth=None,
-        mask_source="supplied", progress=None, use_cache=True, on_start=None):
+        mask_source="supplied", progress=None, use_cache=True, on_start=None, ignore=None, magnify_masks=None):
     """Run one clip. Returns the results dict (also written to results.json).
 
     masks: {part name: HxW array or PNG path}. Required when options.api is "off"; otherwise the fallback for
@@ -274,13 +280,18 @@ def run(clip, masks=None, runs_dir="runs", options=None, plan=None, segment=None
     plan(clip, ingested) -> {"machine_type", "rpm_range", "parts"}; segment(clip, phrases) -> {part: mask};
     diagnose(results) -> dict.
     truth: a twin truth dict, to compare against. on_start(run_id) is called once the run id is known.
+    ignore: a region the background leaves out although no part covers it (a fan's blade disc).
+    magnify_masks: masks for the magnified video when they should differ from the measured parts (a fan's whole
+    guard, blades included, wobbles as one); same part names.
     """
     clip = Path(clip)
     options = options or Options()
     masks = load_masks(masks)
     if not masks and options.api == "off":
         raise ValueError("give part masks, or turn on Muse Spark and SAM 3.1 (options.api)")
-    rid = run_id(clip, masks, options, mask_source, truth)
+    ignore = None if ignore is None else (load_masks({"i": ignore})["i"])
+    magnify_masks = load_masks(magnify_masks) if magnify_masks else None
+    rid = run_id(clip, masks, options, mask_source, truth, ignore, magnify_masks)
     if on_start:
         on_start(rid)
     out = Path(runs_dir) / rid
@@ -401,7 +412,8 @@ def run(clip, masks=None, runs_dir="runs", options=None, plan=None, segment=None
         st.set(step, "running")
         scale = None
         if options.reference:
-            part, mm = options.reference
+            part, mm, *axis = options.reference
+            axis = axis[0] if axis else "width"
             if part not in masks:
                 alt = plan_info["fallback_phrase"] if plan_info and plan_info["fallback_phrase"] in masks else None
                 if alt:
@@ -412,9 +424,9 @@ def run(clip, masks=None, runs_dir="runs", options=None, plan=None, segment=None
                                                "amplitudes stay in px.")
                     part = None
             if part:
-                scale = measure.Scale.from_reference(masks, part, float(mm))
+                scale = measure.Scale.from_reference(masks, part, float(mm), axis=axis)
         res, arrays = measure.measure(clip, masks, fps, start=start, count=count, rpm=options.rpm,
-                                      rpm_range=rpm_range, scale=scale, mains_hz=options.mains_hz)
+                                      rpm_range=rpm_range, scale=scale, mains_hz=options.mains_hz, ignore=ignore)
         results["measurement"] = res
         results["files"]["spectra"] = _spectrum_pngs(res, arrays, out)
         results["files"]["spectrum"] = "spectrum.png"
@@ -432,7 +444,8 @@ def run(clip, masks=None, runs_dir="runs", options=None, plan=None, segment=None
         # 6. magnify
         step = "magnify"
         st.set(step, "running")
-        info = magnify.magnify(clip, masks, arrays["rel"], fps, rs["hz"], out, start=start, alpha=options.alpha,
+        shown = {k: magnify_masks.get(k, m) for k, m in masks.items()} if magnify_masks else masks
+        info = magnify.magnify(clip, shown, arrays["rel"], fps, rs["hz"], out, start=start, alpha=options.alpha,
                                band=options.band, seconds=options.video_seconds, write_native=options.verify)
         results["magnify"] = info
         results["files"]["side_by_side"] = info["files"]["side_by_side"]
@@ -450,7 +463,8 @@ def run(clip, masks=None, runs_dir="runs", options=None, plan=None, segment=None
                 cmp_res = {**res, "parts": {p: res["parts"][ph] for p, ph in mapping.items() if ph in res["parts"]}}
             results["truth_comparison"] = evaluate.compare(truth, cmp_res, fp["verdict"])
             results["truth_comparison"]["parts_matched_by_iou"] = mapping
-            results["truth"] = {"fault": truth["fault"], "expected_verdict": truth["expected_verdict"],
+            results["truth"] = {"machine": truth.get("machine", "washer"), "fault": truth["fault"],
+                                "expected_verdict": truth["expected_verdict"],
                                 "rpm": truth["rpm"], "seed": truth["seed"]}
 
         # 7. diagnose
@@ -508,14 +522,31 @@ def run(clip, masks=None, runs_dir="runs", options=None, plan=None, segment=None
         raise
 
 
-def twin_clip(fault, runs_dir="runs", seed=1, seconds=4.0, scale=0.5):
+MACHINES = {"washer": "Washing machine", "fan": "Pedestal fan"}
+
+
+def twin_faults(machine="washer"):
+    return list((twin_fan if machine == "fan" else twin).FAULTS)
+
+
+def twin_clip(fault, runs_dir="runs", seed=1, seconds=4.0, scale=0.5, machine="washer"):
     """Render (or reuse) a twin clip for the app. Returns (clip path, masks, truth)."""
-    h = hashlib.sha1(Path(twin.__file__).read_bytes()).hexdigest()[:10]
-    d = Path(runs_dir) / "twin_clips" / f"{fault}_seed{seed}_{seconds:g}s_{scale:.3g}x_{h}"
+    if machine not in MACHINES:
+        raise ValueError(f"machine must be one of {sorted(MACHINES)}, not {machine!r}")
+    if machine == "fan":
+        h = hashlib.sha1(Path(twin_fan.__file__).read_bytes() + Path(twin.__file__).read_bytes()).hexdigest()[:10]
+        name = f"fan_{fault}_seed{seed}_{seconds:g}s_{scale:.3g}x_{h}"
+    else:
+        h = hashlib.sha1(Path(twin.__file__).read_bytes()).hexdigest()[:10]
+        name = f"{fault}_seed{seed}_{seconds:g}s_{scale:.3g}x_{h}"
+    d = Path(runs_dir) / "twin_clips" / name
     if not (d / "truth.json").exists():
         tmp = d.with_name(d.name + ".tmp")
         shutil.rmtree(tmp, ignore_errors=True)
-        twin.render(twin.TwinConfig(fault, seconds=seconds, seed=seed, out_scale=scale), tmp)
+        if machine == "fan":
+            twin_fan.render(twin_fan.FanConfig(fault, seconds=seconds, seed=seed, out_scale=scale), tmp)
+        else:
+            twin.render(twin.TwinConfig(fault, seconds=seconds, seed=seed, out_scale=scale), tmp)
         shutil.rmtree(d, ignore_errors=True)
         tmp.rename(d)
     truth = json.loads((d / "truth.json").read_text())
@@ -524,33 +555,53 @@ def twin_clip(fault, runs_dir="runs", seed=1, seconds=4.0, scale=0.5):
 
 
 def twin_options(truth, **kw):
-    """Options for a twin clip: mm scale from the machine's width; without Spark, the true rpm +/- 10% as the range."""
+    """Options for a twin clip: mm scale from the reference length; without Spark, the true rpm +/- 10% as the range."""
     rpm = truth["rpm"]
     api = kw.get("api", "off")
     rng = None if api != "off" else (rpm * (1 - RPM_RANGE_TWIN), rpm * (1 + RPM_RANGE_TWIN))
-    return Options(rpm_range=rng, reference=(truth["reference"]["part"], truth["reference"]["width_mm"]),
-                   min_seconds=min(4.0, truth["seconds"]), **kw)
+    ref = truth["reference"]
+    reference = ((ref["part"], ref["height_mm"], "height") if ref.get("axis") == "height"
+                 else (ref["part"], ref["width_mm"]))
+    return Options(rpm_range=rng, reference=reference, min_seconds=min(4.0, truth["seconds"]), **kw)
 
 
 def recording(fault):
     return RECORDINGS / fault / "cassette.json.gz"
 
 
-def run_twin(fault, runs_dir="runs", seed=1, seconds=4.0, scale=0.5, api="off", progress=None, on_start=None, **kw):
+def run_twin(fault, runs_dir="runs", seed=1, seconds=4.0, scale=0.5, api="off", progress=None, on_start=None,
+             machine="washer", **kw):
     """Render (or reuse) a twin clip and run it.
 
-    api "replay" serves the recorded live run for this fault (seed 1, 1920x1080; any duration works, 6 s matches
-    the recording exactly), so seed and scale are fixed to the recording's. api "live" records the calls in the run.
+    api "replay" serves the recorded live run for this fault (washer only: seed 1, 1920x1080; any duration works,
+    6 s matches the recording exactly), so seed and scale are fixed to the recording's. api "live" records the calls.
+    For the fan, the background leaves out the blade disc (its grill and hub move with the head), and the magnified
+    video moves the whole guard, blades included, with the guard rim's measured motion.
     """
     api_kw = {}
     if api == "replay":
+        if machine != "washer":
+            raise ValueError("recorded live runs exist for the washing machine only")
         seed, scale = RECORDED_TWIN["seed"], RECORDED_TWIN["scale"]
         api_kw = dict(api="replay", cassette=str(recording(fault)), api_label=fault, spark_video=False)
     elif api in ("live", "record"):
-        api_kw = dict(api="record", api_label=fault)
-    clip, masks, truth = twin_clip(fault, runs_dir, seed, seconds, scale)
+        api_kw = dict(api="record", api_label=f"fan-{fault}" if machine == "fan" else fault)
+    clip, masks, truth = twin_clip(fault, runs_dir, seed, seconds, scale, machine)
+    extra = {}
+    if machine == "fan":
+        disc = load_masks({"d": clip.parent / truth["rotating_mask"]})["d"]
+        rim = load_masks({"r": masks["fan guard rim"]})["r"]
+        extra = dict(ignore=disc, magnify_masks={"fan guard rim": np.maximum(rim, disc)})
     return run(clip, masks, runs_dir, twin_options(truth, **api_kw, **kw), truth=truth, mask_source="twin renderer",
-               progress=progress, on_start=on_start)
+               progress=progress, on_start=on_start, **extra)
+
+
+def parse_twin(name):
+    """'imbalance' (washing machine) or 'fan-imbalance' -> (machine, fault)."""
+    machine, fault = ("fan", name[4:]) if name.startswith("fan-") else ("washer", name)
+    if fault not in twin_faults(machine):
+        raise ValueError(f"unknown twin {name!r}")
+    return machine, fault
 
 
 def main(argv=None):
@@ -562,7 +613,8 @@ def main(argv=None):
     p.add_argument("--cassette", help="recording to replay, or where to save one")
     p.add_argument("--parts", help="comma-separated part phrases to use instead of Spark's")
     p.add_argument("--no-spark-video", action="store_true", help="do not send the magnified clip to Spark")
-    p.add_argument("--twin", choices=sorted(twin.FAULTS))
+    p.add_argument("--twin", choices=sorted(twin.FAULTS) + [f"fan-{f}" for f in twin_fan.FAULTS],
+                   help="a twin clip: washing machine faults, or fan-healthy, fan-imbalance, fan-looseness")
     p.add_argument("--seed", type=int, default=1)
     p.add_argument("--seconds", type=float, default=4.0)
     p.add_argument("--scale", type=float, default=0.5)
@@ -578,7 +630,8 @@ def main(argv=None):
     alpha = a.alpha if a.alpha == "auto" else float(a.alpha)
     show = lambda k, s, d: print(f"[{s:8s}] {k:12s} {d or ''}", flush=True)  # noqa: E731
     if a.twin:
-        r = run_twin(a.twin, a.runs, a.seed, a.seconds, a.scale, api=a.api, progress=show, alpha=alpha,
+        machine, fault = parse_twin(a.twin)
+        r = run_twin(fault, a.runs, a.seed, a.seconds, a.scale, api=a.api, progress=show, alpha=alpha, machine=machine,
                      verify=a.verify)
     else:
         if not a.clip or (not a.mask and a.api == "off"):
@@ -595,6 +648,10 @@ def main(argv=None):
         r = run(a.clip, masks, a.runs, opts, progress=show)
     fp = r["fingerprint"]
     print(f"verdict: {fp['verdict']} ({fp['confidence']}): {fp['reason']}")
+    if r.get("truth_comparison"):
+        tc = r["truth_comparison"]
+        print(f"truth: {r['truth']['machine']} {r['truth']['fault']}, expected {tc['expected_verdict']} "
+              f"({'right' if tc['verdict_ok'] else 'WRONG'}); components within tolerance {tc['passed']}/{tc['scored']}")
     if r.get("api"):
         print(f"API cost: ${r['api']['usd']['total']:.4f}")
     print(f"results: {Path(a.runs) / r['run_id'] / 'results.json'}")
