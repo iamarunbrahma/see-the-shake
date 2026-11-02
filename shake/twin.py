@@ -229,35 +229,73 @@ def rocking_displacement(rock_deg, x, y):
     return b * (y - py), -b * (x - px)
 
 
-def part_truth(cfg, masks):
-    """Expected translation per order and axis at each part's centroid, as phasors.
+def rest_gray(sprite, bg):
+    """The scene at rest (no motion, flicker or noise) as grey float32."""
+    frame = bg.copy()
+    sh_, sw_ = sprite.shape[:2]
+    a = sprite[..., 3:4].astype(np.float32) / 255.0
+    roi = frame[Y0:Y0 + sh_, X0:X0 + sw_]
+    roi[:] = roi * (1 - a) + sprite[..., :3].astype(np.float32) * a
+    return cv2.cvtColor(np.clip(frame, 0, 255).astype(np.uint8), cv2.COLOR_BGR2GRAY).astype(np.float32)
 
-    Each axis signal is sum over orders of amp * sin(theta * order + phase). Translation and rocking are summed
-    as phasors, so the amplitude here is what a translation tracker on that part should read.
+
+def rocking_lever(gray, weight, blur):
+    """Translation (px per rad of rocking) that best explains the part's rocking motion field over its rest image.
+
+    A rotation moves every point differently, so 'the part's translation' needs a definition. This is the
+    structure-weighted least-squares translation: S^-1 sum(w g g^T u), with g the image gradient, S = sum(w g g^T)
+    and u the rotation field. Any translation estimate of the region (the tracker included) aims at this; the
+    centroid's displacement ignores where the texture is.
+    """
+    px, py = pivot_px()
+    ys, xs = np.nonzero(weight)
+    y0, y1, x0, x1 = ys.min(), ys.max() + 1, xs.min(), xs.max() + 1
+    g = cv2.GaussianBlur(gray, (0, 0), blur)[y0:y1, x0:x1]
+    w = weight[y0:y1, x0:x1].astype(np.float64)
+    gy, gx = np.gradient(g.astype(np.float64))
+    yy, xx = np.mgrid[y0:y1, x0:x1]
+    ux, uy = (yy - py), -(xx - px)
+    S = np.array([[np.sum(w * gx * gx), np.sum(w * gx * gy)], [np.sum(w * gx * gy), np.sum(w * gy * gy)]])
+    bvec = np.array([np.sum(w * (gx * gx * ux + gx * gy * uy)), np.sum(w * (gx * gy * ux + gy * gy * uy))])
+    return np.linalg.solve(S, bvec)
+
+
+def part_truth(cfg, masks, levers=None):
+    """Expected translation per order and axis for each part, as phasors.
+
+    Each axis signal is sum over orders of amp * sin(theta * order + phase). Translation and rocking are summed as
+    phasors. 'components' uses the structure-weighted rocking lever (rocking_lever) and is what evaluation scores;
+    'components_centroid' uses the displacement of the mask's centroid, for reference.
     """
     px, py = pivot_px()
     r_amp, r_order, r_ph = ROCKING.get(cfg.fault, ROCKING_DEFAULT)
     r_rad = np.deg2rad(r_amp)
-    out = {}
-    for name, m in masks.items():
-        ys, xs = np.nonzero(m)
-        cx, cy = float(xs.mean()), float(ys.mean())
+
+    def comps_for(lx, ly):
         ph = {}  # order -> [x phasor, y phasor]
         for order, ax, ay, p in cfg.components:
             v = ph.setdefault(float(order), [0j, 0j])
             v[0] += ax * np.exp(1j * p)
             v[1] += ay * np.exp(1j * (p + np.pi / 2))
         v = ph.setdefault(float(r_order), [0j, 0j])
-        v[0] += r_rad * (cy - py) * np.exp(1j * r_ph)
-        v[1] += -r_rad * (cx - px) * np.exp(1j * r_ph)
-        comps = []
+        v[0] += r_rad * lx * np.exp(1j * r_ph)
+        v[1] += r_rad * ly * np.exp(1j * r_ph)
+        out = []
         for order in sorted(ph):
             zx, zy = ph[order]
-            comps.append({"order": order, "hz": round(order * cfg.rpm / 60, 4),
-                          "x_amp_px": round(abs(zx), 5), "y_amp_px": round(abs(zy), 5),
-                          "x_phase": round(float(np.angle(zx)), 4), "y_phase": round(float(np.angle(zy)), 4),
-                          "x_amp_mm": round(abs(zx) * MM_PER_PX, 5), "y_amp_mm": round(abs(zy) * MM_PER_PX, 5)})
-        out[name] = {"mask": f"mask_{slug(name)}.png", "centroid_px": [round(cx, 2), round(cy, 2)], "components": comps}
+            out.append({"order": order, "hz": round(order * cfg.rpm / 60, 4),
+                        "x_amp_px": round(abs(zx), 6), "y_amp_px": round(abs(zy), 6),
+                        "x_phase": round(float(np.angle(zx)), 4), "y_phase": round(float(np.angle(zy)), 4)})
+        return out
+
+    out = {}
+    for name, m in masks.items():
+        ys, xs = np.nonzero(m)
+        cx, cy = float(xs.mean()), float(ys.mean())
+        lx, ly = levers[name] if levers else (cy - py, -(cx - px))
+        out[name] = {"mask": f"mask_{slug(name)}.png", "centroid_px": [round(cx, 2), round(cy, 2)],
+                     "rocking_lever_px_per_rad": [round(float(lx), 2), round(float(ly), 2)],
+                     "components": comps_for(lx, ly), "components_centroid": comps_for(cy - py, -(cx - px))}
     return out
 
 
@@ -330,16 +368,27 @@ def render(cfg, out_dir, encode=True):
             ff.wait()
 
     masks, glass = part_masks(sprite_u8)
-    parts = part_truth(cfg, masks)  # at full resolution, then scaled to the output
+    # truth at full resolution, then scaled to the output; the lever uses the tracker's weights (mask dilated 5x5,
+    # rotating glass excluded) and its blur expressed in full-resolution px
+    gray = rest_gray(sprite_u8, bg)
+    no_glass = cv2.dilate(glass, np.ones((7, 7), np.uint8)) == 0
+    levers = {k: rocking_lever(gray, (cv2.dilate(m, np.ones((5, 5), np.uint8)) > 0) & no_glass, 1.5 / sc)
+              for k, m in masks.items()}
+    parts = part_truth(cfg, masks, levers)
     if sc != 1.0:
         rs = lambda m: ((cv2.resize(m, (OW, OH), interpolation=cv2.INTER_AREA) > 127) * 255).astype(np.uint8)
         masks = {k: rs(m) for k, m in masks.items()}
         glass = rs(glass)
         for pt in parts.values():
             pt["centroid_px"] = [round(v * sc, 2) for v in pt["centroid_px"]]
-            for c in pt["components"]:
+            pt["rocking_lever_px_per_rad"] = [round(v * sc, 2) for v in pt["rocking_lever_px_per_rad"]]
+            for c in pt["components"] + pt["components_centroid"]:
                 c["x_amp_px"] = round(c["x_amp_px"] * sc, 6)
                 c["y_amp_px"] = round(c["y_amp_px"] * sc, 6)
+    for pt in parts.values():
+        for c in pt["components"] + pt["components_centroid"]:
+            c["x_amp_mm"] = round(c["x_amp_px"] * MM_PER_PX / sc, 6)
+            c["y_amp_mm"] = round(c["y_amp_px"] * MM_PER_PX / sc, 6)
     for name, m in masks.items():
         cv2.imwrite(str(out / f"mask_{slug(name)}.png"), m)
     cv2.imwrite(str(out / "mask_glass.png"), glass)
