@@ -67,3 +67,44 @@ def test_rotating_drum_excluded(twin_runs):
 def test_mm_scale(twin_runs):
     r = twin_runs["healthy"]["result"]
     assert abs(r["scale"]["mm_per_px"] - 2.4) < 0.01
+
+
+def _mean_pass_before_parallel(path, start, count):
+    """mean_and_motion_mask as it was when the accuracy table was made (sequential, one decode loop), verbatim."""
+    import cv2
+    from shake.ingest import read_gray
+    acc = acc2 = None
+    n = 0
+    for g in read_gray(path, start=start, count=count, blur=measure.BLUR):
+        gm = float(g.mean())
+        gn = g * (1.0 / gm)
+        if acc is None:
+            acc, acc2, gsum = g.astype(np.float64), (gn.astype(np.float64)) ** 2, gm
+            gnsum = gn.astype(np.float64)
+        else:
+            acc += g
+            acc2 += gn.astype(np.float64) ** 2
+            gnsum += gn
+            gsum += gm
+        n += 1
+    ref = (acc / n).astype(np.float32)
+    scale = gsum / n
+    std = np.sqrt(np.maximum(acc2 / n - (gnsum / n) ** 2, 0)).astype(np.float32) * scale
+    gy, gx = np.gradient(ref)
+    grad = np.sqrt(gx * gx + gy * gy)
+    noise = float(np.median(std))
+    rotating = std > 4 * noise + measure.MAX_VIB_PX * grad
+    rotating = measure._dilate(cv2.morphologyEx(rotating.astype(np.uint8), cv2.MORPH_OPEN, np.ones((3, 3), np.uint8)) > 0, 7)
+    return ref, rotating, n, noise
+
+
+def test_parallel_measurement_is_bit_identical(twin_runs):
+    """The threaded decode, strip-parallel mean pass and frame-parallel tracking change nothing, bit for bit,
+    so the accuracy table made with the sequential code still stands."""
+    run = twin_runs["looseness"]
+    clip = run["dir"] / "clip.mp4"
+    new, old = measure.mean_and_motion_mask(clip, 0, 480), _mean_pass_before_parallel(clip, 0, 480)
+    assert np.array_equal(new[0], old[0]) and np.array_equal(new[1], old[1]) and new[2:] == old[2:]
+    seq, _ = measure.track(clip, run["masks"], 0, 480, workers=1)
+    par, _ = measure.track(clip, run["masks"], 0, 480, workers=4)
+    assert all(np.array_equal(seq[k], par[k]) for k in seq)
