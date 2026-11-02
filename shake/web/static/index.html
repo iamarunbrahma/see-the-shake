@@ -77,6 +77,7 @@
 
     <form id="form-twin">
       <div class="grid">
+        <div><label for="machine">Machine</label><select id="machine"></select></div>
         <div><label for="fault">Injected fault</label><select id="fault"></select></div>
         <div><label for="seed">Seed</label><input id="seed" type="number" value="1" min="1"></div>
         <div><label for="seconds">Seconds at 240 fps</label><input id="seconds" type="number" value="4" min="1" max="10" step="1"></div>
@@ -202,9 +203,23 @@ function fmt(v, d = 3) { return (v === null || v === undefined) ? "" : Number(v)
 async function init() {
   const s = await (await fetch("/api/samples")).json();
   steps = s.steps;
-  for (const f of s.twin_faults) { const o = el("option", f.label); o.value = f.key; $("fault").appendChild(o); }
+  machines = s.machines;
+  for (const m of machines) { const o = el("option", m.label); o.value = m.key; $("machine").appendChild(o); }
+  $("machine").onchange = () => { fillFaults(); twinHint(); };
+  fillFaults();
   $("fault").value = "imbalance";
   $("twin_api").onchange = twinHint; twinHint();
+}
+
+let machines = [];
+function fillFaults() {
+  const m = machines.find(x => x.key === $("machine").value) || machines[0];
+  const keep = $("fault").value; clear($("fault"));
+  for (const f of m.faults) { const o = el("option", f.label); o.value = f.key; $("fault").appendChild(o); }
+  if (m.faults.some(f => f.key === keep)) $("fault").value = keep;
+  const replay = $("twin_api").querySelector('option[value="replay"]');
+  replay.disabled = m.key !== "washer";  // recorded live runs exist for the washing machine only
+  if (replay.disabled && $("twin_api").value === "replay") $("twin_api").value = "off";
 }
 
 function twinHint() {
@@ -213,7 +228,9 @@ function twinHint() {
   $("seed").disabled = fixed; $("scale").disabled = fixed;
   if (fixed) { $("seed").value = 1; $("scale").value = "1"; $("seconds").value = 6; }
   $("twin_hint").textContent = {
-    off: "The twin is a rendered washing machine with a known fault, camera shake, light flicker and sensor noise. Its exact part masks stand in for SAM 3.1, and the true running speed plus or minus 10% stands in for the Muse Spark plan. Results are compared with the truth.",
+    off: ($("machine").value === "fan"
+      ? "The fan twin is a rendered pedestal fan at a 3/4 angle, 1290 rpm, three blades spinning behind the guard, with camera shake, light flicker and sensor noise. The motor housing, guard rim and stand are measured; the blade disc is left out. Exact part masks stand in for SAM 3.1, and the true running speed plus or minus 10% for the Muse Spark plan. Results are compared with the truth."
+      : "The twin is a rendered washing machine with a known fault, camera shake, light flicker and sensor noise. Its exact part masks stand in for SAM 3.1, and the true running speed plus or minus 10% stands in for the Muse Spark plan. Results are compared with the truth."),
     replay: "Replays the recorded live run for this fault: the real Muse Spark plan, SAM 3.1 masks and Spark diagnosis, at no cost. It needs the recording's clip (seed 1, 1920 x 1080); the first run renders and measures it, which takes a few minutes.",
     live: "Calls Muse Spark and SAM 3.1 for real, about 6 to 7 cents a run, and records the responses with the run. Results are compared with the truth, and SAM's masks with the renderer's.",
   }[mode];
@@ -442,7 +459,7 @@ function showDiagnosis(r) {
 $("form-twin").onsubmit = (e) => {
   e.preventDefault();
   start("/api/twin", { method: "POST", headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ fault: $("fault").value, seed: +$("seed").value, seconds: +$("seconds").value, scale: +$("scale").value,
+    body: JSON.stringify({ machine: $("machine").value, fault: $("fault").value, seed: +$("seed").value, seconds: +$("seconds").value, scale: +$("scale").value,
                            api: $("twin_api").value }) });
 };
 $("form-clip").onsubmit = (e) => {
