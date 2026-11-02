@@ -21,6 +21,7 @@
   main { max-width: 1100px; margin: 0 auto; padding: 8px 16px 48px; }
   .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 16px; margin: 12px 0; }
   .panel h2 { margin: 0 0 10px; font-size: 17px; }
+  .panel h3 { margin: 12px 0 6px; font-size: 15px; }
   .tabs { display: flex; gap: 8px; margin-bottom: 12px; }
   .tabs button { background: var(--chip); color: var(--ink); border: 1px solid var(--line); }
   .tabs button[aria-selected="true"] { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
@@ -37,7 +38,9 @@
   ol.steps li { display: flex; gap: 10px; align-items: baseline; flex-wrap: wrap; }
   .chip { font-size: 12px; padding: 1px 8px; border-radius: 999px; background: var(--chip); color: var(--muted); min-width: 92px; text-align: center; }
   .chip.done { color: var(--ok); } .chip.running { color: var(--accent); } .chip.failed { color: var(--bad); }
-  .chip.skipped { color: var(--warn); }
+  .chip.skipped, .chip.fallback, .chip.context { color: var(--warn); }
+  .chip.verified { color: var(--ok); } .chip.dropped { color: var(--bad); }
+  .cost { font-variant-numeric: tabular-nums; }
   .detail { color: var(--muted); font-size: 13px; }
   .verdict { display: flex; gap: 16px; align-items: baseline; flex-wrap: wrap; }
   .verdict .big { font-size: 30px; font-weight: 700; }
@@ -77,11 +80,12 @@
         <div><label for="seconds">Seconds at 240 fps</label><input id="seconds" type="number" value="4" min="1" max="10" step="1"></div>
         <div><label for="scale">Resolution</label>
           <select id="scale"><option value="0.5">960 x 540</option><option value="0.6667">1280 x 720</option><option value="1">1920 x 1080</option></select></div>
+        <div><label for="twin_api">Muse Spark and SAM 3.1</label>
+          <select id="twin_api"><option value="off">Off: renderer masks, no cost</option>
+            <option value="replay">Recorded live run, no cost</option><option value="live">Live, costs money</option></select></div>
         <div><button type="submit">Render and analyse</button></div>
       </div>
-      <p class="hint">The twin is a rendered washing machine with a known fault, camera shake, light flicker and sensor noise.
-        Its exact part masks stand in for SAM 3.1, and the true running speed plus or minus 10% stands in for the Muse Spark plan.
-        Results are compared with the truth.</p>
+      <p class="hint" id="twin_hint"></p>
     </form>
 
     <form id="form-clip" class="hidden">
@@ -100,10 +104,15 @@
         <div><label for="ref_part">Reference part</label><input id="ref_part" placeholder="washing machine"></div>
         <div><label for="ref_mm">Its width (mm)</label><input id="ref_mm" placeholder="600"></div>
         <div><label for="alpha">Magnification</label><input id="alpha" value="auto"></div>
+        <div><label for="clip_api">Muse Spark and SAM 3.1</label>
+          <select id="clip_api"><option value="live">Live: find the parts and explain, costs money</option>
+            <option value="off">Off: use my masks or boxes</option></select></div>
+        <div><label for="parts">Part phrases (optional, replace Spark's)</label><input id="parts" placeholder="ceiling fan motor housing"></div>
         <div><button type="submit">Analyse</button></div>
       </div>
-      <p class="hint">Until SAM 3.1 is connected, mark the parts yourself with a mask or a box. Prefer parts that do not rotate:
-        measure a fan through its motor housing, not its blades.</p>
+      <p class="hint">With Muse Spark and SAM 3.1 on, Spark names the parts to measure and SAM 3.1 masks them; any masks or boxes you
+        add are the fallback if SAM finds nothing. With them off, mark the parts yourself. Prefer parts that do not rotate:
+        measure a fan through its motor housing, not its blades. A full run costs a few cents.</p>
     </form>
   </section>
 
@@ -111,6 +120,7 @@
     <h2>Progress</h2>
     <ol class="steps" id="steps"></ol>
     <p id="phase" class="hint"></p>
+    <p id="cost" class="hint cost"></p>
     <p id="error" class="err"></p>
   </section>
 
@@ -119,6 +129,7 @@
       <h2>Verdict from the fixed rules</h2>
       <div class="verdict"><span class="big" id="verdict"></span><span class="conf" id="confidence"></span></div>
       <p id="reason"></p>
+      <p id="both" class="warn"></p>
       <p id="warnings" class="warn"></p>
       <h2 style="margin-top:14px">The peaks it rests on</h2>
       <div class="scroll"><table id="evidence"><thead><tr><th>Part</th><th>Axis</th><th>Frequency</th><th>Order</th><th>Amplitude</th></tr></thead><tbody></tbody></table></div>
@@ -132,7 +143,7 @@
         <div id="plan-body"></div>
       </div>
       <div class="panel slot" id="diagnosis-slot">
-        <h2>Diagnosis and fix (Muse Spark)</h2>
+        <h2>Diagnosis and fix (Muse Spark, checked by code)</h2>
         <p class="state" id="diagnosis-state"></p>
         <div id="diagnosis-body"></div>
       </div>
@@ -173,7 +184,9 @@
 <script>
 const $ = (id) => document.getElementById(id);
 const VERDICT = { none: "No fault found", imbalance: "Imbalance", looseness: "Looseness", misalignment: "Misalignment", unclear: "Unclear" };
-const STATUS = { pending: "waiting", running: "running", done: "done", skipped: "not connected", failed: "failed" };
+const STATUS = { pending: "waiting", running: "running", done: "done", skipped: "off", fallback: "fell back", failed: "failed" };
+const EVIDENCE = { verified: "verified", context: "context", dropped: "dropped" };
+const usd = (v) => "$" + Number(v || 0).toFixed(4);
 let steps = [], timer = null;
 
 function el(tag, text, cls) { const e = document.createElement(tag); if (text !== undefined && text !== null) e.textContent = text; if (cls) e.className = cls; return e; }
@@ -186,6 +199,19 @@ async function init() {
   steps = s.steps;
   for (const f of s.twin_faults) { const o = el("option", f.label); o.value = f.key; $("fault").appendChild(o); }
   $("fault").value = "imbalance";
+  $("twin_api").onchange = twinHint; twinHint();
+}
+
+function twinHint() {
+  const mode = $("twin_api").value;
+  const fixed = mode === "replay";
+  $("seed").disabled = fixed; $("scale").disabled = fixed;
+  if (fixed) { $("seed").value = 1; $("scale").value = "1"; $("seconds").value = 6; }
+  $("twin_hint").textContent = {
+    off: "The twin is a rendered washing machine with a known fault, camera shake, light flicker and sensor noise. Its exact part masks stand in for SAM 3.1, and the true running speed plus or minus 10% stands in for the Muse Spark plan. Results are compared with the truth.",
+    replay: "Replays the recorded live run for this fault: the real Muse Spark plan, SAM 3.1 masks and Spark diagnosis, at no cost. It needs the recording's clip (seed 1, 1920 x 1080); the first run renders and measures it, which takes a few minutes.",
+    live: "Calls Muse Spark and SAM 3.1 for real, about 6 to 7 cents a run, and records the responses with the run. Results are compared with the truth, and SAM's masks with the renderer's.",
+  }[mode];
 }
 
 function selectTab(which) {
@@ -225,6 +251,7 @@ async function poll(jobId) {
   clearTimeout(timer);
   const j = await (await fetch(`/api/jobs/${jobId}`)).json();
   showSteps(j.status);
+  $("cost").textContent = (j.results && j.results.api) ? costText(j.results.api) : "";
   $("phase").textContent = j.state === "done" ? "Done" : (j.phase ? `Working: ${j.phase}` : (j.state === "queued" ? "Queued" : "Working"));
   if (j.state === "failed") { $("error").textContent = j.error || (j.status && j.status.error) || "The run failed"; busy(false); return; }
   if (j.state === "done" && j.results) { busy(false); showResults(j.results, j.base); return; }
@@ -250,26 +277,8 @@ function showResults(r, base) {
     `${fmt(m.seconds, 1)} s analysed at ${m.fps} fps, frequency resolution ${fmt(m.bin_hz, 2)} Hz. ` +
     `Overall velocity ${fmt(fp.parts[fp.lead_part].features.velocity_rms, 1)} ${fp.parts[fp.lead_part].features.velocity_unit} RMS; alert level ${fp.alert_level} ${fp.alert_unit}.`;
 
-  // Muse Spark slots
-  const plan = r.plan || {}, dg = r.diagnosis || {};
-  clear($("plan-body")); clear($("diagnosis-body"));
-  if (plan.status === "not_connected") {
-    $("plan-state").textContent = "Not connected yet. Parts came with the masks (" + r.mask_source + ").";
-    $("plan-body").appendChild(el("p", "Parts measured: " + plan.parts.join(", ")));
-  } else {
-    $("plan-state").textContent = "";
-    if (plan.machine) $("plan-body").appendChild(el("p", "Machine: " + plan.machine));
-    if (plan.rpm_range) $("plan-body").appendChild(el("p", `Running speed range: ${plan.rpm_range[0]} to ${plan.rpm_range[1]} rpm`));
-    if (plan.parts) $("plan-body").appendChild(el("p", "Parts: " + plan.parts.join(", ")));
-  }
-  if (dg.status === "not_connected") {
-    $("diagnosis-state").textContent = "Not connected yet. The rule verdict above is the official result.";
-  } else {
-    $("diagnosis-state").textContent = "";
-    if (dg.explanation) $("diagnosis-body").appendChild(el("p", dg.explanation));
-    if (dg.fix && dg.fix.length) { const ul = el("ul"); dg.fix.forEach(s => ul.appendChild(el("li", s))); $("diagnosis-body").appendChild(ul); }
-    if (!dg.explanation && !dg.fix) $("diagnosis-body").appendChild(el("pre", JSON.stringify(dg, null, 2)));
-  }
+  showPlan(r); showDiagnosis(r);
+  $("cost").textContent = r.api ? costText(r.api) : "";
 
   const v = $("video"); v.src = base + r.files.side_by_side + "?v=" + r.run_id; v.load();
   const mg = r.magnify;
@@ -302,17 +311,104 @@ function showResults(r, base) {
   $("download").href = base + "results.json";
 }
 
+function costText(api) {
+  const u = api.usd || {};
+  const parts = [["plan", "Spark plan"], ["segment", "SAM 3.1"], ["diagnose", "Spark diagnosis"]]
+    .filter(([k]) => u[k] !== undefined).map(([k, label]) => `${label} ${usd(u[k])}`);
+  const how = api.mode === "replay" ? "recorded calls, not charged again" : "charged";
+  return `Meta Model API cost: ${usd(u.total)} (${how})` + (parts.length ? `: ${parts.join(", ")}.` : ".");
+}
+
+function list(node, title, items) {
+  if (!items || !items.length) return;
+  node.appendChild(el("h3", title));
+  const ul = el("ul"); items.forEach(s => ul.appendChild(el("li", s))); node.appendChild(ul);
+}
+
+function showPlan(r) {
+  const plan = r.plan || {}, body = $("plan-body"); clear(body);
+  if (plan.status === "not_connected") {
+    $("plan-state").textContent = "Off for this run. Parts came with the masks (" + r.mask_source + ").";
+    body.appendChild(el("p", "Parts measured: " + plan.parts.join(", ")));
+    return;
+  }
+  if (plan.status === "failed") {
+    $("plan-state").textContent = "The plan failed, so the supplied parts were used: " + plan.error;
+    return;
+  }
+  $("plan-state").textContent = plan.parts_source === "user" ? "Parts from you, machine and speed from Spark." : "";
+  body.appendChild(el("p", "Machine: " + (plan.machine_type || plan.machine || "")));
+  if (plan.rpm_range) body.appendChild(el("p", `Running speed range: ${Math.round(plan.rpm_range[0])} to ${Math.round(plan.rpm_range[1])} rpm` +
+                                         (plan.rpm_reason ? `. ${plan.rpm_reason}` : "")));
+  const seg = r.segment || {}, missing = seg.missing || [];
+  const tbl = el("table"); const head = el("tr"); ["Part phrase", "SAM 3.1"].forEach(h => head.appendChild(el("th", h)));
+  const thead = el("thead"); thead.appendChild(head); tbl.appendChild(thead); const tb = el("tbody");
+  for (const p of plan.parts || []) {
+    const info = (seg.parts || {})[p] || {};
+    const found = missing.includes(p) ? "not found" : (info.confidence ? `found, confidence ${fmt(info.confidence, 2)}` : "found");
+    row(tb, [p, seg.error ? "not run" : found]);
+  }
+  tbl.appendChild(tb); const wrap = el("div", null, "scroll"); wrap.appendChild(tbl); body.appendChild(wrap);
+  if (r.sam_iou) {
+    const s = Object.entries(r.sam_iou).map(([k, v]) => `${k} ${fmt(v.iou, 3)}` + (v.phrase && v.phrase !== k ? ` (as "${v.phrase}")` : ""));
+    body.appendChild(el("p", "Mask overlap (IoU) with the renderer's exact masks: " + s.join(", ") + "."));
+  }
+  list(body, "Rotating parts seen (measured through what holds them)", plan.rotating_parts_seen);
+  list(body, "Notes", plan.warnings);
+}
+
+function showDiagnosis(r) {
+  const dg = r.diagnosis || {}, body = $("diagnosis-body"); clear(body);
+  $("both").textContent = "";
+  if (dg.status === "not_connected") {
+    $("diagnosis-state").textContent = "Off for this run. The rule verdict above is the official result.";
+    return;
+  }
+  const sp = dg.spark || {};
+  if (sp.error || dg.status === "failed") {
+    $("diagnosis-state").textContent = "Muse Spark did not answer usably, so only the rule verdict stands: " + (sp.error || "");
+    return;
+  }
+  if (!sp.fault) { body.appendChild(el("pre", JSON.stringify(dg, null, 2))); return; }
+  $("diagnosis-state").textContent = "";
+  const conf = sp.capped ? `${sp.confidence} confidence (Spark said ${sp.confidence_reported}; capped because it ${sp.cap_reasons.join(", and ")})`
+                         : `${sp.confidence} confidence`;
+  const head = el("p"); const b = el("strong", VERDICT[sp.fault] || sp.fault); head.appendChild(b);
+  head.appendChild(document.createTextNode(`, ${conf}. ` + (sp.agrees ? "Agrees with the rules." : "Disagrees with the rules.")));
+  body.appendChild(head);
+  if (dg.show_both) $("both").textContent = `Muse Spark says ${VERDICT[sp.fault] || sp.fault} (${sp.confidence} confidence). Both are shown; the rule verdict is the headline.`;
+  if (sp.explanation) body.appendChild(el("p", sp.explanation));
+  body.appendChild(el("h3", "Evidence Spark cited, checked against the measured peaks"));
+  const tbl = el("table"); const hr = el("tr"); ["Check", "Part", "Frequency", "Order", "Why"].forEach(h => hr.appendChild(el("th", h)));
+  const thead = el("thead"); thead.appendChild(hr); tbl.appendChild(thead); const tb = el("tbody");
+  for (const e of sp.evidence || []) {
+    const tr = el("tr"); const td = el("td"); td.appendChild(el("span", EVIDENCE[e.status] || e.status, "chip " + e.status)); tr.appendChild(td);
+    [e.part, e.frequency_hz !== undefined && e.frequency_hz !== null ? `${fmt(e.frequency_hz, 2)} Hz` : "", e.order || "", e.reason]
+      .forEach(c => tr.appendChild(el("td", c)));
+    tb.appendChild(tr);
+  }
+  if (!(sp.evidence || []).length) row(tb, ["", "", "", "", "Spark cited no peaks"]);
+  tbl.appendChild(tb); const wrap = el("div", null, "scroll"); wrap.appendChild(tbl); body.appendChild(wrap);
+  const c = sp.counts || {};
+  body.appendChild(el("p", `${c.verified || 0} verified, ${c.context || 0} context (a real peak, but not what this fault rests on), ${c.dropped || 0} dropped.`, "hint"));
+  list(body, "How to fix it", sp.fix);
+  list(body, "What to check next", sp.check_next);
+  if (dg.usd !== undefined) body.appendChild(el("p", "Cost of this answer: " + usd(dg.usd), "hint cost"));
+}
+
 $("form-twin").onsubmit = (e) => {
   e.preventDefault();
   start("/api/twin", { method: "POST", headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ fault: $("fault").value, seed: +$("seed").value, seconds: +$("seconds").value, scale: +$("scale").value }) });
+    body: JSON.stringify({ fault: $("fault").value, seed: +$("seed").value, seconds: +$("seconds").value, scale: +$("scale").value,
+                           api: $("twin_api").value }) });
 };
 $("form-clip").onsubmit = (e) => {
   e.preventDefault();
   const fd = new FormData();
   fd.append("clip", $("clip").files[0]);
   for (const f of $("masks").files) fd.append("masks", f);
-  for (const k of ["mask_names", "boxes", "capture_fps", "rpm", "rpm_min", "rpm_max", "ref_part", "ref_mm", "alpha"]) fd.append(k, $(k).value);
+  for (const k of ["mask_names", "boxes", "capture_fps", "rpm", "rpm_min", "rpm_max", "ref_part", "ref_mm", "alpha", "parts"]) fd.append(k, $(k).value);
+  fd.append("api", $("clip_api").value);
   start("/api/runs", { method: "POST", body: fd });
 };
 init();
