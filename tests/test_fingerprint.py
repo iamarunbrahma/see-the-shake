@@ -29,6 +29,27 @@ def test_rule_order():
     assert fingerprint.classify(_feat(r21=0.2, e1_share=0.3), 7.0)[0] == "unclear"
 
 
+def _entry(amps, floor=0.0002):
+    """A minimal measured part: amplitudes per order on x, nothing on y."""
+    def axis(a):
+        orders = {k: {"hz": 16.67 * float(k[:-1]), "amp_px": v, "above_floor": v > 8 * floor, "phase": 0.0}
+                  for k, v in a.items()}
+        peaks = [{"hz": 16.67 * float(k[:-1]), "amp_px": v, "order": float(k[:-1]), "label": k}
+                 for k, v in a.items() if v > 8 * floor]
+        return {"noise_floor_px": floor, "orders": orders, "peaks": peaks}
+    keys = ["0.5x", "1x", "1.5x", "2x", "2.5x", "3x", "4x", "5x", "6x"]
+    return {"axes": {"x": axis({k: amps.get(k, 0.0) for k in keys}), "y": axis({k: 0.0 for k in keys})}}
+
+
+def test_faint_harmonics_do_not_make_looseness():
+    """Misalignment measured on a long clean clip: a 4x at 2% of 2x is above the noise floor but is not a row."""
+    f = fingerprint.part_features(_entry({"1x": 0.07, "2x": 0.19, "3x": 0.03, "4x": 0.0046}), 1.2)
+    assert f["harmonics"] == ["2x", "3x"] and f["faint_harmonics"] == ["4x"]
+    assert fingerprint.classify(f, 7.0)[0] == "misalignment"
+    loose = fingerprint.part_features(_entry({"1x": 0.10, "2x": 0.08, "3x": 0.05, "4x": 0.03}), 1.2)
+    assert loose["n_harmonics"] == 3 and fingerprint.classify(loose, 7.0)[0] == "looseness"
+
+
 def test_features_are_reported(twin_runs):
     fp = twin_runs["looseness"]["fp"]
     f = fp["parts"][fp["lead_part"]]["features"]

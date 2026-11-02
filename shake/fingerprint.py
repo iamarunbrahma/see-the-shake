@@ -2,7 +2,8 @@
 
 Rules, first match wins, applied to the part that vibrates most:
 1. none          overall velocity below the alert level
-2. looseness     0.5x present, or a row of 3+ harmonics (2x to 6x)
+2. looseness     0.5x present, or a row of 3+ significant harmonics (2x to 6x, each at least 10% of the
+                 largest running-speed component; tiny distortion products far below it do not count)
 3. misalignment  2x at least half of 1x
 4. imbalance     1x holds at least 60% of the vibration energy
 5. unclear       anything else
@@ -18,6 +19,7 @@ R21_MISALIGN = 0.5
 E1_IMBALANCE = 0.6
 HARMONIC_ORDERS = ["2x", "3x", "4x", "5x", "6x"]
 MIN_HARMONICS = 3
+HARMONIC_MIN_RATIO = 0.10  # of the largest of 1x..6x; a long, clean clip resolves products 30 dB down
 
 FAULT_ORDERS = {"imbalance": {"1x"}, "misalignment": {"2x"}, "looseness": {"0.5x"} | set(HARMONIC_ORDERS)}
 
@@ -46,7 +48,9 @@ def part_features(entry, scale_mm_per_px):
     energy = sum(amp[k] ** 2 for k in order_keys if k in amp) + nonsync_energy
     k = scale_mm_per_px or 1.0
     vel = float(np.sqrt(sum((2 * np.pi * p["hz"] * p["amp_px"] * k) ** 2 / 2 for p in peaks)))
-    harmonics = [h for h in HARMONIC_ORDERS if present.get(h)]
+    a_max = max(amp[k] for k in ["1x"] + HARMONIC_ORDERS)
+    harmonics = [h for h in HARMONIC_ORDERS if present.get(h) and amp[h] >= HARMONIC_MIN_RATIO * a_max]
+    faint = [h for h in HARMONIC_ORDERS if present.get(h) and h not in harmonics]
     ax1, ay1 = axes["x"]["orders"]["1x"]["amp_px"], axes["y"]["orders"]["1x"]["amp_px"]
     return {
         "amp_1x_px": round(a1, 5),
@@ -55,6 +59,7 @@ def part_features(entry, scale_mm_per_px):
         "r31": round(amp["3x"] / a1, 3) if a1 > 0 else None,
         "harmonics": harmonics,
         "n_harmonics": len(harmonics),
+        "faint_harmonics": faint,
         "half_order": bool(present.get("0.5x") and a1 > 0 and amp["0.5x"] >= HALF_MIN_RATIO * a1),
         "half_ratio": round(amp["0.5x"] / a1, 3) if a1 > 0 else None,
         "h_over_v_1x": round(ax1 / ay1, 3) if ay1 > 0 else None,
