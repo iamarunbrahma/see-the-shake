@@ -14,6 +14,8 @@ Files API and passed as an input_file. It returns strict JSON; code validates an
   outline stays the same as it turns (a plain shaft, a solid disc) is kept and measured directly, as an
   eddy-current probe would. For phrases without that mark (earlier recordings), names that sound like rotating
   parts are dropped while a static part remains.
+On a fan, Spark also counts the blades when it can (the pipeline then treats blades x running speed as blade pass),
+and is asked for the parts that hold the blades: the motor housing, the guard rim and the stand.
 The range only gates which spectral peak counts as 1x, so Spark is asked for a deliberately wide range from the
 machine type and visible clues, not from apparent rotation (the real-time preview aliases it). An RPM the user
 enters overrides the range downstream. The user can also replace the part list (user_parts); it goes through the
@@ -24,16 +26,18 @@ import subprocess
 import tempfile
 from pathlib import Path
 
-from .meta_api import MetaAPI
+from .meta_api import MetaAPI, image_block
 
 MAX_PARTS = 4
-MAX_WORDS = 5
+MAX_WORDS = 6  # a part with the machine type in front ("washing machine round front door")
 PREVIEW_HEIGHT = 480
 PREVIEW_FPS = 30
 PREVIEW_SECONDS = 4.0
 F_MIN_HZ = 2.0  # measure.F_MIN: lowest frequency the peak picker reports
 MIN_SPAN = 0.20  # an rpm range narrower than +/-20% of its centre is widened to that
 DEFAULT_RPM = (300.0, 3000.0)  # when Spark gives no usable range
+MIN_BLADES, MAX_BLADES = 2, 12  # a counted blade count outside this is ignored
+STILL_WIDTH = 1920  # the full-resolution frame sent with the preview
 
 ROTATING = {"blade", "blades", "rotor", "rotors", "impeller", "propeller", "drum", "pulley", "belt", "shaft",
             "spindle", "flywheel", "gear", "gears", "agitator", "fan blade", "fan blades", "spinner", "turbine"}
@@ -56,13 +60,14 @@ SCHEMA = {
                            "rotation": {"type": "string", "enum": list(ROTATION)}},
             "required": ["phrase", "visibility", "rotation"], "additionalProperties": False}},
         "rotating_parts_seen": {"type": "array", "items": {"type": "string"}},
+        "blades": {"type": "integer"},
     },
-    "required": ["machine_type", "rpm_min", "rpm_max", "rpm_reason", "parts", "rotating_parts_seen"],
+    "required": ["machine_type", "rpm_min", "rpm_max", "rpm_reason", "parts", "rotating_parts_seen", "blades"],
     "additionalProperties": False,
 }
 
 PROMPT = """You are planning a vibration inspection of a running machine from a phone video.
-The original clip was filmed in slow motion at {fps:g} fps. This copy is downscaled and plays at real time ({seconds:.1f} s).
+The original clip was filmed in slow motion at {fps:g} fps. This copy is downscaled and plays at real time ({seconds:.1f} s). The attached image is one full-resolution frame of the same clip, for small details such as a fan's blades.
 A later step measures sub-pixel vibration of each part you name, using a segmentation model that takes one short noun phrase per part.
 
 Return JSON with:
@@ -71,11 +76,12 @@ Return JSON with:
   This copy is too slow to judge rotation from: the machine turns faster than its frame rate can show, so how fast or which way a part appears to turn is meaningless. Do not estimate speed from apparent rotation.
 - rpm_reason: one short sentence on how you chose the range.
 - parts: 1 to 4 parts to measure, each with:
-  - phrase: a short noun phrase (2 to 4 words, common nouns) that a segmentation model could match to one object.
+  - phrase: a short noun phrase (2 to 5 words, common nouns) that a segmentation model could match to one object. Put the machine_type in front of every part (for example "standing fan guard rim", "washing machine front door"): the segmentation model finds a part far more reliably when it knows which machine it belongs to.
   - visibility: "clear" only if the part is a distinct object with its own visible outline that stands out from what surrounds it; "partial" if it is small, faint, blends into a larger surface or is partly hidden; "unsure" otherwise.
-  The first must be the whole machine (its machine_type), marked "clear". Add another part only if it is clearly visible as a separate object, such as a door with a visible rim, a motor housing or a downrod. A flat area or strip of a larger surface is not a separate part. Fewer parts are better than a doubtful one: the whole machine alone is fine. Do not name hidden parts or sides that are out of view.
+  The first must be the whole machine (its machine_type), marked "clear". Add another part only if it is clearly visible as a separate object, such as a door with a visible rim, a motor housing or a downrod. On a fan, name each part that holds the blades as its own part when you can see it: the motor housing, the guard rim (the outer ring of the guard) and the pole (not the base on the floor, which does not move); on a ceiling fan, the motor housing and the downrod. A flat area or strip of a larger surface is not a separate part. Fewer parts are better than a doubtful one: the whole machine alone is fine. Do not name hidden parts or sides that are out of view.
   - rotation: "none" if the part does not turn; "smooth" if it turns but its outline stays the same as it turns (a plain shaft, a solid disc, a coupling sleeve), so its wobble can be measured directly; "changing" if its outline changes as it turns (fan blades, spokes, a drum's contents, a belt). Do not name "changing" parts: they are measured through the static part that holds them.
 - rotating_parts_seen: rotating parts you can see, so they can be excluded.
+- blades: the number of blades if the machine has visible blades (a fan) and you can count them clearly in the attached full-resolution frame; otherwise 0. The blades may be motion-blurred; count them only if you are sure.
 Do not use em dashes."""
 
 
@@ -187,6 +193,20 @@ def clear_phrases(parts, warnings):
     return keep, [normalise_phrase(u) for u in unclear], smooth
 
 
+def blade_count(v, warnings):
+    """Spark's blade count as an int from MIN_BLADES to MAX_BLADES, or None (no blades, not counted, or implausible)."""
+    try:
+        n = int(v)
+    except (TypeError, ValueError):
+        return None
+    if n == 0:
+        return None
+    if not MIN_BLADES <= n <= MAX_BLADES:
+        warnings.append(f"ignored a blade count of {n}")
+        return None
+    return n
+
+
 def validate(raw, capture_fps, user_parts=None):
     """Validated plan from Spark's JSON (raw dict)."""
     if not isinstance(raw, dict):
@@ -204,13 +224,34 @@ def validate(raw, capture_fps, user_parts=None):
     return {"machine_type": machine, "rpm_range": list(rpm) if rpm else None, "rpm_reason": str(raw.get("rpm_reason", ""))[:300],
             "parts": parts, "parts_source": source, "fallback_phrase": machine, "parts_not_clear": unclear,
             "rotating_parts_seen": [normalise_phrase(p) for p in raw.get("rotating_parts_seen") or []][:8],
+            "blades": blade_count(raw.get("blades"), warnings),
             "warnings": warnings, "spark_raw": raw}
 
 
-def plan_from_file(api: MetaAPI, file_id, capture_fps, seconds, user_parts=None, label="plan_parts"):
-    """Ask Spark for the plan on an already uploaded preview."""
+def still_frame(clip, out, frame, max_width=STILL_WIDTH):
+    """One frame of the clip as a PNG (at most max_width wide), for details the preview is too small or slow to
+    show, such as a fan's blade count. Returns the path, or None when the frame cannot be read."""
+    import cv2
+    cap = cv2.VideoCapture(str(clip))
+    try:
+        cap.set(cv2.CAP_PROP_POS_FRAMES, int(frame))
+        ok, f = cap.read()
+    finally:
+        cap.release()
+    if not ok:
+        return None
+    if f.shape[1] > max_width:
+        f = cv2.resize(f, (max_width, round(f.shape[0] * max_width / f.shape[1])), interpolation=cv2.INTER_AREA)
+    cv2.imwrite(str(out), f)
+    return str(out)
+
+
+def plan_from_file(api: MetaAPI, file_id, capture_fps, seconds, user_parts=None, label="plan_parts", still=None):
+    """Ask Spark for the plan on an already uploaded preview (and, when given, one full-resolution still PNG)."""
     content = [{"type": "input_text", "text": PROMPT.format(fps=capture_fps, seconds=seconds)},
                {"type": "input_file", "file_id": file_id}]
+    if still:
+        content.append(image_block(still))
     reply = api.spark(content, label=label, schema=SCHEMA, schema_name="inspection_plan")
     plan = validate(reply.json(), capture_fps, user_parts)
     plan["usd"] = round(reply.usd, 6)
@@ -223,7 +264,8 @@ def plan_parts(api: MetaAPI, clip, capture_fps, start_frame=0, user_parts=None, 
     with tempfile.TemporaryDirectory(dir=workdir) as td:
         prev = preview_clip(clip, Path(td) / "preview.mp4", start_frame, capture_fps)
         fid = api.upload(prev["path"], label=f"{label}:preview")
-        plan = plan_from_file(api, fid, capture_fps, prev["seconds"], user_parts, label)
+        still = still_frame(clip, Path(td) / "still.png", start_frame)
+        plan = plan_from_file(api, fid, capture_fps, prev["seconds"], user_parts, label, still)
     plan["preview"] = {k: prev[k] for k in ("seconds", "fps", "height", "step")}
     plan["preview_file_id"] = fid
     return plan

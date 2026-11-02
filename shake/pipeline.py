@@ -585,17 +585,17 @@ def run_twin(fault, runs_dir="runs", seed=1, seconds=4.0, scale=0.5, api="off", 
              machine="washer", **kw):
     """Render (or reuse) a twin clip and run it.
 
-    api "replay" serves the recorded live run for this fault (washer only: seed 1, 1920x1080; any duration works,
-    6 s matches the recording exactly), so seed and scale are fixed to the recording's. api "live" records the calls.
+    api "replay" serves the recorded live run for this fault (seed 1, 1920x1080; any duration works, 6 s matches the
+    recording exactly; the fan's are under fan-<fault>), so seed and scale are fixed to the recording's. api "live" records the calls.
     For the fan, the background leaves out the blade disc (its grill and hub move with the head), and the magnified
     video moves the whole guard, blades included, with the guard rim's measured motion.
     """
     api_kw = {}
     if api == "replay":
-        if machine != "washer":
-            raise ValueError("recorded live runs exist for the washing machine only")
+        name = f"fan-{fault}" if machine == "fan" else fault
         seed, scale = RECORDED_TWIN["seed"], RECORDED_TWIN["scale"]
-        api_kw = dict(api="replay", cassette=str(recording(fault)), api_label=fault, spark_video=False)
+        # the fan's recordings are pipeline runs that sent the magnified clip with the diagnosis; the washer's are not
+        api_kw = dict(api="replay", cassette=str(recording(name)), api_label=name, spark_video=machine == "fan")
     elif api in ("live", "record"):
         api_kw = dict(api="record", api_label=f"fan-{fault}" if machine == "fan" else fault)
     clip, masks, truth = twin_clip(fault, runs_dir, seed, seconds, scale, machine)

@@ -271,3 +271,49 @@ def test_live_upload_artifact_citations_are_dropped():
     status = {round(e["frequency_hz"]): e["status"] for e in sp["evidence"]}
     assert status[83] == status[117] == "dropped" and status[17] == "context"
     assert sp["confidence"] == "low" and sp["agrees"]
+
+
+# ---------------------------------------------------------------- blade pass on a fan
+
+F1_FAN = 21.5
+
+
+def _fan_result():
+    r = _result([_peak(1, 0.05, hz=F1_FAN), _peak(3, 0.4, hz=3 * F1_FAN)], [_peak(1, 0.02, hz=F1_FAN)])
+    r["running_speed"]["hz"] = F1_FAN
+    return r
+
+
+def _fan_fp(verdict, blades=3):
+    fp = _fp(verdict)
+    fp["blades"] = blades
+    return fp
+
+
+def test_spark_can_agree_with_blade_pass():
+    card = diagnose.verify(_claim("blade pass", [ev(3 * F1_FAN, "3x")]), _fan_result(), _fan_fp("blade_pass"))
+    sp = card["spark"]
+    assert sp["fault"] == "blade_pass" and sp["agrees"] and sp["supported"]
+    assert sp["evidence"][0]["status"] == "verified" and sp["confidence"] == "high" and not card["show_both"]
+    assert "blade_pass" in diagnose.SCHEMA["properties"]["fault"]["enum"]
+
+
+def test_blade_pass_is_not_evidence_for_a_fault_pattern():
+    # Spark calls the 3x blade pass a harmonic for looseness: it is context, and the claim is unsupported
+    card = diagnose.verify(_claim("looseness", [ev(3 * F1_FAN, "3x")]), _fan_result(), _fan_fp("blade_pass"))
+    item = card["spark"]["evidence"][0]
+    assert item["status"] == "context" and "blade pass" in item["reason"]
+    assert not card["spark"]["supported"] and card["spark"]["confidence"] == "low"
+
+
+def test_blade_pass_needs_the_blade_count():
+    card = diagnose.verify(_claim("blade_pass", [ev(3 * F1_FAN, "3x")]), _fan_result(), _fan_fp("none", blades=None))
+    sp = card["spark"]
+    assert not sp["supported"] and sp["confidence"] == "low"
+    assert any("blade count" in r for r in sp["cap_reasons"])
+
+
+def test_prompt_explains_blade_pass_when_the_count_is_known():
+    r = _fan_result()
+    assert "3x (64.5 Hz) is blade pass" in diagnose.blade_note(_fan_fp("none"), r)
+    assert diagnose.blade_note(_fan_fp("none", blades=None), r) == ""
