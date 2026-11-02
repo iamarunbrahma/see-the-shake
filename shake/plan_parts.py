@@ -9,8 +9,11 @@ Files API and passed as an input_file. It returns strict JSON; code validates an
   request costs money, and faint parts such as a strip of control panel come back empty);
 - part phrases are normalised to short noun phrases, de-duplicated and capped at four, with the whole machine
   first (SAM's fallback phrase);
-- rotating parts (blades, drums, rotors...) are dropped while a non-rotating part remains: they are measured
-  through their housing, downrod or cabinet instead.
+- parts whose outline changes as they turn (blades, spokes, a drum's contents) are dropped: they are measured
+  through their housing, downrod or cabinet instead. Spark marks each part's rotation; a smooth round part whose
+  outline stays the same as it turns (a plain shaft, a solid disc) is kept and measured directly, as an
+  eddy-current probe would. For phrases without that mark (earlier recordings), names that sound like rotating
+  parts are dropped while a static part remains.
 The range only gates which spectral peak counts as 1x, so Spark is asked for a deliberately wide range from the
 machine type and visible clues, not from apparent rotation (the real-time preview aliases it). An RPM the user
 enters overrides the range downstream. The user can also replace the part list (user_parts); it goes through the
@@ -38,6 +41,7 @@ STATIC_HINTS = {"housing", "cover", "guard", "mount", "mounting", "bracket", "ca
                 "cabinet", "base", "panel", "door", "canopy", "stand", "body", "shroud"}
 FILLER = {"the", "a", "an", "its", "this", "that", "visible", "front-loading"}
 VISIBILITY = ("clear", "partial", "unsure")  # only "clear" parts are segmented (each SAM request costs $0.012)
+ROTATION = ("none", "smooth", "changing")  # "changing" parts are dropped; "smooth" ones (a plain shaft) are kept
 
 SCHEMA = {
     "type": "object",
@@ -48,8 +52,9 @@ SCHEMA = {
         "rpm_reason": {"type": "string"},
         "parts": {"type": "array", "items": {
             "type": "object",
-            "properties": {"phrase": {"type": "string"}, "visibility": {"type": "string", "enum": list(VISIBILITY)}},
-            "required": ["phrase", "visibility"], "additionalProperties": False}},
+            "properties": {"phrase": {"type": "string"}, "visibility": {"type": "string", "enum": list(VISIBILITY)},
+                           "rotation": {"type": "string", "enum": list(ROTATION)}},
+            "required": ["phrase", "visibility", "rotation"], "additionalProperties": False}},
         "rotating_parts_seen": {"type": "array", "items": {"type": "string"}},
     },
     "required": ["machine_type", "rpm_min", "rpm_max", "rpm_reason", "parts", "rotating_parts_seen"],
@@ -68,7 +73,8 @@ Return JSON with:
 - parts: 1 to 4 parts to measure, each with:
   - phrase: a short noun phrase (2 to 4 words, common nouns) that a segmentation model could match to one object.
   - visibility: "clear" only if the part is a distinct object with its own visible outline that stands out from what surrounds it; "partial" if it is small, faint, blends into a larger surface or is partly hidden; "unsure" otherwise.
-  The first must be the whole machine (its machine_type), marked "clear". Add another part only if it is clearly visible as a separate object, such as a door with a visible rim, a motor housing or a downrod. A flat area or strip of a larger surface is not a separate part. Fewer parts are better than a doubtful one: the whole machine alone is fine. Never name rotating parts (fan blades, drum, rotor, pulley, belt): they are measured through the static part that holds them. Do not name hidden parts or sides that are out of view.
+  The first must be the whole machine (its machine_type), marked "clear". Add another part only if it is clearly visible as a separate object, such as a door with a visible rim, a motor housing or a downrod. A flat area or strip of a larger surface is not a separate part. Fewer parts are better than a doubtful one: the whole machine alone is fine. Do not name hidden parts or sides that are out of view.
+  - rotation: "none" if the part does not turn; "smooth" if it turns but its outline stays the same as it turns (a plain shaft, a solid disc, a coupling sleeve), so its wobble can be measured directly; "changing" if its outline changes as it turns (fan blades, spokes, a drum's contents, a belt). Do not name "changing" parts: they are measured through the static part that holds them.
 - rotating_parts_seen: rotating parts you can see, so they can be excluded.
 Do not use em dashes."""
 
@@ -134,15 +140,17 @@ def clamp_rpm(rpm_min, rpm_max, capture_fps, warnings):
     return round(lo, 1), round(hi, 1)
 
 
-def clean_parts(parts, machine_type, warnings):
+def clean_parts(parts, machine_type, warnings, trusted=()):
+    """Normalised, de-duplicated phrases, the machine first. Phrases that sound like rotating parts are dropped
+    while a static one remains, unless Spark said they do not turn or turn smoothly (trusted)."""
     out = []
     for p in parts or []:
         n = normalise_phrase(p)
         if n and n not in out:
             out.append(n)
     machine = normalise_phrase(machine_type) or "machine"
-    rotating = [p for p in out if is_rotating(p)]
-    static = [p for p in out if not is_rotating(p)]
+    rotating = [p for p in out if is_rotating(p) and p not in trusted]
+    static = [p for p in out if p not in rotating]
     if rotating and static:
         warnings.append(f"dropped rotating parts {rotating}; they are measured through static parts")
         out = static
@@ -156,17 +164,27 @@ def clean_parts(parts, machine_type, warnings):
 
 
 def clear_phrases(parts, warnings):
-    """Phrases Spark marked as clearly visible. Plain strings (earlier recordings) count as clear."""
-    keep, unclear = [], []
+    """(phrases Spark marked as clearly visible, the unclear ones, the kept phrases Spark said do not turn or turn
+    smoothly). Plain strings (earlier recordings) count as clear, with no rotation given. Parts whose outline
+    changes as they turn are dropped here."""
+    keep, unclear, smooth, changing = [], [], set(), []
     for p in parts or []:
         if isinstance(p, dict):
             phrase, vis = p.get("phrase", ""), str(p.get("visibility", "unsure")).strip().lower()
+            rot = str(p.get("rotation", "")).strip().lower()
         else:
-            phrase, vis = p, "clear"
+            phrase, vis, rot = p, "clear", ""
+        if rot == "changing":
+            changing.append(normalise_phrase(phrase))
+            continue
         (keep if vis == "clear" else unclear).append(phrase)
+        if vis == "clear" and rot in ("none", "smooth"):
+            smooth.add(normalise_phrase(phrase))
     if unclear:
         warnings.append(f"skipped parts Spark could not clearly see: {[normalise_phrase(u) for u in unclear]}")
-    return keep, [normalise_phrase(u) for u in unclear]
+    if changing:
+        warnings.append(f"dropped parts whose outline changes as they turn: {changing}")
+    return keep, [normalise_phrase(u) for u in unclear], smooth
 
 
 def validate(raw, capture_fps, user_parts=None):
@@ -176,11 +194,12 @@ def validate(raw, capture_fps, user_parts=None):
     warnings = []
     machine = normalise_phrase(raw.get("machine_type", "")) or "machine"
     rpm = clamp_rpm(raw.get("rpm_min"), raw.get("rpm_max"), capture_fps, warnings)
-    clear, unclear = clear_phrases(raw.get("parts"), warnings)
-    parts = clean_parts(clear, machine, warnings)
+    clear, unclear, smooth = clear_phrases(raw.get("parts"), warnings)
+    parts = clean_parts(clear, machine, warnings, trusted=smooth)
     source = "spark"
     if user_parts:
-        parts = clean_parts(user_parts, user_parts[0], warnings)
+        # the user named these parts: none is dropped for sounding like a rotating part
+        parts = clean_parts(user_parts, user_parts[0], warnings, trusted={normalise_phrase(u) for u in user_parts})
         source = "user"
     return {"machine_type": machine, "rpm_range": list(rpm) if rpm else None, "rpm_reason": str(raw.get("rpm_reason", ""))[:300],
             "parts": parts, "parts_source": source, "fallback_phrase": machine, "parts_not_clear": unclear,

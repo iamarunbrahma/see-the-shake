@@ -1,0 +1,1555 @@
+{
+ "run_id": "cd1c4530dbaf",
+ "code_version": "4bb349d74f",
+ "options": {
+  "capture_fps": null,
+  "rpm": null,
+  "rpm_range": null,
+  "reference": [
+   "washing machine",
+   600.0
+  ],
+  "alpha": "auto",
+  "band": [
+   0.8,
+   1.25
+  ],
+  "video_seconds": 3.0,
+  "min_seconds": 4.0,
+  "max_seconds": 10.0,
+  "verify": false,
+  "mains_hz": 50.0,
+  "api": "record",
+  "cassette": null,
+  "api_label": "run",
+  "spark_video": true,
+  "user_parts": null,
+  "extra": {}
+ },
+ "mask_source": "SAM 3.1",
+ "clip": {
+  "name": "aeg-washer-1400rpm-120fps.webm"
+ },
+ "ingest": {
+  "clip": {
+   "path": "samples/real/aeg-washer-120fps/aeg-washer-1400rpm-120fps.webm",
+   "width": 1920,
+   "height": 1080,
+   "codec": "vp9",
+   "container": "matroska,webm",
+   "stream_fps": 120.0,
+   "capture_fps": 120.0,
+   "fps_source": "metadata:COM.ANDROID.CAPTURE.FPS",
+   "frames": 1265,
+   "duration_s": 10.5417,
+   "time_scale": 1.0,
+   "rotation": 0,
+   "warnings": [
+    "codec vp9 is not H.264 or H.265; SAM 3.1 needs one of those",
+    "container matroska,webm is not MP4 or MOV; SAM 3.1 needs one of those",
+    "in-between frames look synthesised (noise whiteness 0.234 below 0.7); the spectrum would be meaningless. Re-film at a native capture rate (e.g. 1080p 120 fps)."
+   ]
+  },
+  "interpolation": {
+   "flagged": true,
+   "status": "synthesised",
+   "whiteness": 0.234,
+   "threshold": 0.7,
+   "temporal_noise_grey": 2.487,
+   "min_noise_grey": 0.3,
+   "tile_whiteness_p10_p90": [
+    0.184,
+    0.542
+   ],
+   "frames_checked": 720
+  },
+  "window": {
+   "start_frame": 0,
+   "frames": 1200,
+   "start_s": 0.0,
+   "seconds": 10.0
+  }
+ },
+ "plan": {
+  "status": "done",
+  "machine_type": "washing machine",
+  "rpm_range": [
+   400.0,
+   1600.0
+  ],
+  "rpm_reason": "Standard front loader spin cycle covers 400 to 1600 rpm.",
+  "parts": [
+   "washing machine",
+   "washer front door"
+  ],
+  "parts_source": "spark",
+  "fallback_phrase": "washing machine",
+  "parts_not_clear": [],
+  "rotating_parts_seen": [
+   "drum"
+  ],
+  "warnings": [],
+  "usd": 0.012807,
+  "usage": {
+   "input_tokens": 1552,
+   "output_tokens": 2557
+  },
+  "preview": {
+   "seconds": 4.0,
+   "fps": 30,
+   "height": 480,
+   "step": 4
+  },
+  "preview_file_id": "file-1162483266120629"
+ },
+ "segment": {
+  "file_id": "file-4444612002454588",
+  "subclip": {
+   "start_frame": 570,
+   "frames": 60
+  },
+  "missing": [],
+  "usd": 0.024,
+  "parts": {
+   "washing machine": {
+    "objects": 2,
+    "frames_sent": 60,
+    "found": true,
+    "object_id": "0",
+    "frames_returned": 60,
+    "frames_decoded": 8,
+    "present_share": 1.0,
+    "confidence": 0.9766,
+    "area_px": 732987,
+    "bbox": [
+     467,
+     49,
+     1380,
+     1012
+    ],
+    "unstable_share": 0.0167,
+    "frames_billed": 60,
+    "usd": 0.012
+   },
+   "washer front door": {
+    "objects": 1,
+    "frames_sent": 60,
+    "found": true,
+    "object_id": "0",
+    "frames_returned": 60,
+    "frames_decoded": 8,
+    "present_share": 1.0,
+    "confidence": 0.8439,
+    "area_px": 296402,
+    "bbox": [
+     592,
+     294,
+     1250,
+     867
+    ],
+    "unstable_share": 0.0201,
+    "frames_billed": 60,
+    "usd": 0.012
+   }
+  }
+ },
+ "measurement": {
+  "fps": 120.0,
+  "frames": 1200,
+  "start_frame": 0,
+  "seconds": 10.0,
+  "bin_hz": 0.1,
+  "nyquist_hz": 60.0,
+  "running_speed": {
+   "hz": 22.7551,
+   "rpm": 1365.3,
+   "source": "rpm_range"
+  },
+  "scale": {
+   "mm_per_px": 0.6571741511500547,
+   "basis": "washing machine width = 600 mm over 913 px"
+  },
+  "flicker_hz": 20.0,
+  "pixel_noise_grey": 20.47,
+  "parts": {
+   "washing machine": {
+    "axes": {
+     "x": {
+      "noise_floor_px": 0.003201,
+      "peaks": [
+       {
+        "hz": 2.683,
+        "amp_px": 0.03745,
+        "amp_mm": 0.02461,
+        "order": null,
+        "label": "non-synchronous",
+        "phase": -1.7895,
+        "snr": 11.7,
+        "bg_amp_px": 0.40567
+       },
+       {
+        "hz": 4.154,
+        "amp_px": 0.03614,
+        "amp_mm": 0.02375,
+        "order": null,
+        "label": "non-synchronous",
+        "phase": 3.078,
+        "snr": 11.3,
+        "bg_amp_px": 0.09503
+       },
+       {
+        "hz": 5.134,
+        "amp_px": 0.03684,
+        "amp_mm": 0.02421,
+        "order": null,
+        "label": "non-synchronous",
+        "phase": 0.8541,
+        "snr": 11.5,
+        "bg_amp_px": 0.12665
+       },
+       {
+        "hz": 6.147,
+        "amp_px": 0.04932,
+        "amp_mm": 0.03241,
+        "order": null,
+        "label": "non-synchronous",
+        "phase": 2.9108,
+        "snr": 15.4,
+        "bg_amp_px": 0.19651
+       },
+       {
+        "hz": 7.428,
+        "amp_px": 0.04454,
+        "amp_mm": 0.02927,
+        "order": null,
+        "label": "non-synchronous",
+        "phase": 1.0112,
+        "snr": 13.9,
+        "bg_amp_px": 0.1639
+       },
+       {
+        "hz": 8.621,
+        "amp_px": 0.03329,
+        "amp_mm": 0.02188,
+        "order": null,
+        "label": "non-synchronous",
+        "phase": 1.6422,
+        "snr": 10.4,
+        "bg_amp_px": 0.12314
+       },
+       {
+        "hz": 9.54,
+        "amp_px": 0.02967,
+        "amp_mm": 0.0195,
+        "order": null,
+        "label": "non-synchronous",
+        "phase": -0.1753,
+        "snr": 9.3,
+        "bg_amp_px": 0.10375
+       },
+       {
+        "hz": 12.086,
+        "amp_px": 0.02701,
+        "amp_mm": 0.01775,
+        "order": null,
+        "label": "non-synchronous",
+        "phase": 2.1014,
+        "snr": 8.4,
+        "bg_amp_px": 0.13622
+       },
+       {
+        "hz": 22.752,
+        "amp_px": 0.06405,
+        "amp_mm": 0.04209,
+        "order": 1.0,
+        "label": "1x",
+        "phase": -1.7767,
+        "snr": 20.0,
+        "bg_amp_px": 0.02021
+       }
+      ],
+      "orders": {
+       "0.5x": {
+        "hz": 11.34,
+        "amp_px": 0.02658,
+        "above_floor": true,
+        "phase": -1.4142
+       },
+       "1x": {
+        "hz": 22.752,
+        "amp_px": 0.06405,
+        "above_floor": true,
+        "phase": -1.7767
+       },
+       "1.5x": {
+        "hz": 33.975,
+        "amp_px": 0.00604,
+        "above_floor": false,
+        "phase": 1.4224
+       },
+       "2x": {
+        "hz": 45.498,
+        "amp_px": 0.01422,
+        "above_floor": false,
+        "phase": -0.1703
+       },
+       "2.5x": {
+        "hz": 57.1,
+        "amp_px": 0.00185,
+        "above_floor": false,
+        "phase": 0.5237
+       },
+       "3x": {
+        "hz": 68.265,
+        "amp_px": 0.0,
+        "above_floor": false,
+        "phase": null
+       },
+       "4x": {
+        "hz": 91.02,
+        "amp_px": 0.0,
+        "above_floor": false,
+        "phase": null
+       },
+       "5x": {
+        "hz": 113.775,
+        "amp_px": 0.0,
+        "above_floor": false,
+        "phase": null
+       },
+       "6x": {
+        "hz": 136.53,
+        "amp_px": 0.0,
+        "above_floor": false,
+        "phase": null
+       }
+      }
+     },
+     "y": {
+      "noise_floor_px": 0.004248,
+      "peaks": [
+       {
+        "hz": 2.318,
+        "amp_px": 0.07691,
+        "amp_mm": 0.05054,
+        "order": null,
+        "label": "non-synchronous",
+        "phase": -1.8091,
+        "snr": 18.1,
+        "bg_amp_px": 0.26406
+       },
+       {
+        "hz": 3.338,
+        "amp_px": 0.06834,
+        "amp_mm": 0.04491,
+        "order": null,
+        "label": "non-synchronous",
+        "phase": 0.3417,
+        "snr": 16.1,
+        "bg_amp_px": 0.2157
+       },
+       {
+        "hz": 4.213,
+        "amp_px": 0.03864,
+        "amp_mm": 0.02539,
+        "order": null,
+        "label": "non-synchronous",
+        "phase": 2.8513,
+        "snr": 9.1,
+        "bg_amp_px": 0.07556
+       },
+       {
+        "hz": 6.181,
+        "amp_px": 0.03775,
+        "amp_mm": 0.02481,
+        "order": null,
+        "label": "non-synchronous",
+        "phase": 0.0162,
+        "snr": 8.9,
+        "bg_amp_px": 0.1611
+       },
+       {
+        "hz": 7.516,
+        "amp_px": 0.044,
+        "amp_mm": 0.02892,
+        "order": null,
+        "label": "non-synchronous",
+        "phase": -1.9157,
+        "snr": 10.4,
+        "bg_amp_px": 0.316
+       },
+       {
+        "hz": 22.745,
+        "amp_px": 0.05537,
+        "amp_mm": 0.03639,
+        "order": 1.0,
+        "label": "1x",
+        "phase": 0.641,
+        "snr": 13.0,
+        "bg_amp_px": 0.02193
+       }
+      ],
+      "orders": {
+       "0.5x": {
+        "hz": 11.401,
+        "amp_px": 0.02891,
+        "above_floor": false,
+        "phase": 1.665
+       },
+       "1x": {
+        "hz": 22.745,
+        "amp_px": 0.05537,
+        "above_floor": true,
+        "phase": 0.641
+       },
+       "1.5x": {
+        "hz": 33.877,
+        "amp_px": 0.00467,
+        "above_floor": false,
+        "phase": -1.1995
+       },
+       "2x": {
+        "hz": 45.521,
+        "amp_px": 0.01288,
+        "above_floor": false,
+        "phase": 1.2548
+       },
+       "2.5x": {
+        "hz": 56.675,
+        "amp_px": 0.00819,
+        "above_floor": false,
+        "phase": -0.1588
+       },
+       "3x": {
+        "hz": 68.265,
+        "amp_px": 0.0,
+        "above_floor": false,
+        "phase": null
+       },
+       "4x": {
+        "hz": 91.02,
+        "amp_px": 0.0,
+        "above_floor": false,
+        "phase": null
+       },
+       "5x": {
+        "hz": 113.775,
+        "amp_px": 0.0,
+        "above_floor": false,
+        "phase": null
+       },
+       "6x": {
+        "hz": 136.53,
+        "amp_px": 0.0,
+        "above_floor": false,
+        "phase": null
+       }
+      }
+     }
+    },
+    "velocity_rms": 6.209,
+    "velocity_unit": "mm/s",
+    "excluded_rotating_px": 2826
+   },
+   "washer front door": {
+    "axes": {
+     "x": {
+      "noise_floor_px": 0.00508,
+      "peaks": [
+       {
+        "hz": 2.644,
+        "amp_px": 0.05969,
+        "amp_mm": 0.03923,
+        "order": null,
+        "label": "non-synchronous",
+        "phase": 1.1623,
+        "snr": 11.8,
+        "bg_amp_px": 0.40567
+       },
+       {
+        "hz": 7.412,
+        "amp_px": 0.04792,
+        "amp_mm": 0.03149,
+        "order": null,
+        "label": "non-synchronous",
+        "phase": 0.8942,
+        "snr": 9.4,
+        "bg_amp_px": 0.1639
+       },
+       {
+        "hz": 22.749,
+        "amp_px": 0.1877,
+        "amp_mm": 0.12335,
+        "order": 1.0,
+        "label": "1x",
+        "phase": 1.1704,
+        "snr": 37.0,
+        "bg_amp_px": 0.02021
+       },
+       {
+        "hz": 45.497,
+        "amp_px": 0.05526,
+        "amp_mm": 0.03632,
+        "order": 2.0,
+        "label": "2x",
+        "phase": -0.2607,
+        "snr": 10.9,
+        "bg_amp_px": 0.0025
+       }
+      ],
+      "orders": {
+       "0.5x": {
+        "hz": 11.595,
+        "amp_px": 0.02367,
+        "above_floor": false,
+        "phase": -1.2126
+       },
+       "1x": {
+        "hz": 22.749,
+        "amp_px": 0.1877,
+        "above_floor": true,
+        "phase": 1.1704
+       },
+       "1.5x": {
+        "hz": 34.35,
+        "amp_px": 0.00521,
+        "above_floor": false,
+        "phase": 0.7889
+       },
+       "2x": {
+        "hz": 45.497,
+        "amp_px": 0.05526,
+        "above_floor": true,
+        "phase": -0.2607
+       },
+       "2.5x": {
+        "hz": 56.658,
+        "amp_px": 0.00409,
+        "above_floor": false,
+        "phase": 1.288
+       },
+       "3x": {
+        "hz": 68.265,
+        "amp_px": 0.0,
+        "above_floor": false,
+        "phase": null
+       },
+       "4x": {
+        "hz": 91.02,
+        "amp_px": 0.0,
+        "above_floor": false,
+        "phase": null
+       },
+       "5x": {
+        "hz": 113.775,
+        "amp_px": 0.0,
+        "above_floor": false,
+        "phase": null
+       },
+       "6x": {
+        "hz": 136.53,
+        "amp_px": 0.0,
+        "above_floor": false,
+        "phase": null
+       }
+      }
+     },
+     "y": {
+      "noise_floor_px": 0.007438,
+      "peaks": [
+       {
+        "hz": 2.715,
+        "amp_px": 0.08885,
+        "amp_mm": 0.05839,
+        "order": null,
+        "label": "non-synchronous",
+        "phase": -0.9753,
+        "snr": 11.9,
+        "bg_amp_px": 0.26394
+       },
+       {
+        "hz": 22.757,
+        "amp_px": 0.41463,
+        "amp_mm": 0.27248,
+        "order": 1.0,
+        "label": "1x",
+        "phase": 1.3271,
+        "snr": 55.7,
+        "bg_amp_px": 0.02193
+       },
+       {
+        "hz": 45.482,
+        "amp_px": 0.08538,
+        "amp_mm": 0.05611,
+        "order": 2.0,
+        "label": "2x",
+        "phase": 3.09,
+        "snr": 11.5,
+        "bg_amp_px": 0.00269
+       }
+      ],
+      "orders": {
+       "0.5x": {
+        "hz": 11.239,
+        "amp_px": 0.02164,
+        "above_floor": false,
+        "phase": 1.8137
+       },
+       "1x": {
+        "hz": 22.757,
+        "amp_px": 0.41463,
+        "above_floor": true,
+        "phase": 1.3271
+       },
+       "1.5x": {
+        "hz": 33.887,
+        "amp_px": 0.00915,
+        "above_floor": false,
+        "phase": -0.3907
+       },
+       "2x": {
+        "hz": 45.482,
+        "amp_px": 0.08538,
+        "above_floor": true,
+        "phase": 3.09
+       },
+       "2.5x": {
+        "hz": 56.893,
+        "amp_px": 0.00489,
+        "above_floor": false,
+        "phase": -0.997
+       },
+       "3x": {
+        "hz": 68.265,
+        "amp_px": 0.0,
+        "above_floor": false,
+        "phase": null
+       },
+       "4x": {
+        "hz": 91.02,
+        "amp_px": 0.0,
+        "above_floor": false,
+        "phase": null
+       },
+       "5x": {
+        "hz": 113.775,
+        "amp_px": 0.0,
+        "above_floor": false,
+        "phase": null
+       },
+       "6x": {
+        "hz": 136.53,
+        "amp_px": 0.0,
+        "above_floor": false,
+        "phase": null
+       }
+      }
+     }
+    },
+    "velocity_rms": 33.146,
+    "velocity_unit": "mm/s",
+    "excluded_rotating_px": 0
+   }
+  },
+  "background": {
+   "axes": {
+    "x": {
+     "noise_floor_px": 0.002852,
+     "peaks": [
+      {
+       "hz": 2.462,
+       "amp_px": 0.40567,
+       "amp_mm": 0.2666,
+       "order": null,
+       "label": "non-synchronous",
+       "phase": 2.4538,
+       "snr": 142.2
+      },
+      {
+       "hz": 3.345,
+       "amp_px": 0.28108,
+       "amp_mm": 0.18472,
+       "order": null,
+       "label": "non-synchronous",
+       "phase": 1.802,
+       "snr": 98.5
+      },
+      {
+       "hz": 4.156,
+       "amp_px": 0.09503,
+       "amp_mm": 0.06245,
+       "order": null,
+       "label": "non-synchronous",
+       "phase": -1.2905,
+       "snr": 33.3
+      },
+      {
+       "hz": 5.103,
+       "amp_px": 0.12665,
+       "amp_mm": 0.08323,
+       "order": null,
+       "label": "non-synchronous",
+       "phase": -2.2352,
+       "snr": 44.4
+      },
+      {
+       "hz": 6.193,
+       "amp_px": 0.19651,
+       "amp_mm": 0.12914,
+       "order": null,
+       "label": "non-synchronous",
+       "phase": 2.7701,
+       "snr": 68.9
+      },
+      {
+       "hz": 7.431,
+       "amp_px": 0.1639,
+       "amp_mm": 0.10771,
+       "order": null,
+       "label": "non-synchronous",
+       "phase": -2.6446,
+       "snr": 57.5
+      },
+      {
+       "hz": 8.633,
+       "amp_px": 0.12314,
+       "amp_mm": 0.08092,
+       "order": null,
+       "label": "non-synchronous",
+       "phase": -1.5782,
+       "snr": 43.2
+      },
+      {
+       "hz": 9.552,
+       "amp_px": 0.10375,
+       "amp_mm": 0.06818,
+       "order": null,
+       "label": "non-synchronous",
+       "phase": -0.999,
+       "snr": 36.4
+      },
+      {
+       "hz": 10.882,
+       "amp_px": 0.06921,
+       "amp_mm": 0.04548,
+       "order": null,
+       "label": "non-synchronous",
+       "phase": -1.7241,
+       "snr": 24.3
+      },
+      {
+       "hz": 12.107,
+       "amp_px": 0.13622,
+       "amp_mm": 0.08952,
+       "order": null,
+       "label": "non-synchronous",
+       "phase": -1.3392,
+       "snr": 47.8
+      }
+     ],
+     "orders": {
+      "0.5x": {
+       "hz": 11.363,
+       "amp_px": 0.1071,
+       "above_floor": true,
+       "phase": -1.9623
+      },
+      "1x": {
+       "hz": 22.743,
+       "amp_px": 0.02021,
+       "above_floor": false,
+       "phase": -1.8372
+      },
+      "1.5x": {
+       "hz": 34.297,
+       "amp_px": 0.00421,
+       "above_floor": false,
+       "phase": -2.1196
+      },
+      "2x": {
+       "hz": 45.572,
+       "amp_px": 0.0025,
+       "above_floor": false,
+       "phase": -1.9125
+      },
+      "2.5x": {
+       "hz": 56.841,
+       "amp_px": 0.00291,
+       "above_floor": false,
+       "phase": -1.8856
+      },
+      "3x": {
+       "hz": 68.265,
+       "amp_px": 0.0,
+       "above_floor": false,
+       "phase": null
+      },
+      "4x": {
+       "hz": 91.02,
+       "amp_px": 0.0,
+       "above_floor": false,
+       "phase": null
+      },
+      "5x": {
+       "hz": 113.775,
+       "amp_px": 0.0,
+       "above_floor": false,
+       "phase": null
+      },
+      "6x": {
+       "hz": 136.53,
+       "amp_px": 0.0,
+       "above_floor": false,
+       "phase": null
+      }
+     }
+    },
+    "y": {
+     "noise_floor_px": 0.003356,
+     "peaks": [
+      {
+       "hz": 2.893,
+       "amp_px": 0.26394,
+       "amp_mm": 0.17346,
+       "order": null,
+       "label": "non-synchronous",
+       "phase": -2.7643,
+       "snr": 78.6
+      },
+      {
+       "hz": 3.85,
+       "amp_px": 0.16991,
+       "amp_mm": 0.11166,
+       "order": null,
+       "label": "non-synchronous",
+       "phase": -0.9032,
+       "snr": 50.6
+      },
+      {
+       "hz": 4.9,
+       "amp_px": 0.09797,
+       "amp_mm": 0.06438,
+       "order": null,
+       "label": "non-synchronous",
+       "phase": 0.9617,
+       "snr": 29.2
+      },
+      {
+       "hz": 6.4,
+       "amp_px": 0.14996,
+       "amp_mm": 0.09855,
+       "order": null,
+       "label": "non-synchronous",
+       "phase": 2.3111,
+       "snr": 44.7
+      },
+      {
+       "hz": 7.541,
+       "amp_px": 0.316,
+       "amp_mm": 0.20767,
+       "order": null,
+       "label": "non-synchronous",
+       "phase": -2.6203,
+       "snr": 94.1
+      },
+      {
+       "hz": 8.616,
+       "amp_px": 0.14996,
+       "amp_mm": 0.09855,
+       "order": null,
+       "label": "non-synchronous",
+       "phase": 0.4506,
+       "snr": 44.7
+      },
+      {
+       "hz": 10.042,
+       "amp_px": 0.11885,
+       "amp_mm": 0.07811,
+       "order": null,
+       "label": "non-synchronous",
+       "phase": -1.5438,
+       "snr": 35.4
+      },
+      {
+       "hz": 11.024,
+       "amp_px": 0.07954,
+       "amp_mm": 0.05227,
+       "order": null,
+       "label": "non-synchronous",
+       "phase": -1.0706,
+       "snr": 23.7
+      },
+      {
+       "hz": 12.025,
+       "amp_px": 0.1304,
+       "amp_mm": 0.08569,
+       "order": null,
+       "label": "non-synchronous",
+       "phase": 0.0497,
+       "snr": 38.9
+      },
+      {
+       "hz": 14.274,
+       "amp_px": 0.04647,
+       "amp_mm": 0.03054,
+       "order": null,
+       "label": "non-synchronous",
+       "phase": 1.9355,
+       "snr": 13.8
+      }
+     ],
+     "orders": {
+      "0.5x": {
+       "hz": 11.353,
+       "amp_px": 0.05729,
+       "above_floor": true,
+       "phase": 1.7524
+      },
+      "1x": {
+       "hz": 22.703,
+       "amp_px": 0.02193,
+       "above_floor": false,
+       "phase": 2.9278
+      },
+      "1.5x": {
+       "hz": 34.093,
+       "amp_px": 0.00295,
+       "above_floor": false,
+       "phase": 2.1929
+      },
+      "2x": {
+       "hz": 45.528,
+       "amp_px": 0.00269,
+       "above_floor": false,
+       "phase": -0.7746
+      },
+      "2.5x": {
+       "hz": 56.673,
+       "amp_px": 0.00359,
+       "above_floor": false,
+       "phase": 3.0366
+      },
+      "3x": {
+       "hz": 68.265,
+       "amp_px": 0.0,
+       "above_floor": false,
+       "phase": null
+      },
+      "4x": {
+       "hz": 91.02,
+       "amp_px": 0.0,
+       "above_floor": false,
+       "phase": null
+      },
+      "5x": {
+       "hz": 113.775,
+       "amp_px": 0.0,
+       "above_floor": false,
+       "phase": null
+      },
+      "6x": {
+       "hz": 136.53,
+       "amp_px": 0.0,
+       "above_floor": false,
+       "phase": null
+      }
+     }
+    }
+   },
+   "velocity_rms": 14.721,
+   "velocity_unit": "mm/s"
+  },
+  "mains_hz": 50.0
+ },
+ "fingerprint": {
+  "verdict": "imbalance",
+  "confidence": "high",
+  "reason": "1x holds 95% of the vibration energy",
+  "lead_part": "washer front door",
+  "evidence": [
+   {
+    "axis": "x",
+    "hz": 22.749,
+    "order": 1.0,
+    "label": "1x",
+    "amp_px": 0.1877
+   },
+   {
+    "axis": "y",
+    "hz": 22.757,
+    "order": 1.0,
+    "label": "1x",
+    "amp_px": 0.41463
+   }
+  ],
+  "alert_level": 7.0,
+  "alert_unit": "mm/s",
+  "scaled": true,
+  "phase_1x_x_rad": {
+   "washing machine -> washer front door": 2.947
+  },
+  "parts": {
+   "washing machine": {
+    "features": {
+     "amp_1x_px": 0.08467,
+     "e1_share": 1.0,
+     "r21": 0.227,
+     "r31": 0.0,
+     "harmonics": [],
+     "n_harmonics": 0,
+     "faint_harmonics": [],
+     "half_order": true,
+     "half_ratio": 0.464,
+     "h_over_v_1x": 1.157,
+     "velocity_rms": 5.624,
+     "velocity_unit": "mm/s",
+     "present": {
+      "0.5x": true,
+      "1x": true
+     },
+     "artifacts": [
+      {
+       "axis": "x",
+       "hz": 2.683,
+       "label": "non-synchronous",
+       "amp_px": 0.03745,
+       "bg_amp_px": 0.40567,
+       "kind": "whole frame"
+      },
+      {
+       "axis": "x",
+       "hz": 4.154,
+       "label": "non-synchronous",
+       "amp_px": 0.03614,
+       "bg_amp_px": 0.09503,
+       "kind": "whole frame"
+      },
+      {
+       "axis": "x",
+       "hz": 5.134,
+       "label": "non-synchronous",
+       "amp_px": 0.03684,
+       "bg_amp_px": 0.12665,
+       "kind": "whole frame"
+      },
+      {
+       "axis": "x",
+       "hz": 6.147,
+       "label": "non-synchronous",
+       "amp_px": 0.04932,
+       "bg_amp_px": 0.19651,
+       "kind": "whole frame"
+      },
+      {
+       "axis": "x",
+       "hz": 7.428,
+       "label": "non-synchronous",
+       "amp_px": 0.04454,
+       "bg_amp_px": 0.1639,
+       "kind": "whole frame"
+      },
+      {
+       "axis": "x",
+       "hz": 8.621,
+       "label": "non-synchronous",
+       "amp_px": 0.03329,
+       "bg_amp_px": 0.12314,
+       "kind": "whole frame"
+      },
+      {
+       "axis": "x",
+       "hz": 9.54,
+       "label": "non-synchronous",
+       "amp_px": 0.02967,
+       "bg_amp_px": 0.10375,
+       "kind": "whole frame"
+      },
+      {
+       "axis": "x",
+       "hz": 12.086,
+       "label": "non-synchronous",
+       "amp_px": 0.02701,
+       "bg_amp_px": 0.13622,
+       "kind": "whole frame"
+      },
+      {
+       "axis": "y",
+       "hz": 2.318,
+       "label": "non-synchronous",
+       "amp_px": 0.07691,
+       "bg_amp_px": 0.26406,
+       "kind": "whole frame"
+      },
+      {
+       "axis": "y",
+       "hz": 3.338,
+       "label": "non-synchronous",
+       "amp_px": 0.06834,
+       "bg_amp_px": 0.2157,
+       "kind": "whole frame"
+      },
+      {
+       "axis": "y",
+       "hz": 4.213,
+       "label": "non-synchronous",
+       "amp_px": 0.03864,
+       "bg_amp_px": 0.07556,
+       "kind": "whole frame"
+      },
+      {
+       "axis": "y",
+       "hz": 6.181,
+       "label": "non-synchronous",
+       "amp_px": 0.03775,
+       "bg_amp_px": 0.1611,
+       "kind": "whole frame"
+      },
+      {
+       "axis": "y",
+       "hz": 7.516,
+       "label": "non-synchronous",
+       "amp_px": 0.044,
+       "bg_amp_px": 0.316,
+       "kind": "whole frame"
+      }
+     ]
+    },
+    "verdict": "none",
+    "confidence": "medium",
+    "reason": "velocity 5.62 mm/s is below the alert level 7",
+    "evidence": []
+   },
+   "washer front door": {
+    "features": {
+     "amp_1x_px": 0.45514,
+     "e1_share": 0.952,
+     "r21": 0.223,
+     "r31": 0.0,
+     "harmonics": [
+      "2x"
+     ],
+     "n_harmonics": 1,
+     "faint_harmonics": [],
+     "half_order": false,
+     "half_ratio": 0.07,
+     "h_over_v_1x": 0.453,
+     "velocity_rms": 33.119,
+     "velocity_unit": "mm/s",
+     "present": {
+      "1x": true,
+      "2x": true
+     },
+     "artifacts": [
+      {
+       "axis": "x",
+       "hz": 2.644,
+       "label": "non-synchronous",
+       "amp_px": 0.05969,
+       "bg_amp_px": 0.40567,
+       "kind": "whole frame"
+      },
+      {
+       "axis": "x",
+       "hz": 7.412,
+       "label": "non-synchronous",
+       "amp_px": 0.04792,
+       "bg_amp_px": 0.1639,
+       "kind": "whole frame"
+      },
+      {
+       "axis": "y",
+       "hz": 2.715,
+       "label": "non-synchronous",
+       "amp_px": 0.08885,
+       "bg_amp_px": 0.26394,
+       "kind": "whole frame"
+      }
+     ]
+    },
+    "verdict": "imbalance",
+    "confidence": "high",
+    "reason": "1x holds 95% of the vibration energy",
+    "evidence": [
+     {
+      "axis": "x",
+      "hz": 22.749,
+      "order": 1.0,
+      "label": "1x",
+      "amp_px": 0.1877
+     },
+     {
+      "axis": "y",
+      "hz": 22.757,
+      "order": 1.0,
+      "label": "1x",
+      "amp_px": 0.41463
+     }
+    ]
+   }
+  }
+ },
+ "diagnosis": {
+  "status": "done",
+  "headline": {
+   "fault": "imbalance",
+   "confidence": "high",
+   "reason": "1x holds 95% of the vibration energy",
+   "lead_part": "washer front door",
+   "evidence": [
+    {
+     "axis": "x",
+     "hz": 22.749,
+     "order": 1.0,
+     "label": "1x",
+     "amp_px": 0.1877
+    },
+    {
+     "axis": "y",
+     "hz": 22.757,
+     "order": 1.0,
+     "label": "1x",
+     "amp_px": 0.41463
+    }
+   ],
+   "source": "fixed rules"
+  },
+  "spark": {
+   "fault": "imbalance",
+   "fault_reported": "imbalance",
+   "confidence": "high",
+   "confidence_reported": "high",
+   "capped": false,
+   "cap_reasons": [],
+   "agrees": true,
+   "supported": true,
+   "evidence": [
+    {
+     "part": "washer front door",
+     "frequency_hz": 22.757,
+     "order": "1x",
+     "matched": {
+      "part": "washer front door",
+      "axis": "y",
+      "hz": 22.757,
+      "label": "1x",
+      "amp_px": 0.41463,
+      "snr": 55.7
+     },
+     "status": "verified",
+     "reason": "matches the measured 1x peak"
+    },
+    {
+     "part": "washer front door",
+     "frequency_hz": 22.749,
+     "order": "1x",
+     "matched": {
+      "part": "washer front door",
+      "axis": "x",
+      "hz": 22.749,
+      "label": "1x",
+      "amp_px": 0.1877,
+      "snr": 37.0
+     },
+     "status": "verified",
+     "reason": "matches the measured 1x peak"
+    },
+    {
+     "part": "washer front door",
+     "frequency_hz": 45.482,
+     "order": "2x",
+     "matched": {
+      "part": "washer front door",
+      "axis": "y",
+      "hz": 45.482,
+      "label": "2x",
+      "amp_px": 0.08538,
+      "snr": 11.5
+     },
+     "status": "context",
+     "reason": "a real 2x peak, but it is not what this fault rests on"
+    },
+    {
+     "part": "washer front door",
+     "frequency_hz": 45.497,
+     "order": "2x",
+     "matched": {
+      "part": "washer front door",
+      "axis": "x",
+      "hz": 45.497,
+      "label": "2x",
+      "amp_px": 0.05526,
+      "snr": 10.9
+     },
+     "status": "context",
+     "reason": "a real 2x peak, but it is not what this fault rests on"
+    }
+   ],
+   "counts": {
+    "verified": 2,
+    "context": 2,
+    "dropped": 0
+   },
+   "explanation": "The washer front door shows a dominant 1x peak in vertical and horizontal with high SNR and 95 percent of energy at 1x. The 2x peaks are small at about 22 percent of 1x and there is no 0.5x or harmonic row, so misalignment and looseness are not supported. The pattern and very high overall velocity match a spin imbalance from uneven laundry.",
+   "fix": [
+    "Stop the machine and redistribute laundry evenly around the drum",
+    "Balance heavy items and avoid single item loads",
+    "Level the machine so all feet sit firmly on the floor",
+    "Run a test spin with a normal load to confirm smooth running"
+   ],
+   "check_next": [
+    "Run a spin with a normal balanced load and compare shake",
+    "Check leveling feet and floor contact for rocking",
+    "Inspect shock absorbers and drum suspension if shake stays high"
+   ],
+   "visual": {
+    "most_moving_part": "washer front door",
+    "direction": "vertical",
+    "description": "In the magnified view the door area bounces mainly up and down relative to its rest outline.",
+    "status": "verified",
+    "checks": [
+     {
+      "claim": "most_moving_part",
+      "status": "verified",
+      "measured": {
+       "amplitude_px": {
+        "washing machine": 0.08467,
+        "washer front door": 0.45514
+       }
+      },
+      "reason": "washer front door moves 0.4551 px in the band; the most is 0.4551 px (washer front door)"
+     },
+     {
+      "claim": "direction",
+      "status": "verified",
+      "measured": {
+       "part": "washer front door",
+       "horizontal_share": 0.17
+      },
+      "reason": "measured motion of washer front door is vertical (17% horizontal)"
+     }
+    ]
+   }
+  },
+  "show_both": false,
+  "spark_raw": {
+   "check_next": [
+    "Run a spin with a normal balanced load and compare shake",
+    "Check leveling feet and floor contact for rocking",
+    "Inspect shock absorbers and drum suspension if shake stays high"
+   ],
+   "confidence": "high",
+   "evidence": [
+    {
+     "frequency_hz": 22.757,
+     "order": "1x",
+     "part": "washer front door"
+    },
+    {
+     "frequency_hz": 22.749,
+     "order": "1x",
+     "part": "washer front door"
+    },
+    {
+     "frequency_hz": 45.482,
+     "order": "2x",
+     "part": "washer front door"
+    },
+    {
+     "frequency_hz": 45.497,
+     "order": "2x",
+     "part": "washer front door"
+    }
+   ],
+   "explanation": "The washer front door shows a dominant 1x peak in vertical and horizontal with high SNR and 95 percent of energy at 1x. The 2x peaks are small at about 22 percent of 1x and there is no 0.5x or harmonic row, so misalignment and looseness are not supported. The pattern and very high overall velocity match a spin imbalance from uneven laundry.",
+   "fault": "imbalance",
+   "fix": [
+    "Stop the machine and redistribute laundry evenly around the drum",
+    "Balance heavy items and avoid single item loads",
+    "Level the machine so all feet sit firmly on the floor",
+    "Run a test spin with a normal load to confirm smooth running"
+   ],
+   "visual_observation": {
+    "description": "In the magnified view the door area bounces mainly up and down relative to its rest outline.",
+    "direction": "vertical",
+    "most_moving_part": "washer front door"
+   }
+  },
+  "usd": 0.018125,
+  "usage": {
+   "input_tokens": 5221,
+   "output_tokens": 2729
+  }
+ },
+ "api": {
+  "mode": "record",
+  "usd": {
+   "plan": 0.012807,
+   "segment": 0.024,
+   "diagnose": 0.018125,
+   "total": 0.054932
+  },
+  "calls": {
+   "usd": 0.054932,
+   "calls": 7,
+   "by_step": [
+    {
+     "op": "upload",
+     "label": "run:plan:preview",
+     "calls": 1,
+     "usd": 0.0
+    },
+    {
+     "op": "spark",
+     "label": "run:plan",
+     "calls": 1,
+     "usd": 0.012807
+    },
+    {
+     "op": "upload",
+     "label": "run:segment:subclip",
+     "calls": 1,
+     "usd": 0.0
+    },
+    {
+     "op": "sam",
+     "label": "washer front door",
+     "calls": 1,
+     "usd": 0.012
+    },
+    {
+     "op": "sam",
+     "label": "washing machine",
+     "calls": 1,
+     "usd": 0.012
+    },
+    {
+     "op": "upload",
+     "label": "run:diagnose:magnified",
+     "calls": 1,
+     "usd": 0.0
+    },
+    {
+     "op": "spark",
+     "label": "run:diagnose",
+     "calls": 1,
+     "usd": 0.018125
+    }
+   ]
+  }
+ },
+ "steps": [
+  {
+   "key": "ingest",
+   "label": "Ingest the clip",
+   "status": "done",
+   "detail": "120 fps (metadata:COM.ANDROID.CAPTURE.FPS), window 10.0 s, frames check: synthesised",
+   "seconds": 12.84
+  },
+  {
+   "key": "plan",
+   "label": "Plan the inspection (Muse Spark)",
+   "status": "done",
+   "detail": "washing machine: washing machine, washer front door",
+   "seconds": 28.51
+  },
+  {
+   "key": "segment",
+   "label": "Find the parts (SAM 3.1)",
+   "status": "done",
+   "detail": "2 parts",
+   "seconds": 32.24
+  },
+  {
+   "key": "measure",
+   "label": "Measure the vibration",
+   "status": "done",
+   "detail": "running speed 22.76 Hz (1365 rpm, from the rpm range)",
+   "seconds": 58.97
+  },
+  {
+   "key": "fingerprint",
+   "label": "Match fault fingerprints",
+   "status": "done",
+   "detail": "imbalance (high)",
+   "seconds": 0.02
+  },
+  {
+   "key": "magnify",
+   "label": "Magnify the shake",
+   "status": "done",
+   "detail": "4x, band 18.2 to 28.4 Hz",
+   "seconds": 14.16
+  },
+  {
+   "key": "diagnose",
+   "label": "Explain and suggest a fix (Muse Spark)",
+   "status": "done",
+   "detail": "Spark: imbalance (high); evidence 2 verified, 2 context, 0 dropped",
+   "seconds": 20.62
+  }
+ ],
+ "magnify": {
+  "alpha": 3.928,
+  "band_hz": [
+   18.204,
+   28.444
+  ],
+  "band_orders": [
+   0.8,
+   1.25
+  ],
+  "frames": 360,
+  "seconds": 3.0,
+  "playback_fps": 30,
+  "slow_factor": 4.0,
+  "start_frame": 0,
+  "ref_index": 168,
+  "render_scale": 0.5,
+  "zones_px": {
+   "washing machine": 199027,
+   "washer front door": 89652
+  },
+  "layers": [
+   {
+    "part": "washing machine",
+    "outer": true,
+    "max_shift_px": 0.818
+   },
+   {
+    "part": "washer front door",
+    "outer": false,
+    "max_shift_px": 9.354
+   }
+  ],
+  "slice": {
+   "row": 264,
+   "cols": [
+    239,
+    299
+   ],
+   "seconds": 0.5,
+   "scale": 0.5
+  },
+  "files": {
+   "side_by_side": "side_by_side.mp4",
+   "native": null,
+   "slice": "slice.png"
+  }
+ },
+ "warnings": [
+  "In-between frames look synthesised; treat the spectrum with suspicion."
+ ],
+ "files": {
+  "masks": {
+   "washing machine": "masks/washing_machine.png",
+   "washer front door": "masks/washer_front_door.png"
+  },
+  "spectra": {
+   "washing machine": "spectrum_washing_machine.png",
+   "washer front door": "spectrum_washer_front_door.png"
+  },
+  "spectrum": "spectrum.png",
+  "side_by_side": "side_by_side.mp4",
+  "slice": "slice.png"
+ }
+}
