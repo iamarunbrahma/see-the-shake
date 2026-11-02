@@ -109,12 +109,33 @@ Render a twin clip on its own:
 python -m shake.twin looseness out/twin/looseness --seconds 6
 ```
 
+The second virtual machine is a pedestal fan (healthy, imbalance, looseness):
+
+```bash
+python -m shake.pipeline --twin fan-imbalance --seconds 6 --scale 1
+```
+
 ## Filming tips
 
 - Slow motion at 240 fps (720p is fine). Avoid 960 fps modes: they invent frames, and ingest will flag them.
 - Prop the phone up; it must not touch the machine. Film 10 s of steady running.
 - Keep the original file: transfer by USB or a cloud drive, not a messaging app.
 - If the phone saved slow motion as a 30 fps file, enter the capture rate (240).
+
+### Filming a fan
+
+The spinning blades change every frame, so any region that contains them cannot be tracked. Measure what holds them.
+
+- Film a pedestal or table fan from a 3/4 angle, so the motor housing, the guard rim and the stand are all in view.
+  For a ceiling fan, frame the motor housing and the downrod.
+- Parts to measure: the motor housing, the guard rim and the stand (or downrod), never the blade disc. With Muse Spark
+  and SAM 3.1 on, the plan already drops blades; if you draw boxes yourself, box the housing and the stand, and give
+  the guard as a whole: rotating content inside it is detected and left out, the rim is what gets measured.
+- Keep the background still. A fan blows curtains and paper, and the background is the reference for camera shake.
+- Dark or contrasting parts measure best. On the twin, a pale pole against a pale wall read its motion low until
+  the pole was dark; a chrome stand in front of a white wall can do the same.
+- Three blades give a blade-pass peak at 3x running speed. On its own it is not a fault; imbalance shows at 1x, a
+  loose head mount at 0.5x and a row of harmonics.
 
 ## Tests
 
