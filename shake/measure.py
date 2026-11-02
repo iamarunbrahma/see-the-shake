@@ -4,7 +4,8 @@ Ported from reference/spike/measure.py (Oct 27). Kept from the spike: region Luc
 against the mean frame, gain normalisation (rejects LED flicker), background motion subtracted (camera shake),
 quadratic detrend, Hann window, peaks above 8x the median floor.
 Added: any number of parts with the background outside their union; rotating content (drum glass, fan blades)
-dropped from each part's weight; peak frequency and amplitude refined by log-parabolic interpolation; running
+dropped from each part's weight; texture turning on a part's surface (marks on a shaft or disc), whose change no
+shift explains, dropped too; peak frequency and amplitude refined by log-parabolic interpolation; running
 speed from an RPM or an RPM range; order labels; amplitudes read at every order; mm scale from one reference length.
 """
 import os
@@ -28,6 +29,9 @@ BG_BORDER = 40  # px removed at the frame edges
 PEAK_FACTOR = 8.0  # peaks must exceed this multiple of the median floor
 F_MIN = 2.0  # Hz
 MAX_VIB_PX = 1.0  # temporal change beyond what this much motion explains is treated as rotating content
+TEXTURE_K = 3.0  # a part pixel whose change after the part's own shift exceeds this many times the pixel noise
+TEXTURE_MIN = 0.10  # a part is re-tracked without such pixels when they cover at least this share of it
+RESID_Q = 64.0  # fixed-point steps per grey level for the residual sums (integer sums: the same for any thread order)
 ORDERS = [0.5, 1, 1.5, 2, 2.5, 3, 4, 5, 6]
 WORKERS = min(4, os.cpu_count() or 1)  # frames tracked in parallel; results are identical for any count
 MAINS_HZ = 50.0  # India; lights flicker at twice this
@@ -54,6 +58,17 @@ class Region:
         self.x0, self.x1 = max(xs.min() - margin, 0), xs.max() + margin
         self.w = weight[self.y0:self.y1, self.x0:self.x1].astype(np.float32)
         self.wsum = float(self.w.sum())
+        self.stats = None
+
+    def collect(self):
+        """Also sum each pixel's residual after tracking (the change the region's shift does not explain)."""
+        self.stats = [np.zeros(self.w.shape, np.int64), np.zeros(self.w.shape, np.int64), 0, threading.Lock()]
+
+    def residual_std(self):
+        """Per-pixel std (grey levels) over the tracked frames of the residual, on the region's crop."""
+        s1, s2, n, _ = self.stats
+        m1, m2 = s1 / (n * RESID_Q), s2 / (n * RESID_Q * RESID_Q)
+        return np.sqrt(np.maximum(m2 - m1 * m1, 0))
 
     def crop(self, img):
         return img[self.y0:self.y1, self.x0:self.x1]
@@ -76,6 +91,12 @@ class Region:
             al *= self.ref_mean / (float(np.sum(al * self.w)) / self.wsum)  # cancel light flicker
             e = self.ref - al
             d += self.Hinv @ np.array([np.sum(self.gx * e), np.sum(self.gy * e)])
+        if self.stats is not None:  # the last step's residual; its update is a small fraction of a pixel
+            q = np.rint(e * RESID_Q).astype(np.int64)
+            with self.stats[3]:
+                self.stats[0] += q
+                self.stats[1] += q * q
+                self.stats[2] += 1
         return d
 
 
@@ -259,24 +280,67 @@ def amplitude_at(f, A, hz, search_bins=1.5):
     return ra, rf, k
 
 
-def running_speed(f, power, rpm=None, rpm_range=None):
+HALF_SWITCH = 0.8  # a peak at half the strongest frequency this strong is taken as 1x (a big 2x over its 1x)
+AMBIGUOUS = 0.5  # half or double the chosen speed this strong in the range: say the running speed is ambiguous
+
+
+def running_speed(f, power, rpm=None, rpm_range=None, detail=False):
     """Running speed in Hz from summed spectral power: the user's RPM (snapped to the nearest strong bin),
-    else the strongest peak inside the RPM range, else the strongest peak overall."""
+    else the strongest peak inside the RPM range, else the strongest peak overall.
+
+    A wide range can hold both f and 2f. If the peak at half the strongest frequency is nearly as strong
+    (HALF_SWITCH), that half is taken as 1x: a 2x that large over a matching 1x is far more common than a 0.5x
+    that large. If half or double the chosen speed is merely strong (AMBIGUOUS), the result is marked ambiguous so
+    the user can be asked for the rpm. With detail=True returns (hz, source, info)."""
     df = f[1] - f[0]
     A = np.sqrt(power)
     band = (f > F_MIN) & (f < f[-1] - 1)
+    info = {"ambiguous": False, "alternatives_hz": []}
     if rpm:
         hz = rpm / 60.0
         _, rf, _ = amplitude_at(f, A, hz, search_bins=1.5)
-        return rf, "rpm"
-    if rpm_range:
+        out = (rf, "rpm")
+    elif rpm_range:
         lo, hi = rpm_range[0] / 60.0, rpm_range[1] / 60.0
         sel = band & (f >= lo - df) & (f <= hi + df)
         if sel.any():
             k = int(np.flatnonzero(sel)[np.argmax(A[sel])])
-            return refine(f, A, k)[0], "rpm_range"
-    k = int(np.flatnonzero(band)[np.argmax(A[band])])
-    return refine(f, A, k)[0], "strongest_peak"
+            hz, amp = refine(f, A, k)
+            source = "rpm_range"
+            inside = lambda h: lo - df <= h <= hi + df  # noqa: E731
+            half = amplitude_at(f, A, hz / 2)[:2] if inside(hz / 2) and hz / 2 > F_MIN else (0.0, None)
+            if half[1] is not None and half[0] >= HALF_SWITCH * amp:
+                info["alternatives_hz"].append(round(hz, 3))
+                hz, amp, source = half[1], half[0], "rpm_range, half of the strongest peak"
+            for h in (hz / 2, hz * 2):
+                if inside(h) and h > F_MIN and h < f[-1] - 1:
+                    a_h, f_h, _ = amplitude_at(f, A, h)
+                    if a_h >= AMBIGUOUS * amp and round(f_h, 3) not in info["alternatives_hz"]:
+                        info["alternatives_hz"].append(round(f_h, 3))
+            info["ambiguous"] = bool(info["alternatives_hz"])
+            out = (hz, source)
+        else:
+            out = None
+    else:
+        out = None
+    if out is None:
+        k = int(np.flatnonzero(band)[np.argmax(A[band])])
+        out = (refine(f, A, k)[0], "strongest_peak")
+    return (*out, info) if detail else out
+
+
+def axis_confidence(ref, weight):
+    """How well a region's edges pin down each axis: the structure tensor's information about x once y is free
+    (and the other way round), relative to the better axis. A horizontal shaft has edges that fix y well and x
+    hardly at all; its x then reads mostly texture and noise."""
+    gy, gx = np.gradient(ref.astype(np.float64))
+    w = weight.astype(np.float64)
+    sxx, syy, sxy = float(np.sum(w * gx * gx)), float(np.sum(w * gy * gy)), float(np.sum(w * gx * gy))
+    if sxx <= 0 or syy <= 0:
+        return {"x": 0.0 if sxx <= 0 else 1.0, "y": 0.0 if syy <= 0 else 1.0}
+    ix, iy = sxx - sxy * sxy / syy, syy - sxy * sxy / sxx
+    top = max(ix, iy)
+    return {"x": round(ix / top, 4), "y": round(iy / top, 4)}
 
 
 def label_order(hz, f1, df, flicker=None):
@@ -306,20 +370,7 @@ class Scale:
         return cls(length_mm / px, f"{part} {axis} = {length_mm:g} mm over {px} px")
 
 
-def track(path, masks, start, count, exclude_rotating=True, workers=None, ignore=None):
-    """Per-frame translation (px) of every part and of the background, over frames [start, start + count).
-
-    Each frame is tracked against the fixed mean frame from zero, independently of every other frame, so frames
-    run in parallel threads (workers) with results identical to the sequential loop (workers=1)."""
-    workers = WORKERS if workers is None else workers
-    ref, rotating, n, noise = mean_and_motion_mask(path, start, count)
-    weights, bg = part_weights(masks, ref.shape, rotating if exclude_rotating else None, ignore)
-    regions = {name: Region(w) for name, w in weights.items()}
-    regions["background"] = Region(bg)
-    for r in regions.values():
-        r.set_ref(ref)
-    series = {k: np.empty((n, 2)) for k in regions}
-
+def _track_frames(path, start, n, regions, series, workers):
     def one(i, g):
         for k, r in regions.items():
             series[k][i] = r.track(g)
@@ -336,9 +387,51 @@ def track(path, masks, start, count, exclude_rotating=True, workers=None, ignore
                     pending.popleft().result()
             for f in pending:
                 f.result()
-    excluded = {name: int((_dilate(masks[name] > 0, PART_DILATE) & ~weights[name]).sum()) for name in masks}
+
+
+def surface_texture(region, noise):
+    """Pixels of a part whose change over the clip its own shift does not explain: marks on a turning shaft or disc
+    pass by once per revolution and read as false harmonics. Returns a mask on the region's crop."""
+    return (region.residual_std() > TEXTURE_K * noise) & (region.w > 0)
+
+
+def track(path, masks, start, count, exclude_rotating=True, workers=None, ignore=None):
+    """Per-frame translation (px) of every part and of the background, over frames [start, start + count).
+
+    Each frame is tracked against the fixed mean frame from zero, independently of every other frame, so frames
+    run in parallel threads (workers) with results identical to the sequential loop (workers=1). A part whose
+    surface texture changes as it turns (TEXTURE_MIN of it or more) is tracked again without those pixels."""
+    workers = WORKERS if workers is None else workers
+    ref, rotating, n, noise = mean_and_motion_mask(path, start, count)
+    weights, bg = part_weights(masks, ref.shape, rotating if exclude_rotating else None, ignore)
+    regions = {name: Region(w) for name, w in weights.items()}
+    regions["background"] = Region(bg)
+    for k, r in regions.items():
+        r.set_ref(ref)
+        if k in masks:
+            r.collect()
+    series = {k: np.empty((n, 2)) for k in regions}
+    _track_frames(path, start, n, regions, series, workers)
+    texture, again = {}, {}
+    for name in masks:
+        r = regions[name]
+        bad = surface_texture(r, noise)
+        kept = weights[name].copy()
+        kept[r.y0:r.y1, r.x0:r.x1] &= ~bad
+        texture[name] = 0
+        if bad.sum() >= TEXTURE_MIN * weights[name].sum() and kept.sum() > 0.2 * weights[name].sum():
+            texture[name] = int(bad.sum())
+            weights[name] = kept
+            again[name] = Region(kept)
+            again[name].set_ref(ref)
+    if again:
+        redo = {k: np.empty((n, 2)) for k in again}
+        _track_frames(path, start, n, again, redo, workers)
+        series.update(redo)
+    excluded = {name: int((_dilate(masks[name] > 0, PART_DILATE) & ~weights[name]).sum()) - texture[name]
+                for name in masks}
     return series, {"ref": ref, "rotating": rotating, "weights": weights, "background": bg,
-                    "pixel_noise": noise, "excluded_px": excluded}
+                    "pixel_noise": noise, "excluded_px": excluded, "texture_px": texture}
 
 
 def analyse_axis(x, fps, f1, scale, mains_hz=MAINS_HZ):
@@ -386,10 +479,11 @@ def measure(path, masks, fps, start=0, count=None, rpm=None, rpm_range=None, sca
         for ai in range(2):
             f, Z = spectrum(rel[k][:, ai], fps)
             power = power + np.abs(Z) ** 2
-    f1, f1_source = running_speed(f, power, rpm=rpm, rpm_range=rpm_range)
+    f1, f1_source, f1_info = running_speed(f, power, rpm=rpm, rpm_range=rpm_range, detail=True)
     df = f[1] - f[0]
     result = {"fps": fps, "frames": n, "start_frame": start, "seconds": round(n / fps, 4), "bin_hz": round(df, 5),
-              "nyquist_hz": fps / 2, "running_speed": {"hz": round(f1, 4), "rpm": round(f1 * 60, 1), "source": f1_source},
+              "nyquist_hz": fps / 2, "running_speed": {"hz": round(f1, 4), "rpm": round(f1 * 60, 1), "source": f1_source,
+                                                       **f1_info},
               "scale": {"mm_per_px": scale.mm_per_px, "basis": scale.basis},
               "flicker_hz": flicker_hz(fps, mains_hz), "pixel_noise_grey": round(aux["pixel_noise"], 4), "parts": {}}
     arrays = {"series": series, "rel": rel, "spectra": {}}
@@ -402,6 +496,8 @@ def measure(path, masks, fps, start=0, count=None, rpm=None, rpm_range=None, sca
         entry = {"axes": axes, "velocity_rms": round(v, 3), "velocity_unit": "mm/s" if scale.mm_per_px else "px/s"}
         if k in masks:
             entry["excluded_rotating_px"] = aux["excluded_px"][k]
+            entry["excluded_texture_px"] = aux["texture_px"][k]
+            entry["axis_confidence"] = axis_confidence(aux["ref"], aux["weights"][k])
             result["parts"][k] = entry
         else:
             result["background"] = entry
