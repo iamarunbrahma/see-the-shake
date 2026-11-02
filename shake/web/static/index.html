@@ -308,7 +308,8 @@ function showResults(r, base) {
   $("truth-panel").classList.toggle("hidden", !tc);
   if (tc) {
     $("truth-summary").textContent = `Injected: ${VERDICT[r.truth.expected_verdict] || r.truth.fault}. Rule verdict ${tc.verdict_ok ? "matches" : "does not match"}. ` +
-      `${tc.passed} of ${tc.scored} components within one frequency bin and 20% amplitude. Masks are the renderer's.`;
+      `${tc.passed} of ${tc.scored} components within one frequency bin and 20% amplitude. ` +
+      (r.mask_source === "SAM 3.1" ? "Masks from SAM 3.1, matched to the renderer's parts by overlap." : `Masks: ${r.mask_source}.`);
     const tb = $("truth").querySelector("tbody"); clear(tb);
     for (const x of tc.rows.filter(x => x.scored)) {
       row(tb, [x.part, x.axis, `${x.order}x`, fmt(x.true_amp_px, 4), fmt(x.meas_amp_px, 4),
@@ -405,6 +406,10 @@ function showDiagnosis(r) {
   head.appendChild(document.createTextNode(`, ${conf}. ` + (sp.agrees ? "Agrees with the rules." : "Disagrees with the rules.")));
   body.appendChild(head);
   if (dg.show_both) $("both").textContent = `Muse Spark says ${VERDICT[sp.fault] || sp.fault} (${sp.confidence} confidence). Both are shown; the rule verdict is the headline.`;
+  const ra = dg.recorded_against;
+  if (ra) body.appendChild(el("p", `Replayed answer: Spark wrote it when the rules said ${VERDICT[ra.rule_verdict] || ra.rule_verdict}; ` +
+    `they now say ${VERDICT[ra.rule_verdict_now] || ra.rule_verdict_now}, so its wording may refer to the old verdict. ` +
+    "The checks below use the current measurement and rules.", "warn"));
   if (sp.explanation) body.appendChild(el("p", sp.explanation));
   body.appendChild(el("h3", "Evidence Spark cited, checked against the measured peaks"));
   const tbl = el("table"); const hr = el("tr"); ["Check", "Part", "Frequency", "Order", "Why"].forEach(h => hr.appendChild(el("th", h)));
