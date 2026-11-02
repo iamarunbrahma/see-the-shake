@@ -86,3 +86,36 @@ def test_artifacts_never_touch_running_speed_or_low_orders(kind):
                 assert a["label"] != "1x"
                 if a["kind"] == "flicker sideband":
                     assert a["label"] in ("non-synchronous",) or float(a["label"][:-1]) >= fingerprint.FLICKER_SAFE_ORDER
+
+
+def test_flicker_on_an_order_is_not_a_harmonic():
+    """At 1000 rpm 6x is exactly 100 Hz, the light flicker; that peak must not count as a sixth harmonic."""
+    entry = _entry({"1x": 0.07, "2x": 0.02, "3x": 0.015, "6x": 0.012})
+    for p in entry["axes"]["x"]["peaks"]:
+        if p["label"] == "6x":
+            p.update(label="flicker", order=None, hz=100.0)
+    result = {"fps": 240.0, "bin_hz": 0.1667, "mains_hz": 50.0, "running_speed": {"hz": 16.67}, "parts": {"m": entry}}
+    with_rules = fingerprint.part_features(entry, 1.2, result)
+    assert with_rules["harmonics"] == ["2x", "3x"]
+    assert any(a["kind"] == "flicker" and a["hz"] == 100.0 for a in with_rules["artifacts"])
+    assert "6x" in fingerprint.part_features(entry, 1.2)["harmonics"]  # what happened before
+
+
+def test_spectrum_plots_skip_artifact_peaks(monkeypatch, tmp_path):
+    """The phone-like healthy spectrum Spark is sent: flicker sidebands near 5x and 7x get no order label."""
+    import matplotlib.axes
+    import numpy as np
+    from shake import measure
+    m = _recorded("live_phone", "healthy")
+    fp = fingerprint.fingerprint(m)
+    skip = {p: {(a["axis"], a["hz"]) for a in e["features"]["artifacts"]} for p, e in fp["parts"].items()}
+    f = np.linspace(0, 120, 721)
+    arrays = {"spectra": {(p, ax): (f, np.full_like(f, 1e-3)) for p in m["parts"] for ax in "xy"}}
+    labels = []
+    monkeypatch.setattr(matplotlib.axes.Axes, "annotate", lambda self, text, *a, **k: labels.append(text))
+    measure.plot_spectra(m, arrays, tmp_path / "all.png")
+    before = list(labels)
+    labels.clear()
+    measure.plot_spectra(m, arrays, tmp_path / "skipped.png", skip=skip)
+    assert "5x" in before and "7x" in before
+    assert "5x" not in labels and "7x" not in labels and "1x" in labels

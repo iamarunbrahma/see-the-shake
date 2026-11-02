@@ -105,3 +105,36 @@ def test_running_speed_and_the_strong_components(fan_runs):
         assert strong and all(r["pass"] for r in strong), [r for r in strong if not r["pass"]]
     rotating = {p: e["excluded_rotating_px"] for p, e in fan_runs["looseness"]["result"]["parts"].items()}
     assert rotating["fan stand"] == rotating["fan motor housing"] == 0
+
+
+def test_blade_pass_cannot_push_a_verdict(fan_runs):
+    """A healthy fan whose blade pass grows past the alert: without the blade count the rules called it imbalance;
+    with it, blade pass is left out of the pattern and the verdict says so. Severity keeps it."""
+    import copy
+    base = fan_runs["healthy"]["result"]
+    f3 = 3 * base["running_speed"]["hz"]
+    for amp in np.arange(0.002, 0.2, 0.002):  # a blade-pass peak of growing size on every part
+        m = copy.deepcopy(base)
+        for e in m["parts"].values():
+            for ax in "xy":
+                a = e["axes"][ax]
+                a["peaks"] = [p for p in a["peaks"] if p["order"] != 3] + [
+                    {"hz": round(f3, 3), "amp_px": float(amp), "order": 3.0, "label": "3x", "phase": 0.0, "snr": 50.0,
+                     "bg_amp_px": 0.0}]
+                a["orders"]["3x"].update(amp_px=float(amp), above_floor=True)
+        with_count = fingerprint.fingerprint(m, blades=3)
+        if with_count["verdict"] != "none":
+            break
+    without = fingerprint.fingerprint(m)
+    assert with_count["verdict"] == "blade_pass" and "check the blades and the guard" in with_count["reason"]
+    assert without["verdict"] in ("imbalance", "unclear")  # the vulnerability the blade count closes
+    lead = with_count["parts"][with_count["lead_part"]]["features"]
+    assert lead["velocity_rms"] == without["parts"][with_count["lead_part"]]["features"]["velocity_rms"]
+    assert lead["velocity_without_blade_pass"] < with_count["alert_level"] <= lead["velocity_rms"]
+    assert {e["label"] for e in with_count["evidence"]} == {"3x"}
+
+
+@pytest.mark.parametrize("fault", list(twin_fan.FAULTS))
+def test_fan_verdicts_hold_with_the_blade_count(fan_runs, fault):
+    fp = fingerprint.fingerprint(fan_runs[fault]["result"], blades=3)
+    assert fp["verdict"] == twin_fan.EXPECTED_VERDICT[fault], fp["reason"]

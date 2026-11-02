@@ -159,3 +159,12 @@ def test_fan_twin_run(client):
         "fan motor housing", "fan guard rim", "fan stand"}
     assert res["fingerprint"]["verdict"] == "imbalance" and res["truth_comparison"]["verdict_ok"]
     assert "height" in res["measurement"]["scale"]["basis"]
+    assert res["blades"] == {"count": 3, "source": "given"} and res["fingerprint"]["blades"] == 3
+
+
+def test_blade_count_is_checked(client):
+    d = twin_clip("healthy")
+    clip = ("clip", ("clip.mp4", (d / "clip.mp4").read_bytes(), "video/mp4"))
+    for bad in ("three", "1", "40"):
+        r = client.post("/api/runs", files=[clip], data={"boxes": "machine: 10, 10, 200, 200", "blades": bad})
+        assert r.status_code == 400 and "blades" in r.json()["detail"].lower()
