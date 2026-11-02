@@ -141,3 +141,21 @@ def test_slowed_phone_upload_asks_for_the_capture_rate_then_measures_the_same(cl
     orig = wait(client, up(d / "clip.mp4").json()["job_id"])  # the same frames at a 240 fps container
     assert j["results"]["measurement"]["parts"] == orig["results"]["measurement"]["parts"]
     assert j["results"]["fingerprint"]["verdict"] == "imbalance"
+
+
+def test_fan_twin_run(client):
+    """The fan in the twin picker: a short, small clip through the whole pipeline with renderer masks."""
+    s = client.get("/api/samples").json()
+    fan = next(m for m in s["machines"] if m["key"] == "fan")
+    assert [f["key"] for f in fan["faults"]] == ["healthy", "imbalance", "looseness"]
+    assert client.post("/api/twin", json={"machine": "fan", "fault": "misalignment"}).status_code == 400
+    assert client.post("/api/twin", json={"machine": "fan", "fault": "imbalance", "api": "replay"}).status_code == 400
+    r = client.post("/api/twin", json={"machine": "fan", "fault": "imbalance", "seed": 3, "seconds": 1, "scale": 0.5})
+    assert r.status_code == 200, r.text
+    j = wait(client, r.json()["job_id"], timeout=300)
+    assert j["state"] == "done", j
+    res = j["results"]
+    assert res["truth"]["machine"] == "fan" and set(res["measurement"]["parts"]) == {
+        "fan motor housing", "fan guard rim", "fan stand"}
+    assert res["fingerprint"]["verdict"] == "imbalance" and res["truth_comparison"]["verdict_ok"]
+    assert "height" in res["measurement"]["scale"]["basis"]
