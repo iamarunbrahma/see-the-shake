@@ -35,6 +35,12 @@ BG_RATIO = 0.3
 SIDEBAND_TOL_BINS = 1.5
 FLICKER_SAFE_ORDER = 5  # orders below this are never flicker sidebands
 MAINS_DEFAULT = 50.0
+# Orders that land on the flicker pattern (2x and 4x at 3000 rpm on 50 Hz mains, 3x and 5x on its sidebands) cannot
+# be told from flicker at that frequency. They count only when strong: at least this share of 1x, which still lets a
+# real 2x (misalignment needs 2x at half of 1x or more) through.
+FLICKER_ORDER_MIN = 0.5
+# An axis whose edges carry under this share of the other axis's information is left out (a horizontal shaft's x).
+AXIS_WEAK = 0.05
 
 FAULT_ORDERS = {"imbalance": {"1x"}, "misalignment": {"2x"}, "looseness": {"0.5x"} | set(HARMONIC_ORDERS)}
 
@@ -77,6 +83,23 @@ def artifact_kind(p, result, axis, pattern):
     return None
 
 
+def on_flicker(hz, result, pattern):
+    """Whether a frequency sits on the flicker pattern (multiples of its fundamental) or a sideband with 1x."""
+    g, seen = pattern
+    if not (seen and g):
+        return False
+    fps, f1 = result["fps"], result["running_speed"]["hz"]
+    tol = SIDEBAND_TOL_BINS * result["bin_hz"]
+    for k in range(1, int((fps / 2 + f1) / g) + 2):
+        for c in (k * g, k * g - f1, k * g + f1):
+            c = abs(c)
+            if c > fps / 2:
+                c = fps - c
+            if abs(hz - c) <= tol:
+                return True
+    return False
+
+
 def _vec(axes, key, skip=()):
     """Vector amplitude (px) of an order over both axes, and whether either axis is above the peak threshold.
     Axes listed in skip (where an artifact peak sits on this order) count as zero."""
@@ -103,14 +126,34 @@ def part_features(entry, scale_mm_per_px, result=None, blades=None):
                     artifacts.append({"axis": ax, "hz": p["hz"], "label": p["label"], "amp_px": p["amp_px"],
                                       "bg_amp_px": p.get("bg_amp_px"), "kind": kind})
     bin_hz = result["bin_hz"] if result is not None else 0.0
-    amp, present = {}, {}
+    conf = entry.get("axis_confidence") or {}
+    weak = {ax for ax in "xy" if conf.get(ax, 1.0) < AXIS_WEAK}
+    pattern = flicker_pattern(result) if result is not None else (0.0, False)
+    amp, present, flick = {}, {}, {}
     for key in axes["x"]["orders"]:
         hz = axes["x"]["orders"][key]["hz"]
+        order = float(key[:-1])
+        if order >= 2 and result is not None and on_flicker(hz, result, pattern):
+            flick[key] = _vec(axes, key, weak)  # judged by strength below, once 1x is known
+            amp[key], present[key] = 0.0, False
+            continue
         skip = {a["axis"] for a in artifacts if abs(a["hz"] - hz) <= SIDEBAND_TOL_BINS * bin_hz + 1e-9} if key != "1x" else set()
-        amp[key], present[key] = _vec(axes, key, skip)
+        amp[key], present[key] = _vec(axes, key, skip | weak)
     a1 = amp["1x"]
+    on_flicker_orders = {}
+    for key, (a_k, pres) in flick.items():
+        strong = bool(pres and a1 > 0 and a_k >= FLICKER_ORDER_MIN * a1)
+        on_flicker_orders[key] = "counted" if strong else "left out"
+        if strong:
+            amp[key], present[key] = a_k, True
     flagged = {(a["axis"], a["hz"]) for a in artifacts}
-    peaks = [p for ax in "xy" for p in axes[ax]["peaks"] if p["label"] != "flicker" and (ax, p["hz"]) not in flagged]
+    peaks = [p for ax in "xy" for p in axes[ax]["peaks"]
+             if p["label"] != "flicker" and (ax, p["hz"]) not in flagged and ax not in weak
+             and not (p["order"] is not None and f"{p['order']:g}x" in flick)]
+    # an order on the flicker that is strong enough counts as one peak at its vector amplitude
+    f1_hz = result["running_speed"]["hz"] if result is not None else 0.0
+    peaks += [{"hz": float(k_[:-1]) * f1_hz, "amp_px": amp[k_], "order": float(k_[:-1]), "label": k_}
+              for k_, v in on_flicker_orders.items() if v == "counted"]
     k = scale_mm_per_px or 1.0
     vel_of = lambda ps: float(np.sqrt(sum((2 * np.pi * p["hz"] * p["amp_px"] * k) ** 2 / 2 for p in ps)))  # noqa: E731
     blade_pass = None
@@ -154,6 +197,8 @@ def part_features(entry, scale_mm_per_px, result=None, blades=None):
         "present": {k2: v for k2, v in present.items() if v},
         "artifacts": artifacts,
         "blade_pass": blade_pass,
+        "weak_axes": sorted(weak),
+        "on_flicker_orders": on_flicker_orders,
         "velocity_without_blade_pass": round(vel_of(pattern_peaks), 3) if blade_pass else None,
     }
 
@@ -226,4 +271,21 @@ def fingerprint(result, alert=None, blades=None):
     return {"verdict": parts[lead]["verdict"], "confidence": parts[lead]["confidence"], "reason": parts[lead]["reason"],
             "lead_part": lead, "evidence": parts[lead]["evidence"], "alert_level": alert,
             "alert_unit": "mm/s" if mm else "px/s", "scaled": bool(mm), "phase_1x_x_rad": phases,
-            "blades": int(blades) if blades else None, "parts": parts}
+            "blades": int(blades) if blades else None, "notes": _notes(parts, result), "parts": parts}
+
+
+def _notes(parts, result):
+    """Plain-words notes for the page: orders on the light flicker, and axes left out."""
+    notes = []
+    flick = sorted({k for p in parts.values() for k in p["features"].get("on_flicker_orders", {})},
+                   key=lambda k: float(k[:-1]))
+    if flick:
+        rpm = result["running_speed"]["rpm"]
+        notes.append(f"At {rpm:.0f} rpm, {', '.join(flick)} land on the light flicker ({2 * float(result.get('mains_hz') or MAINS_DEFAULT):g} Hz "
+                     f"from the mains) or its sidebands; they count only when at least {FLICKER_ORDER_MIN:.0%} of 1x. "
+                     "Film in daylight or under DC lighting to be sure.")
+    for name, p in parts.items():
+        for ax in p["features"].get("weak_axes", []):
+            notes.append(f"The {name}'s {'horizontal' if ax == 'x' else 'vertical'} motion is left out: its edges "
+                         f"barely fix that direction, so the reading there is mostly texture and noise.")
+    return notes

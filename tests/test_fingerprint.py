@@ -119,3 +119,54 @@ def test_spectrum_plots_skip_artifact_peaks(monkeypatch, tmp_path):
     measure.plot_spectra(m, arrays, tmp_path / "skipped.png", skip=skip)
     assert "5x" in before and "7x" in before
     assert "5x" not in labels and "7x" not in labels and "1x" in labels
+
+
+def _rotor_entry(amps_x, amps_y, f1=50.0, floor=0.0002, flicker_hz=100.0, conf=None):
+    """A measured part at 500 fps with orders at f1; a peak on the flicker frequency is labelled flicker."""
+    def axis(amps):
+        orders, peaks = {}, []
+        for k in ["0.5x", "1x", "1.5x", "2x", "2.5x", "3x", "4x", "5x", "6x"]:
+            v = amps.get(k, 0.0)
+            hz = f1 * float(k[:-1])
+            orders[k] = {"hz": hz, "amp_px": v, "above_floor": v > 8 * floor, "phase": 0.0}
+            if v > 8 * floor:
+                on_flicker = abs(hz - flicker_hz) < 0.5
+                peaks.append({"hz": hz, "amp_px": v, "order": None if on_flicker else float(k[:-1]),
+                              "label": "flicker" if on_flicker else k, "bg_amp_px": 0.0})
+        return {"noise_floor_px": floor, "orders": orders, "peaks": peaks}
+    e = {"axes": {"x": axis(amps_x), "y": axis(amps_y)}}
+    if conf:
+        e["axis_confidence"] = conf
+    return e
+
+
+def _rotor_result(entry):
+    return {"fps": 500.0, "bin_hz": 1.0, "mains_hz": 50.0, "running_speed": {"hz": 50.0, "rpm": 3000.0},
+            "scale": {"mm_per_px": 0.6}, "parts": {"shaft": entry},
+            "background": {"axes": {ax: {"peaks": [], "orders": {}} for ax in "xy"}}}
+
+
+def test_orders_on_the_flicker_count_only_when_strong():
+    """3000 rpm on 50 Hz mains: 2x and 4x sit on the flicker, 3x on a sideband. Weak ones are left out; a real
+    2x at half of 1x or more still makes misalignment."""
+    weak = _rotor_result(_rotor_entry({}, {"1x": 0.06, "2x": 0.015, "3x": 0.01, "4x": 0.012}))
+    fp = fingerprint.fingerprint(weak)
+    f = fp["parts"]["shaft"]["features"]
+    assert fp["verdict"] == "imbalance" and f["harmonics"] == []
+    assert f["on_flicker_orders"] == {"2x": "left out", "3x": "left out", "4x": "left out", "5x": "left out"}
+    assert any("light flicker" in n for n in fp["notes"])
+    strong = _rotor_result(_rotor_entry({}, {"1x": 0.06, "2x": 0.05}))
+    fp = fingerprint.fingerprint(strong)
+    assert fp["verdict"] == "misalignment" and fp["parts"]["shaft"]["features"]["on_flicker_orders"]["2x"] == "counted"
+
+
+def test_a_weak_axis_is_left_out():
+    """A horizontal shaft: its x reads surface marks as harmonics; with x weak, only y counts."""
+    e = _rotor_entry({"1x": 0.04, "2x": 0.03, "3x": 0.025, "4x": 0.02}, {"1x": 0.05, "2x": 0.004},
+                     f1=16.67, flicker_hz=1000.0, conf={"x": 0.02, "y": 1.0})
+    r = _rotor_result(e)
+    r["running_speed"] = {"hz": 16.67, "rpm": 1000.0}
+    fp = fingerprint.fingerprint(r, alert=0.0)  # the pattern only; this shaft is slow and small
+    f = fp["parts"]["shaft"]["features"]
+    assert f["weak_axes"] == ["x"] and f["harmonics"] == [] and fp["verdict"] == "imbalance"
+    assert any("horizontal motion is left out" in n for n in fp["notes"])
