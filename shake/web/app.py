@@ -27,6 +27,8 @@ STATIC = Path(__file__).parent / "static"
 MAX_UPLOAD = 600 * 1024 * 1024
 BOX = re.compile(r"^\s*(?P<name>[^:]+?)\s*:\s*(?P<x>\d+)\s*,\s*(?P<y>\d+)\s*,\s*(?P<w>\d+)\s*,\s*(?P<h>\d+)\s*$")
 FAULT_LABELS = {"healthy": "Healthy", "imbalance": "Imbalance", "looseness": "Looseness", "misalignment": "Misalignment"}
+FAN_FAULT_LABELS = {"healthy": "Healthy", "imbalance": "Imbalance (head wobbles once a turn)",
+                    "looseness": "Looseness (loose head mount)"}
 
 
 class TwinRequest(BaseModel):
@@ -36,6 +38,7 @@ class TwinRequest(BaseModel):
     scale: float = 0.5
     alpha: str = "auto"
     api: str = "off"  # off, replay (recorded live run, no cost), live (costs money)
+    machine: str = "washer"  # washer or fan
 
 
 def _alpha(v):
@@ -93,14 +96,24 @@ def create_app(runs_dir=None):
     def samples():
         return {"twin_faults": [{"key": k, "label": FAULT_LABELS[k],
                                  "recorded": pipeline.recording(k).exists()} for k in twin.FAULTS],
+                "machines": [{"key": "washer", "label": pipeline.MACHINES["washer"],
+                              "faults": [{"key": k, "label": FAULT_LABELS[k], "recorded": pipeline.recording(k).exists()}
+                                         for k in twin.FAULTS]},
+                             {"key": "fan", "label": pipeline.MACHINES["fan"],
+                              "faults": [{"key": k, "label": FAN_FAULT_LABELS[k], "recorded": False}
+                                         for k in pipeline.twin_faults("fan")]}],
                 "recorded_twin": pipeline.RECORDED_TWIN,
                 "twin_defaults": TwinRequest(fault="imbalance").model_dump(),
                 "steps": [{"key": k, "label": label} for k, label in pipeline.STEPS]}
 
     @app.post("/api/twin")
     def start_twin(req: TwinRequest):
-        if req.fault not in twin.FAULTS:
-            raise HTTPException(400, f"Unknown fault {req.fault}")
+        if req.machine not in pipeline.MACHINES:
+            raise HTTPException(400, f"Unknown machine {req.machine}")
+        if req.fault not in pipeline.twin_faults(req.machine):
+            raise HTTPException(400, f"Unknown fault {req.fault} for the {pipeline.MACHINES[req.machine].lower()}")
+        if req.api == "replay" and req.machine != "washer":
+            raise HTTPException(400, "Recorded live runs exist for the washing machine only")
         if not (0.5 <= req.seconds <= 10 and 0.2 <= req.scale <= 1.0):
             raise HTTPException(400, "Twin clips are 0.5 to 10 s long at a scale of 0.2 to 1")
         if req.api not in ("off", "replay", "live"):
@@ -115,6 +128,7 @@ def create_app(runs_dir=None):
         def fn():
             update(job_id, phase="rendering the twin clip")
             return pipeline.run_twin(req.fault, runs, req.seed, req.seconds, req.scale, api=req.api, alpha=alpha,
+                                     machine=req.machine,
                                      progress=progress_for(job_id, None),
                                      on_start=lambda rid: update(job_id, run_id=rid))
         submit(job_id, fn)
@@ -148,8 +162,11 @@ def create_app(runs_dir=None):
         else:
             shutil.move(tmp, dest)
         try:
-            info = ingest.clip_info(dest, capture_fps=_opt_float(capture_fps, "Capture fps"), min_fps=1)
+            # the real check, before any job starts: a slowed slow-motion file needs its capture rate
+            info = ingest.clip_info(dest, capture_fps=_opt_float(capture_fps, "Capture fps"))
         except ingest.IngestError as e:
+            if e.field:
+                raise HTTPException(400, {"message": str(e), "field": e.field})
             raise HTTPException(400, str(e))
         H, W = info.height, info.width
         names = [n.strip() for n in mask_names.split(",") if n.strip()]

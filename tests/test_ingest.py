@@ -79,3 +79,49 @@ def test_ingest_end_to_end(clips):
     r = ingest.ingest(clips["slowed"], min_s=1.0).to_dict()
     assert r["clip"]["capture_fps"] == 240 and r["interpolation"]["status"] == "ok"
     assert r["window"]["frames"] == 480
+
+
+# ---------------------------------------------------------------- phone slow-motion containers
+
+@pytest.fixture(scope="module")
+def phone(clips):
+    """What phones do with slow motion, made from a 240 fps twin clip: a slowed 30 fps container (same frames),
+    a speed ramp (real-time timestamps, then slowed), jittered 30 fps timestamps, and synthesised frames in a
+    slowed container."""
+    d = CACHE / "ingest"
+    out = {"slowed30": d / "phone_slowed30.mp4", "ramp": d / "phone_vfr_ramp.mp4", "jitter": d / "phone_vfr_jitter.mp4",
+           "synth30": d / "phone_synth_slowed30.mp4"}
+    _ffmpeg("-itsscale", 8, "-i", clips["src"], "-c", "copy", out["slowed30"])
+    enc = ["-fps_mode", "vfr", "-c:v", "libx264", "-preset", "veryfast", "-tune", "grain", "-crf", "16",
+           "-pix_fmt", "yuv420p"]
+    _ffmpeg("-i", clips["src"], "-vf", "setpts='if(lt(N,60),N/240,0.25+(N-60)/30)/TB'", *enc, out["ramp"])
+    _ffmpeg("-i", clips["src"], "-vf", "setpts='(N/30+0.004*sin(N*1.7))/TB'", *enc, out["jitter"])
+    _ffmpeg("-itsscale", 8, "-i", clips["blend"], "-c", "copy", out["synth30"])
+    return out
+
+
+def test_slowed_container_asks_for_the_capture_rate(phone, clips):
+    with pytest.raises(ingest.IngestError) as e:
+        ingest.clip_info(phone["slowed30"])
+    assert e.value.field == "capture_fps" and "plays at 30" in str(e.value) and "captured at" in str(e.value)
+    info = ingest.clip_info(phone["slowed30"], capture_fps=240)
+    assert info.capture_fps == 240 and info.fps_source == "override" and abs(info.time_scale - 8) < 0.1
+    assert info.frames == 480 and abs(info.duration_s - 2.0) < 1e-6 and not info.variable_rate
+    a = list(ingest.read_gray(clips["src"], start=200, count=4))
+    b = list(ingest.read_gray(phone["slowed30"], start=200, count=4))
+    assert all(np.array_equal(x, y) for x, y in zip(a, b))  # the same frames, so the same measurement
+
+
+@pytest.mark.parametrize("name", ["ramp", "jitter"])
+def test_variable_rate_containers(phone, name):
+    with pytest.raises(ingest.IngestError) as e:
+        ingest.clip_info(phone[name])  # its average rate is about 30 fps, whatever r_frame_rate claims
+    assert e.value.field == "capture_fps"
+    r = ingest.ingest(phone[name], capture_fps=240, min_s=1.0)
+    assert r.info.variable_rate and any("variable frame rate" in w for w in r.info.warnings)
+    assert r.info.frames == 480 and r.window == (0, 480) and r.interpolation["status"] == "ok"
+
+
+def test_synthesised_frames_flagged_in_a_slowed_container(phone):
+    r = ingest.ingest(phone["synth30"], capture_fps=240, min_s=1.0)
+    assert r.interpolation["flagged"] and any("synthesised" in w for w in r.info.warnings)

@@ -181,8 +181,10 @@ def mean_and_motion_mask(path, start, count):
     return ref, rotating, n, noise
 
 
-def part_weights(masks, shape, rotating=None):
-    """Tracking weights: each part's mask dilated 5x5 minus rotating content, and the background."""
+def part_weights(masks, shape, rotating=None, ignore=None):
+    """Tracking weights: each part's mask dilated 5x5 minus rotating content, and the background.
+    ignore: a region the background must leave out although no part covers it (a fan's blade disc, whose grill and
+    hub move with the head); None leaves everything as it was."""
     union = np.zeros(shape, bool)
     weights = {}
     for name, m in masks.items():
@@ -194,6 +196,8 @@ def part_weights(masks, shape, rotating=None):
             if kept.sum() > 0.2 * w.sum():  # never let the exclusion swallow a part
                 w = kept
         weights[name] = w
+    if ignore is not None:
+        union |= np.asarray(ignore) > 0
     bg = ~_dilate(union, BG_DILATE)
     bg[:BG_BORDER], bg[-BG_BORDER:], bg[:, :BG_BORDER], bg[:, -BG_BORDER:] = False, False, False, False
     if rotating is not None:
@@ -302,14 +306,14 @@ class Scale:
         return cls(length_mm / px, f"{part} {axis} = {length_mm:g} mm over {px} px")
 
 
-def track(path, masks, start, count, exclude_rotating=True, workers=None):
+def track(path, masks, start, count, exclude_rotating=True, workers=None, ignore=None):
     """Per-frame translation (px) of every part and of the background, over frames [start, start + count).
 
     Each frame is tracked against the fixed mean frame from zero, independently of every other frame, so frames
     run in parallel threads (workers) with results identical to the sequential loop (workers=1)."""
     workers = WORKERS if workers is None else workers
     ref, rotating, n, noise = mean_and_motion_mask(path, start, count)
-    weights, bg = part_weights(masks, ref.shape, rotating if exclude_rotating else None)
+    weights, bg = part_weights(masks, ref.shape, rotating if exclude_rotating else None, ignore)
     regions = {name: Region(w) for name, w in weights.items()}
     regions["background"] = Region(bg)
     for r in regions.values():
@@ -366,13 +370,13 @@ def velocity_rms(peaks_x, peaks_y, mm_per_px):
 
 
 def measure(path, masks, fps, start=0, count=None, rpm=None, rpm_range=None, scale=None, exclude_rotating=True,
-            mains_hz=MAINS_HZ, workers=None):
+            mains_hz=MAINS_HZ, workers=None, ignore=None):
     """Full measurement for one clip window. masks: {part name: HxW array, nonzero inside}.
 
     Returns (result dict, arrays dict). The result is JSON-ready; arrays holds series and spectra for plots.
     """
     scale = scale or Scale()
-    series, aux = track(path, masks, start, count, exclude_rotating, workers)
+    series, aux = track(path, masks, start, count, exclude_rotating, workers, ignore)
     n = len(series["background"])
     rel = {k: series[k] - series["background"] for k in masks}
     # running speed from the summed power of every part, both axes

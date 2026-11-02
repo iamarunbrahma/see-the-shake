@@ -112,3 +112,50 @@ def test_api_mode_errors(client):
     clip = ("clip", ("clip.mp4", (d / "clip.mp4").read_bytes(), "video/mp4"))
     r = client.post("/api/runs", files=[clip], data={"api": "maybe", "boxes": "machine: 1, 1, 5, 5"})
     assert r.status_code == 400
+
+
+def test_slowed_phone_upload_asks_for_the_capture_rate_then_measures_the_same(client, tmp_path):
+    """A phone's slow motion saved as a slowed 30 fps file: refused until the capture rate is given, then measured
+    exactly like the original 240 fps clip (the frames are the same)."""
+    import subprocess
+    d = twin_clip("imbalance")
+    truth = json.loads((d / "truth.json").read_text())
+    slowed = CACHE / "ingest" / "imbalance_slowed30.mp4"
+    slowed.parent.mkdir(parents=True, exist_ok=True)
+    if not slowed.exists():
+        subprocess.run(["ffmpeg", "-nostdin", "-y", "-loglevel", "error", "-itsscale", "8", "-i", str(d / "clip.mp4"),
+                        "-c", "copy", str(slowed)], check=True, stdin=subprocess.DEVNULL, timeout=120)
+    names = list(truth["parts"])
+    masks = [("masks", (f"{n}.png", (d / truth["parts"][n]["mask"]).read_bytes(), "image/png")) for n in names]
+    form = {"mask_names": ", ".join(names), "rpm_min": "900", "rpm_max": "1100", "ref_part": "washing machine",
+            "ref_mm": "600", "min_seconds": "2"}
+    up = lambda path, **extra: client.post("/api/runs", data={**form, **extra},  # noqa: E731
+                                           files=[("clip", ("clip.mp4", path.read_bytes(), "video/mp4")), *masks])
+    r = up(slowed)
+    assert r.status_code == 400 and r.json()["detail"]["field"] == "capture_fps"
+    assert "plays at 30" in r.json()["detail"]["message"]
+    j = wait(client, up(slowed, capture_fps="240").json()["job_id"])
+    assert j["state"] == "done", j
+    clip = j["results"]["ingest"]["clip"]
+    assert clip["capture_fps"] == 240 and clip["fps_source"] == "override" and abs(clip["duration_s"] - 2.0) < 1e-6
+    orig = wait(client, up(d / "clip.mp4").json()["job_id"])  # the same frames at a 240 fps container
+    assert j["results"]["measurement"]["parts"] == orig["results"]["measurement"]["parts"]
+    assert j["results"]["fingerprint"]["verdict"] == "imbalance"
+
+
+def test_fan_twin_run(client):
+    """The fan in the twin picker: a short, small clip through the whole pipeline with renderer masks."""
+    s = client.get("/api/samples").json()
+    fan = next(m for m in s["machines"] if m["key"] == "fan")
+    assert [f["key"] for f in fan["faults"]] == ["healthy", "imbalance", "looseness"]
+    assert client.post("/api/twin", json={"machine": "fan", "fault": "misalignment"}).status_code == 400
+    assert client.post("/api/twin", json={"machine": "fan", "fault": "imbalance", "api": "replay"}).status_code == 400
+    r = client.post("/api/twin", json={"machine": "fan", "fault": "imbalance", "seed": 3, "seconds": 1, "scale": 0.5})
+    assert r.status_code == 200, r.text
+    j = wait(client, r.json()["job_id"], timeout=300)
+    assert j["state"] == "done", j
+    res = j["results"]
+    assert res["truth"]["machine"] == "fan" and set(res["measurement"]["parts"]) == {
+        "fan motor housing", "fan guard rim", "fan stand"}
+    assert res["fingerprint"]["verdict"] == "imbalance" and res["truth_comparison"]["verdict_ok"]
+    assert "height" in res["measurement"]["scale"]["basis"]

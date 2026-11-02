@@ -26,7 +26,11 @@ CAPTURE_TAG = re.compile(r"capture[._-]?fps|capture[._-]?frame[._-]?rate", re.I)
 
 
 class IngestError(ValueError):
-    pass
+    """A clip that cannot be measured. field names the input that would fix it (for example "capture_fps")."""
+
+    def __init__(self, message, field=None):
+        super().__init__(message)
+        self.field = field
 
 
 @dataclass
@@ -44,6 +48,7 @@ class ClipInfo:
     time_scale: float  # capture_fps / stream_fps (8 for a 240 fps capture saved at 30 fps)
     rotation: int = 0
     warnings: list = field(default_factory=list)
+    variable_rate: bool = False  # container timestamps are uneven; frames are still timed by capture_fps
 
     def to_dict(self):
         return asdict(self)
@@ -97,20 +102,27 @@ def clip_info(path, capture_fps=None, min_fps=MIN_CAPTURE_FPS):
     if not videos:
         raise IngestError(f"{path} has no video stream")
     v = videos[0]
-    stream_fps = _rate(v.get("avg_frame_rate")) or _rate(v.get("r_frame_rate"))
+    # avg_frame_rate (frames over duration), not r_frame_rate: a phone's variable-rate file can report r_frame_rate
+    # 240 while most of it plays at 30
+    avg_fps, r_fps = _rate(v.get("avg_frame_rate")), _rate(v.get("r_frame_rate"))
+    stream_fps = avg_fps or r_fps
     duration = float(v.get("duration") or meta.get("format", {}).get("duration") or 0)
-    frames = int(v.get("nb_frames") or 0)
+    frames = int(v.get("nb_frames") or 0) or count_frames(path)
     if not frames and duration and stream_fps:
         frames = int(round(duration * stream_fps))
     if not stream_fps and frames and duration:
         stream_fps = frames / duration
     warnings = []
+    variable = bool(avg_fps and r_fps and abs(r_fps - avg_fps) > 0.05 * avg_fps)
 
     tag_fps, tag = _capture_tag(meta, v)
     if capture_fps:
         fps, source = float(capture_fps), "override"
         if tag_fps and abs(tag_fps - fps) > 1:
             warnings.append(f"override {fps:g} fps differs from metadata {tag} = {tag_fps:g} fps")
+        elif not tag_fps and stream_fps >= min_fps and abs(stream_fps - fps) > 1:
+            warnings.append(f"you entered {fps:g} fps but the file itself plays at {stream_fps:.4g} fps; "
+                            f"every frame is taken as 1/{fps:g} s")
     elif tag_fps:
         fps, source = tag_fps, f"metadata:{tag}"
         if tag_fps < stream_fps - 1:
@@ -121,8 +133,19 @@ def clip_info(path, capture_fps=None, min_fps=MIN_CAPTURE_FPS):
             warnings.append(f"stream plays at {stream_fps:g} fps with no capture-fps metadata; "
                             "if this is slow motion, enter the capture rate")
     if fps < min_fps:
-        raise IngestError(f"captured at {fps:g} fps ({source}); need at least {min_fps:g} fps. "
-                          "If the phone saved slow motion at a lower playback rate, enter the capture fps.")
+        if source == "override":
+            msg = f"You entered a capture rate of {fps:g} fps; measuring needs at least {min_fps:g} fps."
+        elif source.startswith("metadata:"):
+            msg = (f"The file's capture-rate tag ({tag}) says {fps:g} fps; measuring needs at least {min_fps:g} fps. "
+                   "If the tag is wrong, enter the capture rate.")
+        else:
+            msg = (f"This file plays at {stream_fps:.4g} fps and has no capture-rate tag. Phones often save "
+                   f"slow motion as a slowed {round(stream_fps)} fps file that still holds every frame; enter the "
+                   f"rate it was captured at (for example 240). Measuring needs at least {min_fps:g} fps.")
+        raise IngestError(msg, field="capture_fps")
+    if variable:
+        warnings.append(f"variable frame rate (timestamps between {avg_fps:.4g} and {r_fps:.4g} fps): frames are "
+                        f"timed by the capture rate, one every 1/{fps:g} s, not by the file's timestamps")
 
     codec = v.get("codec_name", "")
     container = meta.get("format", {}).get("format_name", "")
@@ -134,7 +157,18 @@ def clip_info(path, capture_fps=None, min_fps=MIN_CAPTURE_FPS):
                     container=container, stream_fps=round(stream_fps, 4), capture_fps=round(fps, 4), fps_source=source,
                     frames=frames, duration_s=round(frames / fps, 4) if fps else 0.0,
                     time_scale=round(fps / stream_fps, 4) if stream_fps else 1.0, rotation=_rotation(v),
-                    warnings=warnings)
+                    warnings=warnings, variable_rate=variable)
+
+
+def count_frames(path):
+    """Video packets in the file (one per frame), for containers that do not state a frame count. 0 if unknown."""
+    try:
+        r = subprocess.run(["ffprobe", "-v", "error", "-select_streams", "v:0", "-count_packets",
+                            "-show_entries", "stream=nb_read_packets", "-of", "csv=p=0", str(path)],
+                           capture_output=True, text=True, stdin=subprocess.DEVNULL, timeout=120)
+        return int(r.stdout.strip().split(",")[0] or 0) if r.returncode == 0 else 0
+    except (subprocess.TimeoutExpired, ValueError):
+        return 0
 
 
 def read_gray(path, start=0, count=None, scale=1.0, blur=None):
