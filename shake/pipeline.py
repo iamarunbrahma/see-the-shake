@@ -93,7 +93,8 @@ def code_version():
     return h.hexdigest()[:10]
 
 
-def run_id(clip, masks, options):
+def run_id(clip, masks, options, mask_source="supplied", truth=None):
+    """Hash of everything a run depends on, including its context (where the masks came from, which truth)."""
     h = hashlib.sha1()
     h.update(_sha_file(clip).encode())
     for name in sorted(masks):
@@ -102,6 +103,9 @@ def run_id(clip, masks, options):
         h.update(str(masks[name].shape).encode())
     h.update(json.dumps(options.key(), sort_keys=True, default=str).encode())
     h.update(code_version().encode())
+    h.update(mask_source.encode())
+    if truth is not None:
+        h.update(json.dumps([truth["fault"], truth["seed"], truth["rpm"], truth["seconds"]]).encode())
     return h.hexdigest()[:12]
 
 
@@ -171,7 +175,7 @@ def run(clip, masks, runs_dir="runs", options=None, plan=None, segment=None, dia
     clip = Path(clip)
     options = options or Options()
     masks = load_masks(masks)
-    rid = run_id(clip, masks, options)
+    rid = run_id(clip, masks, options, mask_source, truth)
     out = Path(runs_dir) / rid
     res_path = out / "results.json"
     if use_cache and res_path.exists():

@@ -75,3 +75,13 @@ def test_bad_clip_fails_at_ingest(tmp_path):
     runs = [p for p in tmp_path.iterdir() if p.is_dir()]
     res = json.loads((runs[0] / "results.json").read_text())
     assert res["state"] == "failed" and res["error"]["step"] == "ingest"
+
+
+def test_run_id_depends_on_context():
+    """The same clip and masks from an upload and from the twin renderer are separate runs (labels, truth)."""
+    clip, masks, truth = twin_inputs("imbalance")
+    m = pipeline.load_masks(masks)
+    opts = pipeline.twin_options(truth)
+    ids = {pipeline.run_id(clip, m, opts, "uploaded"), pipeline.run_id(clip, m, opts, "twin renderer", truth),
+           pipeline.run_id(clip, m, opts, "twin renderer")}
+    assert len(ids) == 3
