@@ -416,8 +416,11 @@ def measure(path, masks, fps, start=0, count=None, rpm=None, rpm_range=None, sca
     return result, arrays
 
 
-def plot_spectra(result, arrays, out_png, title=""):
-    """One panel per part (x and y overlaid), peaks labelled with their orders."""
+def plot_spectra(result, arrays, out_png, title="", skip=None):
+    """One panel per part (x and y overlaid), peaks labelled with their orders.
+    skip: {part: {(axis, hz)}} peaks not to label, such as the fingerprint's artifacts (a flicker sideband that
+    happens to sit near 5x must not be drawn as a 5x on the plot Spark is sent)."""
+    skip = skip or {}
     import matplotlib
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
@@ -431,6 +434,8 @@ def plot_spectra(result, arrays, out_png, title=""):
             f, A = arrays["spectra"][(name, axis)]
             ax.semilogy(f, A * (k_mm or 1), lw=0.8, color=col, label=f"{axis} (horizontal)" if axis == "x" else f"{axis} (vertical)")
             for p in result["parts"][name]["axes"][axis]["peaks"]:
+                if (axis, p["hz"]) in skip.get(name, ()):
+                    continue
                 if p["order"] is not None or p["label"] == "flicker":
                     ax.annotate(p["label"], (p["hz"], p["amp_px"] * (k_mm or 1)), textcoords="offset points",
                                 xytext=(0, 5), ha="center", fontsize=8, color=col)
