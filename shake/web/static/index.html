@@ -163,6 +163,7 @@
 
     <div class="panel">
       <h2>Features per part</h2>
+      <p class="hint" id="ignored"></p>
       <div class="scroll"><table id="features"><thead><tr><th>Part</th><th>Rule result</th><th>Velocity</th><th>1x share</th><th>2x / 1x</th><th>Harmonics</th><th>0.5x</th></tr></thead><tbody></tbody></table></div>
     </div>
 
@@ -298,6 +299,9 @@ function showResults(r, base) {
     row(ft, [part, VERDICT[p.verdict] || p.verdict, `${fmt(f.velocity_rms, 1)} ${f.velocity_unit}`, `${Math.round(f.e1_share * 100)}%`,
              fmt(f.r21, 2), f.harmonics.join(", ") || "none", f.half_order ? "yes" : "no"]);
   }
+  const ignored = Object.entries(fp.parts).flatMap(([part, p]) => (p.features.artifacts || []).map(a =>
+    `${part} ${a.axis === "x" ? "horizontal" : "vertical"} ${fmt(a.hz, 1)} Hz (${a.kind === "whole frame" ? "the background moves the same way" : "light flicker pattern"})`));
+  $("ignored").textContent = ignored.length ? "Left out as compression or flicker artifacts, not vibration: " + ignored.join("; ") + "." : "";
   $("slice").src = base + r.files.slice;
 
   const tc = r.truth_comparison;
