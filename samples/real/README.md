@@ -15,8 +15,8 @@ Real machines filmed by other people, under open licenses, for testing until Aru
 - Notes:
   - Video: 1920x1080 at 120 fps with sound.
   - Handheld: the background shakes at 6 to 12 Hz, typical hand tremor.
-  - A quick check of the control panel against the background shows a steady peak at 24.0 Hz (about 1440 rpm) through
-    the whole original, with a 2x peak at 48 Hz.
+  - The pipeline finds the drum at 22.75 Hz (about 1365 rpm), with its 2x at 45.5 Hz; the door, where the tub shows
+    through the glass, moves most. A rough check of the control panel alone also shows a peak near 24 Hz.
   - The machine is a standard 600 mm wide front-loader.
 
 ## xjtu-rotor-500fps
