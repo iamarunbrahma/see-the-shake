@@ -52,8 +52,8 @@ def test_slots_take_callables(imbalance_run, tmp_path):
     _, _, (clip, masks, truth) = imbalance_run
     plan = lambda clip, ing: {"machine": "washing machine", "rpm_range": [900, 1100], "parts": list(masks)}  # noqa: E731
     diag = lambda res: {"fault": res["fingerprint"]["verdict"], "source": "stand-in"}  # noqa: E731
-    r = pipeline.run(clip, masks, tmp_path, pipeline.Options(reference=("washing machine", 600.0), min_seconds=2.0,
-                                                              video_seconds=0.5), plan=plan, diagnose=diag)
+    r = pipeline.run(clip, masks, tmp_path, pipeline.Options(reference=("washing machine", 600.0), min_seconds=1.0,
+                                                              max_seconds=1.0, video_seconds=0.5), plan=plan, diagnose=diag)
     status = {s["key"]: s["status"] for s in r["steps"]}
     assert status["plan"] == "done" and status["diagnose"] == "done"
     assert r["measurement"]["running_speed"]["source"] == "rpm_range" and r["diagnosis"]["source"] == "stand-in"
