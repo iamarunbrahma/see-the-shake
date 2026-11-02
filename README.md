@@ -135,7 +135,9 @@ The spinning blades change every frame, so any region that contains them cannot 
 - Dark or contrasting parts measure best. On the twin, a pale pole against a pale wall read its motion low until
   the pole was dark; a chrome stand in front of a white wall can do the same.
 - Three blades give a blade-pass peak at 3x running speed. On its own it is not a fault; imbalance shows at 1x, a
-  loose head mount at 0.5x and a row of harmonics.
+  loose head mount at 0.5x and a row of harmonics. Enter the blade count (Fan blades, or `--blades`): blade pass then
+  stays in the overall vibration but cannot push the verdict toward a fault pattern, and when it alone takes the
+  vibration over the alert level the verdict says so: high vibration at blade pass, check the blades and the guard.
 
 ## Tests
 
