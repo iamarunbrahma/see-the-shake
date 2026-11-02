@@ -1,0 +1,41 @@
+{
+ "check_next": [
+  "Trend RMS velocity over next washes with normal balanced load",
+  "Recheck 1x amplitude if shaking increases or load is uneven"
+ ],
+ "confidence": "medium",
+ "evidence": [
+  {
+   "frequency_hz": 16.642,
+   "order": "1x",
+   "part": "washing machine"
+  },
+  {
+   "frequency_hz": 16.648,
+   "order": "1x",
+   "part": "washing machine"
+  },
+  {
+   "frequency_hz": 83.363,
+   "order": "5x",
+   "part": "washing machine"
+  },
+  {
+   "frequency_hz": 116.659,
+   "order": "7x",
+   "part": "washing machine"
+  }
+ ],
+ "explanation": "The spectrum is dominated by 1x running speed with 84 percent energy share, which matches residual unbalance but overall velocity is 6.04 mm/s RMS and below the 7 mm/s alert. There is no strong 2x for misalignment and no 0.5x or row of harmonics for looseness. I agree with the rule verdict of none because the 1x pattern is present but the level is not actionable and the 100 Hz peak is light flicker, not vibration.",
+ "fault": "none",
+ "fix": [
+  "No immediate repair needed, keep machine in service",
+  "Redistribute laundry for a balanced load and level the feet",
+  "Check feet, floor and door seal are tight and clear"
+ ],
+ "visual_observation": {
+  "description": "In the magnified right view the whole cabinet shuttles side to side with the door moving with it.",
+  "direction": "horizontal",
+  "most_moving_part": "washing machine"
+ }
+}
