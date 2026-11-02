@@ -133,6 +133,86 @@ Needed in files this session does not own:
 8. **Short clips work.** A 1 s window gives a 1 Hz bin, and the page warns that 4 s or more is better. The 1x
    still lands within 0.02 Hz.
 
+## Before and after the fixes, on the same recordings
+
+Replayed on Nov 2 at no cost with `python scripts/replay_real.py --rotor-ref-height`: Spark's plan and diagnosis and
+the SAM 3.1 masks come from the recordings, and ingest, measurement, the rules and magnification are the current
+code. The table comes from `python scripts/compare_rotor_probes.py --runs out/real_replay`. The rotor runs now take
+their mm scale from the disc's 150 mm diameter as its mask height (`--ref "large metal disc=150:height"`), so the
+7 mm/s alert applies. The recordings had no scale.
+
+| run | disc 1x (um) | probe #1 1x (um) | 2x/1x disc / probes | 3x to 6x over 1x: shaft, disc / probes | velocity (mm/s): video / probes | rules before | rules now | pattern without the alert |
+|---|---|---|---|---|---|---|---|---|
+| 1000rpm-Unb1 | 18.5 | 25.1 | 1.71 / 0.96 to 1.37 | 0.10, 0.38 / 0.06 or less | 7.2 / 3.7 to 7.6 | looseness | looseness | looseness |
+| 1000rpm-Unb2 | 30.2 | 26.0 | 1.10 / 1.11 to 1.48 | 0.04, 0.09 / 0.05 or less | 6.7 / 4.0 to 8.5 | looseness | none | misalignment |
+| 1000rpm-Unb3 | 16.1 | 26.1 | 1.98 / 1.04 to 1.34 | 0.09, 0.68 / 0.06 or less | 6.7 / 3.8 to 8.5 | looseness | none | misalignment |
+| 2000rpm-Unb1 | 299.4 | 284.8 | 0.01 / 0.02 to 0.03 | 0.06, 0.03 / 0.08 or less | 47.5 / 29.3 to 42.7 | imbalance | imbalance | imbalance |
+| 2000rpm-Unb2 | 437.4 | 407.4 | 0.02 / 0.01 to 0.02 | 0.10, 0.02 / 0.11 or less | 67.9 / 40.1 to 61.2 | imbalance | imbalance | imbalance |
+| 2000rpm-Unb3 | 358.5 | 356.1 | 0.03 / 0.01 to 0.03 | 0.07, 0.06 / 0.08 or less | 56.7 / 35.8 to 53.4 | imbalance | imbalance | imbalance |
+| 3000rpm-Unb1 | 37.9 | 38.5 | 0.12 / 0.01 to 0.05 | 0.04, 0.08 / 0.08 or less | 8.5 / 8.4 to 11.0 | looseness | imbalance | imbalance |
+| 3000rpm-Unb2 | 39.1 | 46.9 | 0.07 / 0.01 to 0.05 | 0.08, 0.07 / 0.06 or less | 9.1 / 5.8 to 14.3 | looseness | imbalance | imbalance |
+| 3000rpm-Unb3 | 63.8 | 55.8 | 0.03 / 0.01 to 0.05 | 0.06, 0.08 / 0.05 or less | 14.3 / 12.3 to 15.8 | looseness | imbalance | imbalance |
+
+Column notes:
+- "3x to 6x over 1x" is the largest of those orders over 1x on the vertical axis, the one the probes read. It
+  includes orders on the light flicker, which the rules leave out. The disc's 0.38 and 0.68 at 1000 rpm are mostly
+  5x and 6x, which sit on 100 Hz flicker and its sideband.
+- The video's velocity covers both axes of the lead part; each probe's covers one vertical axis.
+- "Pattern without the alert" is the rules' verdict with the alert level set to zero.
+
+Verdicts:
+- **The washer** still reads imbalance (1x holds 95% of the vibration energy).
+- **Before:** the rules matched the probes on 3 of 9 rotor runs.
+- **Now:** they match on 6 of 9, and on the pattern at 1000 rpm for 2 of the other 3.
+
+**What each fix did on these clips:**
+
+1. **Synthesised frames.** The washer (VP9) and the rotor clips (MPEG-4) now read "inconclusive", with the reason
+   that compression removes the sensor noise the check relies on. Before, they read "synthesised", and the page said
+   the spectrum would be meaningless. Twin clips still read "ok", both H.264 at 1080p and the phone-like 720p.
+   These still read "synthesised":
+   - a frame-blended or motion-interpolated copy;
+   - a phone clip tagged 480 fps or more.
+2. **Background.** Every SAM mask is left out of the camera-shake reference. The whole machine is also segmented
+   when it is not one of the parts; a replay does this only when its recording holds that call, so these runs don't
+   use it. A warning appears when the background moves at 1x with 30% or more of the part's 1x.
+3. **Running speed.** Without `--rpm` and with Spark's wide range, 1000rpm-Unb1 and Unb2 now take 16.67 Hz, where
+   Unb1 took 33.4 Hz. The page says the speed is ambiguous (2000 rpm also fits) and asks for the rpm. The 2000 rpm runs
+   are not flagged.
+4. **Flicker.** An order on the flicker pattern or its sidebands counts only at 50% of 1x or more, so a real 2x
+   still counts. All three 3000 rpm runs move from looseness to imbalance, and the page says the running speed
+   coincides with the mains.
+5. **Weak axis and turning texture.**
+   - **Weak axis.** The shaft's horizontal axis gets 1 to 2% of its vertical axis's edge information, so it is left
+     out, and the page says why.
+   - **Turning texture.** Each part now also leaves out pixels whose change its own shift does not explain, such
+     as marks turning with the surface. The part is tracked again when these cover 10% or more of it. On the rotor
+     that is 19,000 to 23,000 px of the shaft and 5,000 to 12,000 of the disc; it never happens on the washer or the
+     twin clips.
+   - **Effect on the shaft.** At 1000 rpm its vertical 3x to 6x fall from 21 to 25% of 1x to 4 to 10%. The probes
+     show 6% or less.
+6. **Codec warning.** Gone. The pipeline re-encodes SAM's sub-clip to H.264 itself.
+7. **Scale by height.** `--ref "part=150:height"` on the command line, and a width or height choice on the page.
+
+**Still off:**
+
+- **1000 rpm severity.** The probes read 3.7 to 8.5 mm/s on one axis, with 5.4 to 6.0 at probe #1 near the disc.
+  That is right at the 7 mm/s alert, and the video's 6.7 to 7.2 mm/s on two axes lands on both sides of it. Unb2
+  and Unb3 read none, with the probes' misalignment pattern underneath (2x at 1.1 times 1x).
+- **1000rpm-Unb1** still reads looseness. The disc's 3x to 5x are 16 to 25% of its 2x, and the probes show under
+  6%. Texture on the disc's face and rim survives the 3x-noise threshold. Clearing it would take a rule change,
+  for example counting harmonics only well above 10% of the largest order, and this was not made.
+- **1x amplitude moves with the pixels tracked.**
+  - At 2000 rpm the disc came closer to probe #1: within 1 to 7%, where it was within 7 to 12%. The shaft stayed
+    within 3%.
+  - At 3000 rpm the disc reads 38, 39 and 64 um against 38.5, 46.9 and 55.8 um, where it was within 4%. The shaft
+    reads lower, 19 to 38 um, where it read 28 to 47.
+  - The shaft's 1x is an average along a shaft whose motion changes along its length, so it depends on which pixels
+    remain.
+- **Twin accuracy is unchanged** row for row: 12/12 and 120/120 at 1080p, 4/4 and 31/40 phone-like. No twin part
+  reaches the 10% gate, so none is tracked again. On the two twin clips checked, texture covered at most 4.4% of a
+  part.
+
 ## Cost and time
 
 | run | API cost | wall time |

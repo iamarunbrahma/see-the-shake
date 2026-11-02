@@ -35,12 +35,14 @@ tab with Muse Spark and SAM 3.1 on.
 ## How it works
 
 1. **Ingest.** Reads the clip on its capture time base (phones often save 240 fps as a slowed 30 fps file), refuses
-   clips below 120 fps, flags synthesised in-between frames, and picks a steady window of up to 10 s.
+   clips below 120 fps, flags synthesised in-between frames (or says the check is inconclusive when compression
+   has removed the sensor noise it needs), and picks a steady window of up to 10 s.
 2. **Plan (Muse Spark).** Names the machine, a running-speed range and up to four parts to measure.
 3. **Find the parts (SAM 3.1).** One stable mask per part phrase.
-4. **Measure.** Sub-pixel tracking of each part minus the background (camera shake), with light flicker, compression
-   artifacts and spinning content (drums, blades) left out. A spectrum per part, peaks labelled as orders of running
-   speed, in mm when you give one reference length.
+4. **Measure.** Sub-pixel tracking of each part minus the background (camera shake; every masked part stays out
+   of it), with light flicker, compression artifacts, spinning content (drums, blades) and marks turning on a part's
+   surface left out. An axis a part's edges cannot pin down (a horizontal shaft's horizontal) is left out of the
+   rules. A spectrum per part, peaks labelled as orders of running speed, in mm when you give one reference length.
 5. **Fingerprint.** Fixed rules give the official verdict: none, imbalance, misalignment, looseness or unclear (and,
    for a fan with a known blade count, high vibration at blade pass), citing the peaks it rests on.
 6. **Magnify.** Each part is moved by alpha times its motion around 1x over an inpainted background; original and
@@ -82,7 +84,10 @@ and replayed, so the test suite runs offline. A full run costs about 5 to 8 cent
   Spark agrees on 4 of 5, at 108 to 197 s and $0.05 to $0.08 per run. Re-scored with the current rules:
   [docs/accuracy/live-rescore.md](docs/accuracy/live-rescore.md).
 - **Real clips** ([docs/results/2026-11-02-real-clips.md](docs/results/2026-11-02-real-clips.md)): a phone-filmed
-  washing machine at 120 fps and a laboratory rotor rig at 500 fps with displacement probes for reference.
+  washing machine at 120 fps and a laboratory rotor rig at 500 fps with displacement probes for reference. The 1x
+  is within 0.02 Hz of the probes on all 9 rotor runs. The rule verdict matches what the probes support on 6 of 9
+  (imbalance at 2000 and 3000 rpm); at 1000 rpm, where the rig sits right at the alert level, 2 of 3 show the
+  probes' 2x pattern. The washer reads imbalance.
 - **A second machine:** a pedestal fan twin (healthy, imbalance, looseness) gets 3 of 3 verdicts, measured through its
   housing, guard rim and stand while the blades spin.
 
@@ -105,7 +110,7 @@ and replayed, so the test suite runs offline. A full run costs about 5 to 8 cent
   touch the machine, and a still background in view.
 - Keep the original file: transfer by USB or a cloud drive, not a messaging app. If the phone saved the clip as a 30 fps
   file, enter the capture rate (240) when you upload.
-- Give one reference length (for example the machine's width) to get millimetres.
+- Give one reference length to get millimetres: the machine's width, or a height (a disc's diameter, say).
 - **Fans:** the spinning blades cannot be tracked, so film from a 3/4 angle with the motor housing, guard rim and stand
   in view (for a ceiling fan, the housing and downrod) and measure those, never the blade disc. Keep curtains and paper
   out of the frame, since the fan moves them. Enter the blade count so blade pass (3x for three blades) is labelled
@@ -136,7 +141,8 @@ python -m shake.api_check
 ```
 
 **Command line.** `python -m shake.pipeline clip.mp4 --api live --ref "washing machine=600"` runs your clip with Muse
-Spark and SAM 3.1; `--api off --mask "part=mask.png"` uses your own masks. Other options: `--capture-fps 240`, `--rpm`
+Spark and SAM 3.1 (`--ref "large metal disc=150:height"` takes the length as the mask's height);
+`--api off --mask "part=mask.png"` uses your own masks. Other options: `--capture-fps 240`, `--rpm`
 or `--rpm-range`, `--blades`, `--parts "phrase, phrase"`. Twins: `--twin imbalance` (washing machine faults: healthy,
 imbalance, looseness, misalignment) or `--twin fan-imbalance` (fan: healthy, imbalance, looseness), with `--seconds`
 and `--scale`. Results go to `runs/<run id>/results.json` with the videos and plots beside it. Scripts that call the
@@ -150,7 +156,9 @@ python -m pytest -q
 
 Live API tests cost money and run only with `python -m pytest -m live`. Regenerate the twin accuracy table with
 `python scripts/eval_twin.py --seeds 1 2 3 --seconds 6 --phone`, and the live twin runs (about 25 cents) with
-`python scripts/live_twin.py --max-usd 1.0`.
+`python scripts/live_twin.py --max-usd 1.0`. Replay the real clips through the current code at no cost with
+`python scripts/replay_real.py --rotor-ref-height`, then compare with the probes with
+`python scripts/compare_rotor_probes.py --runs out/real_replay`.
 
 **Layout.** `shake/` holds the pipeline: `ingest`, `twin` and `twin_fan` (renderers with complete truth), `measure`,
 `fingerprint` (rules), `magnify`, `meta_api` (client, cost, record and replay), `plan_parts`, `segment`, `diagnose`,
