@@ -269,6 +269,7 @@ def _magnify_display(path, masks, sh, alpha, band, band_hz, fps, start, m, out, 
     so the visible wobble is the same as compositing at full resolution and shrinking afterwards. Frames are
     composited in parallel threads and written in order.
     """
+    from collections import deque
     from concurrent.futures import ThreadPoolExecutor
     frames = [cv2.resize(f, (hw, hh), interpolation=cv2.INTER_AREA) for f in read_bgr(path, start, m)]
     m = len(frames)
@@ -310,11 +311,20 @@ def _magnify_display(path, masks, sh, alpha, band, band_hz, fps, start, m, out, 
     ok = False
     try:
         with ThreadPoolExecutor(workers, thread_name_prefix="magnify") as ex:
-            for img, sl in ex.map(render, range(m)):  # map keeps frame order
+            pending = deque()
+
+            def emit(fut):
+                img, sl = fut.result()
                 sbs.write(img)
                 if sl:
                     slices["original"].append(sl[0])
                     slices["magnified"].append(sl[1])
+            for i in range(m):  # a sliding window keeps frame order and bounds the frames held in memory
+                pending.append(ex.submit(render, i))
+                while len(pending) > 2 * workers:
+                    emit(pending.popleft())
+            while pending:
+                emit(pending.popleft())
         ok = True
     finally:
         sbs.close(ok)
