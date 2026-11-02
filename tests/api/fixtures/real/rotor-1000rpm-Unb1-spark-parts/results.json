@@ -1,0 +1,1728 @@
+{
+ "run_id": "e4b1757458fa",
+ "code_version": "90b343759f",
+ "options": {
+  "capture_fps": 500.0,
+  "rpm": 1000.0,
+  "rpm_range": null,
+  "reference": null,
+  "alpha": "auto",
+  "band": [
+   0.8,
+   1.25
+  ],
+  "video_seconds": 3.0,
+  "min_seconds": 4.0,
+  "max_seconds": 10.0,
+  "verify": false,
+  "mains_hz": 50.0,
+  "api": "record",
+  "cassette": null,
+  "api_label": "run",
+  "spark_video": true,
+  "user_parts": null,
+  "extra": {}
+ },
+ "mask_source": "SAM 3.1",
+ "clip": {
+  "name": "1000rpm-Unb1.avi"
+ },
+ "ingest": {
+  "clip": {
+   "path": "samples/real/xjtu-rotor-500fps/1000rpm-Unb1.avi",
+   "width": 1280,
+   "height": 800,
+   "codec": "mpeg4",
+   "container": "avi",
+   "stream_fps": 100.0,
+   "capture_fps": 500.0,
+   "fps_source": "override",
+   "frames": 500,
+   "duration_s": 1.0,
+   "time_scale": 5.0,
+   "rotation": 0,
+   "warnings": [
+    "codec mpeg4 is not H.264 or H.265; SAM 3.1 needs one of those",
+    "container avi is not MP4 or MOV; SAM 3.1 needs one of those",
+    "in-between frames look synthesised (noise whiteness 0.67 below 0.7); the spectrum would be meaningless. Re-film at a native capture rate (e.g. 1080p 120 fps).",
+    "only 1.0 s of video; 4 s or more is better"
+   ]
+  },
+  "interpolation": {
+   "flagged": true,
+   "status": "synthesised",
+   "whiteness": 0.67,
+   "threshold": 0.7,
+   "temporal_noise_grey": 0.432,
+   "min_noise_grey": 0.3,
+   "tile_whiteness_p10_p90": [
+    0.551,
+    0.683
+   ],
+   "frames_checked": 500
+  },
+  "window": {
+   "start_frame": 0,
+   "frames": 500,
+   "start_s": 0.0,
+   "seconds": 1.0
+  }
+ },
+ "plan": {
+  "status": "done",
+  "machine_type": "rotor test rig",
+  "rpm_range": [
+   300.0,
+   10000.0
+  ],
+  "rpm_reason": "Lab rotor rigs run from slow roll to high speed so range is kept very wide.",
+  "parts": [
+   "rotor test rig",
+   "long metal shaft",
+   "large metal disc"
+  ],
+  "parts_source": "spark",
+  "fallback_phrase": "rotor test rig",
+  "parts_not_clear": [],
+  "rotating_parts_seen": [
+   "shaft",
+   "disc"
+  ],
+  "warnings": [],
+  "usd": 0.020496,
+  "usage": {
+   "input_tokens": 828,
+   "output_tokens": 4579
+  },
+  "preview": {
+   "seconds": 4.0,
+   "fps": 30,
+   "height": 480,
+   "step": 17
+  },
+  "preview_file_id": "file-28851336567867431"
+ },
+ "segment": {
+  "file_id": "file-1616490433557643",
+  "subclip": {
+   "start_frame": 220,
+   "frames": 60
+  },
+  "missing": [
+   "rotor test rig"
+  ],
+  "usd": 0.036,
+  "parts": {
+   "rotor test rig": {
+    "objects": 0,
+    "frames_sent": 60,
+    "found": false,
+    "frames_billed": 60,
+    "usd": 0.012
+   },
+   "long metal shaft": {
+    "objects": 1,
+    "frames_sent": 60,
+    "found": true,
+    "object_id": "0",
+    "frames_returned": 60,
+    "frames_decoded": 8,
+    "present_share": 1.0,
+    "confidence": 0.8519,
+    "area_px": 42731,
+    "bbox": [
+     14,
+     467,
+     1261,
+     516
+    ],
+    "unstable_share": 0.0648,
+    "frames_billed": 60,
+    "usd": 0.012
+   },
+   "large metal disc": {
+    "objects": 3,
+    "frames_sent": 60,
+    "found": true,
+    "object_id": "2",
+    "frames_returned": 60,
+    "frames_decoded": 8,
+    "present_share": 1.0,
+    "confidence": 0.9452,
+    "area_px": 22607,
+    "bbox": [
+     167,
+     365,
+     270,
+     613
+    ],
+    "unstable_share": 0.0342,
+    "frames_billed": 60,
+    "usd": 0.012
+   }
+  }
+ },
+ "measurement": {
+  "fps": 500.0,
+  "frames": 500,
+  "start_frame": 0,
+  "seconds": 1.0,
+  "bin_hz": 1.0,
+  "nyquist_hz": 250.0,
+  "running_speed": {
+   "hz": 16.663,
+   "rpm": 999.8,
+   "source": "rpm"
+  },
+  "scale": {
+   "mm_per_px": null,
+   "basis": "px"
+  },
+  "flicker_hz": 100.0,
+  "pixel_noise_grey": 0.3372,
+  "parts": {
+   "long metal shaft": {
+    "axes": {
+     "x": {
+      "noise_floor_px": 0.000554,
+      "peaks": [
+       {
+        "hz": 16.663,
+        "amp_px": 0.04565,
+        "amp_mm": null,
+        "order": 1.0,
+        "label": "1x",
+        "phase": 0.2658,
+        "snr": 82.5,
+        "bg_amp_px": 0.00049
+       },
+       {
+        "hz": 33.341,
+        "amp_px": 0.04913,
+        "amp_mm": null,
+        "order": 2.0,
+        "label": "2x",
+        "phase": -2.345,
+        "snr": 88.7,
+        "bg_amp_px": 0.00247
+       },
+       {
+        "hz": 50.015,
+        "amp_px": 0.0287,
+        "amp_mm": null,
+        "order": 3.0,
+        "label": "3x",
+        "phase": 1.2776,
+        "snr": 51.8,
+        "bg_amp_px": 0.00015
+       },
+       {
+        "hz": 66.648,
+        "amp_px": 0.02156,
+        "amp_mm": null,
+        "order": 4.0,
+        "label": "4x",
+        "phase": -2.054,
+        "snr": 38.9,
+        "bg_amp_px": 0.00024
+       },
+       {
+        "hz": 83.391,
+        "amp_px": 0.0065,
+        "amp_mm": null,
+        "order": 5.0,
+        "label": "5x",
+        "phase": -0.1738,
+        "snr": 11.7,
+        "bg_amp_px": 0.00015
+       },
+       {
+        "hz": 133.4,
+        "amp_px": 0.00964,
+        "amp_mm": null,
+        "order": 8.0,
+        "label": "8x",
+        "phase": -1.4474,
+        "snr": 17.4,
+        "bg_amp_px": 0.00017
+       },
+       {
+        "hz": 149.933,
+        "amp_px": 0.00688,
+        "amp_mm": null,
+        "order": 9.0,
+        "label": "9x",
+        "phase": 0.5198,
+        "snr": 12.4,
+        "bg_amp_px": 0.00014
+       }
+      ],
+      "orders": {
+       "0.5x": {
+        "hz": 8.084,
+        "amp_px": 0.00254,
+        "above_floor": false,
+        "phase": -2.7077
+       },
+       "1x": {
+        "hz": 16.663,
+        "amp_px": 0.04565,
+        "above_floor": true,
+        "phase": 0.2658
+       },
+       "1.5x": {
+        "hz": 25.388,
+        "amp_px": 0.00198,
+        "above_floor": false,
+        "phase": -2.5282
+       },
+       "2x": {
+        "hz": 33.341,
+        "amp_px": 0.04913,
+        "above_floor": true,
+        "phase": -2.345
+       },
+       "2.5x": {
+        "hz": 41.551,
+        "amp_px": 0.00088,
+        "above_floor": false,
+        "phase": 0.0491
+       },
+       "3x": {
+        "hz": 50.015,
+        "amp_px": 0.0287,
+        "above_floor": true,
+        "phase": 1.2776
+       },
+       "4x": {
+        "hz": 66.648,
+        "amp_px": 0.02156,
+        "above_floor": true,
+        "phase": -2.054
+       },
+       "5x": {
+        "hz": 83.391,
+        "amp_px": 0.0065,
+        "above_floor": true,
+        "phase": -0.1738
+       },
+       "6x": {
+        "hz": 100.109,
+        "amp_px": 0.00295,
+        "above_floor": false,
+        "phase": 2.3588
+       }
+      }
+     },
+     "y": {
+      "noise_floor_px": 0.000174,
+      "peaks": [
+       {
+        "hz": 8.264,
+        "amp_px": 0.00202,
+        "amp_mm": null,
+        "order": 0.5,
+        "label": "0.5x",
+        "phase": 3.0382,
+        "snr": 11.6,
+        "bg_amp_px": 0.00196
+       },
+       {
+        "hz": 16.654,
+        "amp_px": 0.03438,
+        "amp_mm": null,
+        "order": 1.0,
+        "label": "1x",
+        "phase": 2.7155,
+        "snr": 197.5,
+        "bg_amp_px": 0.00022
+       },
+       {
+        "hz": 33.36,
+        "amp_px": 0.04197,
+        "amp_mm": null,
+        "order": 2.0,
+        "label": "2x",
+        "phase": -2.7316,
+        "snr": 241.1,
+        "bg_amp_px": 0.00774
+       },
+       {
+        "hz": 49.989,
+        "amp_px": 0.00593,
+        "amp_mm": null,
+        "order": 3.0,
+        "label": "3x",
+        "phase": -1.1478,
+        "snr": 34.0,
+        "bg_amp_px": 0.00074
+       },
+       {
+        "hz": 66.661,
+        "amp_px": 0.00831,
+        "amp_mm": null,
+        "order": 4.0,
+        "label": "4x",
+        "phase": 2.1412,
+        "snr": 47.7,
+        "bg_amp_px": 0.00018
+       },
+       {
+        "hz": 83.356,
+        "amp_px": 0.00318,
+        "amp_mm": null,
+        "order": 5.0,
+        "label": "5x",
+        "phase": 0.414,
+        "snr": 18.3,
+        "bg_amp_px": 8e-05
+       },
+       {
+        "hz": 116.663,
+        "amp_px": 0.00397,
+        "amp_mm": null,
+        "order": 7.0,
+        "label": "7x",
+        "phase": 2.3592,
+        "snr": 22.8,
+        "bg_amp_px": 0.00043
+       },
+       {
+        "hz": 133.314,
+        "amp_px": 0.00231,
+        "amp_mm": null,
+        "order": 8.0,
+        "label": "8x",
+        "phase": -2.9372,
+        "snr": 13.3,
+        "bg_amp_px": 0.00035
+       },
+       {
+        "hz": 150.018,
+        "amp_px": 0.00249,
+        "amp_mm": null,
+        "order": 9.0,
+        "label": "9x",
+        "phase": 2.1279,
+        "snr": 14.3,
+        "bg_amp_px": 9e-05
+       },
+       {
+        "hz": 166.635,
+        "amp_px": 0.00302,
+        "amp_mm": null,
+        "order": 10.0,
+        "label": "10x",
+        "phase": 0.7835,
+        "snr": 17.3,
+        "bg_amp_px": 8e-05
+       }
+      ],
+      "orders": {
+       "0.5x": {
+        "hz": 8.264,
+        "amp_px": 0.00202,
+        "above_floor": true,
+        "phase": 3.0382
+       },
+       "1x": {
+        "hz": 16.654,
+        "amp_px": 0.03438,
+        "above_floor": true,
+        "phase": 2.7155
+       },
+       "1.5x": {
+        "hz": 26.237,
+        "amp_px": 0.00092,
+        "above_floor": false,
+        "phase": -1.1857
+       },
+       "2x": {
+        "hz": 33.36,
+        "amp_px": 0.04197,
+        "above_floor": true,
+        "phase": -2.7316
+       },
+       "2.5x": {
+        "hz": 40.916,
+        "amp_px": 0.00051,
+        "above_floor": false,
+        "phase": -1.29
+       },
+       "3x": {
+        "hz": 49.989,
+        "amp_px": 0.00593,
+        "above_floor": true,
+        "phase": -1.1478
+       },
+       "4x": {
+        "hz": 66.661,
+        "amp_px": 0.00831,
+        "above_floor": true,
+        "phase": 2.1412
+       },
+       "5x": {
+        "hz": 83.356,
+        "amp_px": 0.00318,
+        "above_floor": true,
+        "phase": 0.414
+       },
+       "6x": {
+        "hz": 99.968,
+        "amp_px": 0.00176,
+        "above_floor": true,
+        "phase": 1.1971
+       }
+      }
+     }
+    },
+    "velocity_rms": 16.537,
+    "velocity_unit": "px/s",
+    "excluded_rotating_px": 7673
+   },
+   "large metal disc": {
+    "axes": {
+     "x": {
+      "noise_floor_px": 0.000377,
+      "peaks": [
+       {
+        "hz": 16.694,
+        "amp_px": 0.02518,
+        "amp_mm": null,
+        "order": 1.0,
+        "label": "1x",
+        "phase": 0.3532,
+        "snr": 66.8,
+        "bg_amp_px": 0.00049
+       },
+       {
+        "hz": 33.337,
+        "amp_px": 0.0546,
+        "amp_mm": null,
+        "order": 2.0,
+        "label": "2x",
+        "phase": -2.2185,
+        "snr": 144.8,
+        "bg_amp_px": 0.00247
+       },
+       {
+        "hz": 50.138,
+        "amp_px": 0.00386,
+        "amp_mm": null,
+        "order": 3.0,
+        "label": "3x",
+        "phase": 2.2763,
+        "snr": 10.3,
+        "bg_amp_px": 0.00015
+       },
+       {
+        "hz": 66.637,
+        "amp_px": 0.01025,
+        "amp_mm": null,
+        "order": 4.0,
+        "label": "4x",
+        "phase": -2.4861,
+        "snr": 27.2,
+        "bg_amp_px": 0.00024
+       },
+       {
+        "hz": 83.347,
+        "amp_px": 0.01834,
+        "amp_mm": null,
+        "order": 5.0,
+        "label": "5x",
+        "phase": 0.8207,
+        "snr": 48.7,
+        "bg_amp_px": 0.00015
+       },
+       {
+        "hz": 100.053,
+        "amp_px": 0.00489,
+        "amp_mm": null,
+        "order": null,
+        "label": "flicker",
+        "phase": 0.5329,
+        "snr": 13.0,
+        "bg_amp_px": 0.00017
+       },
+       {
+        "hz": 116.653,
+        "amp_px": 0.00898,
+        "amp_mm": null,
+        "order": 7.0,
+        "label": "7x",
+        "phase": -0.034,
+        "snr": 23.8,
+        "bg_amp_px": 0.00021
+       },
+       {
+        "hz": 133.34,
+        "amp_px": 0.00878,
+        "amp_mm": null,
+        "order": 8.0,
+        "label": "8x",
+        "phase": 3.039,
+        "snr": 23.3,
+        "bg_amp_px": 0.00017
+       },
+       {
+        "hz": 149.984,
+        "amp_px": 0.00579,
+        "amp_mm": null,
+        "order": 9.0,
+        "label": "9x",
+        "phase": 2.5167,
+        "snr": 15.4,
+        "bg_amp_px": 0.00014
+       },
+       {
+        "hz": 233.377,
+        "amp_px": 0.00458,
+        "amp_mm": null,
+        "order": 14.0,
+        "label": "14x",
+        "phase": -2.8413,
+        "snr": 12.2,
+        "bg_amp_px": 9e-05
+       }
+      ],
+      "orders": {
+       "0.5x": {
+        "hz": 8.193,
+        "amp_px": 0.00276,
+        "above_floor": false,
+        "phase": -2.9134
+       },
+       "1x": {
+        "hz": 16.694,
+        "amp_px": 0.02518,
+        "above_floor": true,
+        "phase": 0.3532
+       },
+       "1.5x": {
+        "hz": 25.445,
+        "amp_px": 0.00416,
+        "above_floor": true,
+        "phase": -2.1359
+       },
+       "2x": {
+        "hz": 33.337,
+        "amp_px": 0.0546,
+        "above_floor": true,
+        "phase": -2.2185
+       },
+       "2.5x": {
+        "hz": 41.68,
+        "amp_px": 0.00087,
+        "above_floor": false,
+        "phase": 0.9456
+       },
+       "3x": {
+        "hz": 50.138,
+        "amp_px": 0.00386,
+        "above_floor": true,
+        "phase": 2.2763
+       },
+       "4x": {
+        "hz": 66.637,
+        "amp_px": 0.01025,
+        "above_floor": true,
+        "phase": -2.4861
+       },
+       "5x": {
+        "hz": 83.347,
+        "amp_px": 0.01834,
+        "above_floor": true,
+        "phase": 0.8207
+       },
+       "6x": {
+        "hz": 100.053,
+        "amp_px": 0.00489,
+        "above_floor": true,
+        "phase": 0.5329
+       }
+      }
+     },
+     "y": {
+      "noise_floor_px": 0.000326,
+      "peaks": [
+       {
+        "hz": 16.657,
+        "amp_px": 0.03741,
+        "amp_mm": null,
+        "order": 1.0,
+        "label": "1x",
+        "phase": 3.0103,
+        "snr": 114.9,
+        "bg_amp_px": 0.00022
+       },
+       {
+        "hz": 33.357,
+        "amp_px": 0.06879,
+        "amp_mm": null,
+        "order": 2.0,
+        "label": "2x",
+        "phase": -2.4203,
+        "snr": 211.3,
+        "bg_amp_px": 0.00774
+       },
+       {
+        "hz": 66.648,
+        "amp_px": 0.01376,
+        "amp_mm": null,
+        "order": 4.0,
+        "label": "4x",
+        "phase": 0.7406,
+        "snr": 42.3,
+        "bg_amp_px": 0.00018
+       },
+       {
+        "hz": 83.345,
+        "amp_px": 0.01505,
+        "amp_mm": null,
+        "order": 5.0,
+        "label": "5x",
+        "phase": 1.3354,
+        "snr": 46.2,
+        "bg_amp_px": 8e-05
+       },
+       {
+        "hz": 99.997,
+        "amp_px": 0.00924,
+        "amp_mm": null,
+        "order": null,
+        "label": "flicker",
+        "phase": 1.4084,
+        "snr": 28.4,
+        "bg_amp_px": 0.00019
+       },
+       {
+        "hz": 116.643,
+        "amp_px": 0.01324,
+        "amp_mm": null,
+        "order": 7.0,
+        "label": "7x",
+        "phase": -0.499,
+        "snr": 40.7,
+        "bg_amp_px": 0.00043
+       },
+       {
+        "hz": 150.01,
+        "amp_px": 0.01563,
+        "amp_mm": null,
+        "order": 9.0,
+        "label": "9x",
+        "phase": 2.7485,
+        "snr": 48.0,
+        "bg_amp_px": 9e-05
+       },
+       {
+        "hz": 166.648,
+        "amp_px": 0.00988,
+        "amp_mm": null,
+        "order": 10.0,
+        "label": "10x",
+        "phase": 2.2677,
+        "snr": 30.3,
+        "bg_amp_px": 8e-05
+       },
+       {
+        "hz": 200.006,
+        "amp_px": 0.02048,
+        "amp_mm": null,
+        "order": 12.0,
+        "label": "12x",
+        "phase": 2.6333,
+        "snr": 62.9,
+        "bg_amp_px": 0.00025
+       },
+       {
+        "hz": 216.667,
+        "amp_px": 0.017,
+        "amp_mm": null,
+        "order": 13.0,
+        "label": "13x",
+        "phase": 0.3075,
+        "snr": 52.2,
+        "bg_amp_px": 0.00017
+       }
+      ],
+      "orders": {
+       "0.5x": {
+        "hz": 8.372,
+        "amp_px": 0.00193,
+        "above_floor": false,
+        "phase": 3.0393
+       },
+       "1x": {
+        "hz": 16.657,
+        "amp_px": 0.03741,
+        "above_floor": true,
+        "phase": 3.0103
+       },
+       "1.5x": {
+        "hz": 26.013,
+        "amp_px": 0.00123,
+        "above_floor": false,
+        "phase": -1.1921
+       },
+       "2x": {
+        "hz": 33.357,
+        "amp_px": 0.06879,
+        "above_floor": true,
+        "phase": -2.4203
+       },
+       "2.5x": {
+        "hz": 41.177,
+        "amp_px": 0.00048,
+        "above_floor": false,
+        "phase": -1.1424
+       },
+       "3x": {
+        "hz": 50.008,
+        "amp_px": 0.00841,
+        "above_floor": true,
+        "phase": 0.9304
+       },
+       "4x": {
+        "hz": 66.648,
+        "amp_px": 0.01376,
+        "above_floor": true,
+        "phase": 0.7406
+       },
+       "5x": {
+        "hz": 83.345,
+        "amp_px": 0.01505,
+        "above_floor": true,
+        "phase": 1.3354
+       },
+       "6x": {
+        "hz": 99.997,
+        "amp_px": 0.00924,
+        "above_floor": true,
+        "phase": 1.4084
+       }
+      }
+     }
+    },
+    "velocity_rms": 34.642,
+    "velocity_unit": "px/s",
+    "excluded_rotating_px": 4030
+   }
+  },
+  "background": {
+   "axes": {
+    "x": {
+     "noise_floor_px": 8.5e-05,
+     "peaks": [
+      {
+       "hz": 2.5,
+       "amp_px": 0.00105,
+       "amp_mm": null,
+       "order": null,
+       "label": "non-synchronous",
+       "phase": 3.0292,
+       "snr": 12.4
+      },
+      {
+       "hz": 33.337,
+       "amp_px": 0.00247,
+       "amp_mm": null,
+       "order": 2.0,
+       "label": "2x",
+       "phase": 1.6874,
+       "snr": 29.1
+      }
+     ],
+     "orders": {
+      "0.5x": {
+       "hz": 8.622,
+       "amp_px": 0.00066,
+       "above_floor": false,
+       "phase": 2.2548
+      },
+      "1x": {
+       "hz": 16.922,
+       "amp_px": 0.00049,
+       "above_floor": false,
+       "phase": 3.0527
+      },
+      "1.5x": {
+       "hz": 26.08,
+       "amp_px": 0.0003,
+       "above_floor": false,
+       "phase": -2.159
+      },
+      "2x": {
+       "hz": 33.337,
+       "amp_px": 0.00247,
+       "above_floor": true,
+       "phase": 1.6874
+      },
+      "2.5x": {
+       "hz": 41.734,
+       "amp_px": 0.00017,
+       "above_floor": false,
+       "phase": -2.65
+      },
+      "3x": {
+       "hz": 49.283,
+       "amp_px": 0.00015,
+       "above_floor": false,
+       "phase": 0.6852
+      },
+      "4x": {
+       "hz": 67.246,
+       "amp_px": 0.00024,
+       "above_floor": false,
+       "phase": -1.5087
+      },
+      "5x": {
+       "hz": 84.329,
+       "amp_px": 0.00015,
+       "above_floor": false,
+       "phase": -1.7914
+      },
+      "6x": {
+       "hz": 101.293,
+       "amp_px": 0.00017,
+       "above_floor": false,
+       "phase": -0.1155
+      }
+     }
+    },
+    "y": {
+     "noise_floor_px": 0.0001,
+     "peaks": [
+      {
+       "hz": 8.385,
+       "amp_px": 0.00196,
+       "amp_mm": null,
+       "order": 0.5,
+       "label": "0.5x",
+       "phase": -0.5038,
+       "snr": 19.6
+      },
+      {
+       "hz": 33.381,
+       "amp_px": 0.00774,
+       "amp_mm": null,
+       "order": 2.0,
+       "label": "2x",
+       "phase": 1.065,
+       "snr": 77.5
+      }
+     ],
+     "orders": {
+      "0.5x": {
+       "hz": 8.385,
+       "amp_px": 0.00196,
+       "above_floor": true,
+       "phase": -0.5038
+      },
+      "1x": {
+       "hz": 17.858,
+       "amp_px": 0.00022,
+       "above_floor": false,
+       "phase": -2.0387
+      },
+      "1.5x": {
+       "hz": 24.54,
+       "amp_px": 0.00033,
+       "above_floor": false,
+       "phase": 2.091
+      },
+      "2x": {
+       "hz": 33.381,
+       "amp_px": 0.00774,
+       "above_floor": true,
+       "phase": 1.065
+      },
+      "2.5x": {
+       "hz": 40.748,
+       "amp_px": 0.00019,
+       "above_floor": false,
+       "phase": 1.6142
+      },
+      "3x": {
+       "hz": 49.868,
+       "amp_px": 0.00074,
+       "above_floor": false,
+       "phase": -2.1008
+      },
+      "4x": {
+       "hz": 64.827,
+       "amp_px": 0.00018,
+       "above_floor": false,
+       "phase": 3.0908
+      },
+      "5x": {
+       "hz": 81.0,
+       "amp_px": 9e-05,
+       "above_floor": false,
+       "phase": 2.8049
+      },
+      "6x": {
+       "hz": 100.212,
+       "amp_px": 0.00019,
+       "above_floor": false,
+       "phase": 1.5282
+      }
+     }
+    }
+   },
+   "velocity_rms": 1.207,
+   "velocity_unit": "px/s"
+  },
+  "mains_hz": 50.0
+ },
+ "fingerprint": {
+  "verdict": "looseness",
+  "confidence": "medium",
+  "reason": "4 harmonics (2x, 3x, 4x, 6x)",
+  "lead_part": "large metal disc",
+  "evidence": [
+   {
+    "axis": "x",
+    "hz": 16.694,
+    "order": 1.0,
+    "label": "1x",
+    "amp_px": 0.02518
+   },
+   {
+    "axis": "y",
+    "hz": 16.657,
+    "order": 1.0,
+    "label": "1x",
+    "amp_px": 0.03741
+   },
+   {
+    "axis": "x",
+    "hz": 33.337,
+    "order": 2.0,
+    "label": "2x",
+    "amp_px": 0.0546
+   },
+   {
+    "axis": "y",
+    "hz": 33.357,
+    "order": 2.0,
+    "label": "2x",
+    "amp_px": 0.06879
+   },
+   {
+    "axis": "x",
+    "hz": 50.138,
+    "order": 3.0,
+    "label": "3x",
+    "amp_px": 0.00386
+   },
+   {
+    "axis": "x",
+    "hz": 66.637,
+    "order": 4.0,
+    "label": "4x",
+    "amp_px": 0.01025
+   },
+   {
+    "axis": "y",
+    "hz": 66.648,
+    "order": 4.0,
+    "label": "4x",
+    "amp_px": 0.01376
+   }
+  ],
+  "alert_level": 5.0,
+  "alert_unit": "px/s",
+  "scaled": false,
+  "phase_1x_x_rad": {
+   "long metal shaft -> large metal disc": 0.087
+  },
+  "parts": {
+   "long metal shaft": {
+    "features": {
+     "amp_1x_px": 0.05715,
+     "e1_share": 0.37,
+     "r21": 1.131,
+     "r31": 0.513,
+     "harmonics": [
+      "2x",
+      "3x",
+      "4x"
+     ],
+     "n_harmonics": 3,
+     "faint_harmonics": [
+      "6x"
+     ],
+     "half_order": false,
+     "half_ratio": 0.044,
+     "h_over_v_1x": 1.328,
+     "velocity_rms": 16.188,
+     "velocity_unit": "px/s",
+     "present": {
+      "1x": true,
+      "2x": true,
+      "3x": true,
+      "4x": true,
+      "6x": true
+     },
+     "artifacts": [
+      {
+       "axis": "x",
+       "hz": 83.391,
+       "label": "5x",
+       "amp_px": 0.0065,
+       "bg_amp_px": 0.00015,
+       "kind": "flicker sideband"
+      },
+      {
+       "axis": "y",
+       "hz": 8.264,
+       "label": "0.5x",
+       "amp_px": 0.00202,
+       "bg_amp_px": 0.00196,
+       "kind": "whole frame"
+      },
+      {
+       "axis": "y",
+       "hz": 83.356,
+       "label": "5x",
+       "amp_px": 0.00318,
+       "bg_amp_px": 8e-05,
+       "kind": "flicker sideband"
+      },
+      {
+       "axis": "y",
+       "hz": 116.663,
+       "label": "7x",
+       "amp_px": 0.00397,
+       "bg_amp_px": 0.00043,
+       "kind": "flicker sideband"
+      }
+     ]
+    },
+    "verdict": "looseness",
+    "confidence": "medium",
+    "reason": "3 harmonics (2x, 3x, 4x)",
+    "evidence": [
+     {
+      "axis": "x",
+      "hz": 16.663,
+      "order": 1.0,
+      "label": "1x",
+      "amp_px": 0.04565
+     },
+     {
+      "axis": "y",
+      "hz": 16.654,
+      "order": 1.0,
+      "label": "1x",
+      "amp_px": 0.03438
+     },
+     {
+      "axis": "x",
+      "hz": 33.341,
+      "order": 2.0,
+      "label": "2x",
+      "amp_px": 0.04913
+     },
+     {
+      "axis": "y",
+      "hz": 33.36,
+      "order": 2.0,
+      "label": "2x",
+      "amp_px": 0.04197
+     },
+     {
+      "axis": "x",
+      "hz": 50.015,
+      "order": 3.0,
+      "label": "3x",
+      "amp_px": 0.0287
+     },
+     {
+      "axis": "y",
+      "hz": 49.989,
+      "order": 3.0,
+      "label": "3x",
+      "amp_px": 0.00593
+     },
+     {
+      "axis": "x",
+      "hz": 66.648,
+      "order": 4.0,
+      "label": "4x",
+      "amp_px": 0.02156
+     },
+     {
+      "axis": "y",
+      "hz": 66.661,
+      "order": 4.0,
+      "label": "4x",
+      "amp_px": 0.00831
+     }
+    ]
+   },
+   "large metal disc": {
+    "features": {
+     "amp_1x_px": 0.04509,
+     "e1_share": 0.201,
+     "r21": 1.948,
+     "r31": 0.205,
+     "harmonics": [
+      "2x",
+      "3x",
+      "4x",
+      "6x"
+     ],
+     "n_harmonics": 4,
+     "faint_harmonics": [],
+     "half_order": false,
+     "half_ratio": 0.075,
+     "h_over_v_1x": 0.673,
+     "velocity_rms": 20.822,
+     "velocity_unit": "px/s",
+     "present": {
+      "1x": true,
+      "1.5x": true,
+      "2x": true,
+      "3x": true,
+      "4x": true,
+      "6x": true
+     },
+     "artifacts": [
+      {
+       "axis": "x",
+       "hz": 83.347,
+       "label": "5x",
+       "amp_px": 0.01834,
+       "bg_amp_px": 0.00015,
+       "kind": "flicker sideband"
+      },
+      {
+       "axis": "x",
+       "hz": 116.653,
+       "label": "7x",
+       "amp_px": 0.00898,
+       "bg_amp_px": 0.00021,
+       "kind": "flicker sideband"
+      },
+      {
+       "axis": "y",
+       "hz": 83.345,
+       "label": "5x",
+       "amp_px": 0.01505,
+       "bg_amp_px": 8e-05,
+       "kind": "flicker sideband"
+      },
+      {
+       "axis": "y",
+       "hz": 116.643,
+       "label": "7x",
+       "amp_px": 0.01324,
+       "bg_amp_px": 0.00043,
+       "kind": "flicker sideband"
+      },
+      {
+       "axis": "y",
+       "hz": 200.006,
+       "label": "12x",
+       "amp_px": 0.02048,
+       "bg_amp_px": 0.00025,
+       "kind": "flicker sideband"
+      },
+      {
+       "axis": "y",
+       "hz": 216.667,
+       "label": "13x",
+       "amp_px": 0.017,
+       "bg_amp_px": 0.00017,
+       "kind": "flicker sideband"
+      }
+     ]
+    },
+    "verdict": "looseness",
+    "confidence": "medium",
+    "reason": "4 harmonics (2x, 3x, 4x, 6x)",
+    "evidence": [
+     {
+      "axis": "x",
+      "hz": 16.694,
+      "order": 1.0,
+      "label": "1x",
+      "amp_px": 0.02518
+     },
+     {
+      "axis": "y",
+      "hz": 16.657,
+      "order": 1.0,
+      "label": "1x",
+      "amp_px": 0.03741
+     },
+     {
+      "axis": "x",
+      "hz": 33.337,
+      "order": 2.0,
+      "label": "2x",
+      "amp_px": 0.0546
+     },
+     {
+      "axis": "y",
+      "hz": 33.357,
+      "order": 2.0,
+      "label": "2x",
+      "amp_px": 0.06879
+     },
+     {
+      "axis": "x",
+      "hz": 50.138,
+      "order": 3.0,
+      "label": "3x",
+      "amp_px": 0.00386
+     },
+     {
+      "axis": "x",
+      "hz": 66.637,
+      "order": 4.0,
+      "label": "4x",
+      "amp_px": 0.01025
+     },
+     {
+      "axis": "y",
+      "hz": 66.648,
+      "order": 4.0,
+      "label": "4x",
+      "amp_px": 0.01376
+     }
+    ]
+   }
+  }
+ },
+ "diagnosis": {
+  "status": "done",
+  "headline": {
+   "fault": "looseness",
+   "confidence": "medium",
+   "reason": "4 harmonics (2x, 3x, 4x, 6x)",
+   "lead_part": "large metal disc",
+   "evidence": [
+    {
+     "axis": "x",
+     "hz": 16.694,
+     "order": 1.0,
+     "label": "1x",
+     "amp_px": 0.02518
+    },
+    {
+     "axis": "y",
+     "hz": 16.657,
+     "order": 1.0,
+     "label": "1x",
+     "amp_px": 0.03741
+    },
+    {
+     "axis": "x",
+     "hz": 33.337,
+     "order": 2.0,
+     "label": "2x",
+     "amp_px": 0.0546
+    },
+    {
+     "axis": "y",
+     "hz": 33.357,
+     "order": 2.0,
+     "label": "2x",
+     "amp_px": 0.06879
+    },
+    {
+     "axis": "x",
+     "hz": 50.138,
+     "order": 3.0,
+     "label": "3x",
+     "amp_px": 0.00386
+    },
+    {
+     "axis": "x",
+     "hz": 66.637,
+     "order": 4.0,
+     "label": "4x",
+     "amp_px": 0.01025
+    },
+    {
+     "axis": "y",
+     "hz": 66.648,
+     "order": 4.0,
+     "label": "4x",
+     "amp_px": 0.01376
+    }
+   ],
+   "source": "fixed rules"
+  },
+  "spark": {
+   "fault": "misalignment",
+   "fault_reported": "misalignment",
+   "confidence": "low",
+   "confidence_reported": "high",
+   "capped": true,
+   "cap_reasons": [
+    "disagrees with the rule verdict (looseness)"
+   ],
+   "agrees": false,
+   "supported": true,
+   "evidence": [
+    {
+     "part": "large metal disc",
+     "frequency_hz": 16.657,
+     "order": "1x",
+     "matched": {
+      "part": "large metal disc",
+      "axis": "y",
+      "hz": 16.657,
+      "label": "1x",
+      "amp_px": 0.03741,
+      "snr": 114.9
+     },
+     "status": "context",
+     "reason": "a real 1x peak, but it is not what this fault rests on"
+    },
+    {
+     "part": "large metal disc",
+     "frequency_hz": 33.357,
+     "order": "2x",
+     "matched": {
+      "part": "large metal disc",
+      "axis": "y",
+      "hz": 33.357,
+      "label": "2x",
+      "amp_px": 0.06879,
+      "snr": 211.3
+     },
+     "status": "verified",
+     "reason": "matches the measured 2x peak"
+    },
+    {
+     "part": "large metal disc",
+     "frequency_hz": 16.694,
+     "order": "1x",
+     "matched": {
+      "part": "large metal disc",
+      "axis": "x",
+      "hz": 16.694,
+      "label": "1x",
+      "amp_px": 0.02518,
+      "snr": 66.8
+     },
+     "status": "context",
+     "reason": "a real 1x peak, but it is not what this fault rests on"
+    },
+    {
+     "part": "large metal disc",
+     "frequency_hz": 33.337,
+     "order": "2x",
+     "matched": {
+      "part": "large metal disc",
+      "axis": "x",
+      "hz": 33.337,
+      "label": "2x",
+      "amp_px": 0.0546,
+      "snr": 144.8
+     },
+     "status": "verified",
+     "reason": "matches the measured 2x peak"
+    },
+    {
+     "part": "large metal disc",
+     "frequency_hz": 66.648,
+     "order": "4x",
+     "matched": {
+      "part": "large metal disc",
+      "axis": "y",
+      "hz": 66.648,
+      "label": "4x",
+      "amp_px": 0.01376,
+      "snr": 42.3
+     },
+     "status": "context",
+     "reason": "a real 4x peak, but it is not what this fault rests on"
+    }
+   ],
+   "counts": {
+    "verified": 2,
+    "context": 3,
+    "dropped": 0
+   },
+   "explanation": "The disc shows 2x larger than 1x in both horizontal and vertical with 1x still strong, which points to misalignment not imbalance. I disagree with the looseness call because there is no half order and the 6x used by the rule is light flicker near 100 Hz while 3x is very small. The small higher harmonics alone do not make looseness without 0.5x or a strong row.",
+   "fix": [
+    "Shut down and lock out before touching the rig",
+    "Check shaft and coupling alignment and correct to spec",
+    "Tighten base bolts, disc hub screws and check soft foot",
+    "Restart and confirm 2x has dropped"
+   ],
+   "check_next": [
+    "Recheck 1x and 2x with a contact probe in radial and axial directions",
+    "Check phase across the coupling at 2x",
+    "Inspect bearings and mounts for play"
+   ],
+   "visual": {
+    "most_moving_part": "large metal disc",
+    "direction": "both",
+    "description": "The disc traces a small loop against its rest outline while the shaft moves less.",
+    "status": "not verified",
+    "checks": [
+     {
+      "claim": "most_moving_part",
+      "status": "not_verified",
+      "measured": {
+       "amplitude_px": {
+        "long metal shaft": 0.05715,
+        "large metal disc": 0.04509
+       }
+      },
+      "reason": "large metal disc moves 0.0451 px in the band, but long metal shaft moves 0.0571 px"
+     },
+     {
+      "claim": "direction",
+      "status": "not_verified",
+      "measured": {
+       "part": "large metal disc",
+       "horizontal_share": 0.312
+      },
+      "reason": "measured motion of large metal disc is vertical (31% horizontal)"
+     }
+    ]
+   }
+  },
+  "show_both": true,
+  "spark_raw": {
+   "check_next": [
+    "Recheck 1x and 2x with a contact probe in radial and axial directions",
+    "Check phase across the coupling at 2x",
+    "Inspect bearings and mounts for play"
+   ],
+   "confidence": "high",
+   "evidence": [
+    {
+     "frequency_hz": 16.657,
+     "order": "1x",
+     "part": "large metal disc"
+    },
+    {
+     "frequency_hz": 33.357,
+     "order": "2x",
+     "part": "large metal disc"
+    },
+    {
+     "frequency_hz": 16.694,
+     "order": "1x",
+     "part": "large metal disc"
+    },
+    {
+     "frequency_hz": 33.337,
+     "order": "2x",
+     "part": "large metal disc"
+    },
+    {
+     "frequency_hz": 66.648,
+     "order": "4x",
+     "part": "large metal disc"
+    }
+   ],
+   "explanation": "The disc shows 2x larger than 1x in both horizontal and vertical with 1x still strong, which points to misalignment not imbalance. I disagree with the looseness call because there is no half order and the 6x used by the rule is light flicker near 100 Hz while 3x is very small. The small higher harmonics alone do not make looseness without 0.5x or a strong row.",
+   "fault": "misalignment",
+   "fix": [
+    "Shut down and lock out before touching the rig",
+    "Check shaft and coupling alignment and correct to spec",
+    "Tighten base bolts, disc hub screws and check soft foot",
+    "Restart and confirm 2x has dropped"
+   ],
+   "visual_observation": {
+    "description": "The disc traces a small loop against its rest outline while the shaft moves less.",
+    "direction": "both",
+    "most_moving_part": "large metal disc"
+   }
+  },
+  "usd": 0.035573,
+  "usage": {
+   "input_tokens": 6984,
+   "output_tokens": 6316
+  }
+ },
+ "api": {
+  "mode": "record",
+  "usd": {
+   "plan": 0.020496,
+   "segment": 0.036,
+   "diagnose": 0.035573,
+   "total": 0.092069
+  },
+  "calls": {
+   "usd": 0.092069,
+   "calls": 8,
+   "by_step": [
+    {
+     "op": "upload",
+     "label": "run:plan:preview",
+     "calls": 1,
+     "usd": 0.0
+    },
+    {
+     "op": "spark",
+     "label": "run:plan",
+     "calls": 1,
+     "usd": 0.020496
+    },
+    {
+     "op": "upload",
+     "label": "run:segment:subclip",
+     "calls": 1,
+     "usd": 0.0
+    },
+    {
+     "op": "sam",
+     "label": "rotor test rig",
+     "calls": 1,
+     "usd": 0.012
+    },
+    {
+     "op": "sam",
+     "label": "large metal disc",
+     "calls": 1,
+     "usd": 0.012
+    },
+    {
+     "op": "sam",
+     "label": "long metal shaft",
+     "calls": 1,
+     "usd": 0.012
+    },
+    {
+     "op": "upload",
+     "label": "run:diagnose:magnified",
+     "calls": 1,
+     "usd": 0.0
+    },
+    {
+     "op": "spark",
+     "label": "run:diagnose",
+     "calls": 1,
+     "usd": 0.035573
+    }
+   ]
+  }
+ },
+ "steps": [
+  {
+   "key": "ingest",
+   "label": "Ingest the clip",
+   "status": "done",
+   "detail": "500 fps (override), window 1.0 s, frames check: synthesised",
+   "seconds": 1.94
+  },
+  {
+   "key": "plan",
+   "label": "Plan the inspection (Muse Spark)",
+   "status": "done",
+   "detail": "rotor test rig: rotor test rig, long metal shaft, large metal disc",
+   "seconds": 35.75
+  },
+  {
+   "key": "segment",
+   "label": "Find the parts (SAM 3.1)",
+   "status": "done",
+   "detail": "2 parts; not found: rotor test rig",
+   "seconds": 14.19
+  },
+  {
+   "key": "measure",
+   "label": "Measure the vibration",
+   "status": "done",
+   "detail": "running speed 16.66 Hz (1000 rpm, from the rpm)",
+   "seconds": 9.5
+  },
+  {
+   "key": "fingerprint",
+   "label": "Match fault fingerprints",
+   "status": "done",
+   "detail": "looseness (medium)",
+   "seconds": 0.0
+  },
+  {
+   "key": "magnify",
+   "label": "Magnify the shake",
+   "status": "done",
+   "detail": "136x, band 13.3 to 20.8 Hz",
+   "seconds": 14.66
+  },
+  {
+   "key": "diagnose",
+   "label": "Explain and suggest a fix (Muse Spark)",
+   "status": "done",
+   "detail": "Spark: misalignment (low); evidence 2 verified, 3 context, 0 dropped",
+   "seconds": 45.94
+  }
+ ],
+ "magnify": {
+  "alpha": 135.647,
+  "band_hz": [
+   13.33,
+   20.829
+  ],
+  "band_orders": [
+   0.8,
+   1.25
+  ],
+  "frames": 500,
+  "seconds": 1.0,
+  "playback_fps": 30,
+  "slow_factor": 16.666666666666668,
+  "start_frame": 0,
+  "ref_index": 498,
+  "render_scale": 0.75,
+  "zones_px": {
+   "long metal shaft": 50405,
+   "large metal disc": 21369
+  },
+  "layers": [
+   {
+    "part": "long metal shaft",
+    "outer": true,
+    "max_shift_px": 6.763
+   },
+   {
+    "part": "large metal disc",
+    "outer": true,
+    "max_shift_px": 9.246
+   }
+  ],
+  "slice": {
+   "row": 368,
+   "cols": [
+    0,
+    42
+   ],
+   "seconds": 0.5,
+   "scale": 0.75
+  },
+  "files": {
+   "side_by_side": "side_by_side.mp4",
+   "native": null,
+   "slice": "slice.png"
+  }
+ },
+ "warnings": [
+  "In-between frames look synthesised; treat the spectrum with suspicion."
+ ],
+ "files": {
+  "masks": {
+   "long metal shaft": "masks/long_metal_shaft.png",
+   "large metal disc": "masks/large_metal_disc.png"
+  },
+  "spectra": {
+   "long metal shaft": "spectrum_long_metal_shaft.png",
+   "large metal disc": "spectrum_large_metal_disc.png"
+  },
+  "spectrum": "spectrum.png",
+  "side_by_side": "side_by_side.mp4",
+  "slice": "slice.png"
+ }
+}
