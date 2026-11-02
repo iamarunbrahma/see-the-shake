@@ -12,7 +12,10 @@ verify() then checks the claim against the measurement:
 - a matched item counts as support only when its order fits the claimed fault (imbalance 1x, misalignment 2x,
   looseness 0.5x or harmonics); a real peak cited for the wrong fault is shown as context and does not count;
 - the claim must be supported: imbalance needs a verified 1x, misalignment a verified 2x, looseness a verified
-  0.5x or a row of MIN_HARMONICS harmonics.
+  0.5x or a row of MIN_HARMONICS harmonics, blade_pass (a fan's high vibration at blades x running speed) a
+  verified peak at that order, which needs the blade count;
+- when the blade count is known, the blade-pass order is never support for imbalance, misalignment or looseness
+  (the rules leave it out of those patterns too): such an item is context.
 The card's headline is the rule verdict. When Spark disagrees with it, any evidence was dropped, or the claim is
 unsupported, Spark's confidence is capped at "low" and both are shown side by side.
 """
@@ -21,12 +24,13 @@ import re
 from . import fingerprint
 from .meta_api import CreditExhausted, MetaAPI, image_block
 
-FAULTS = ("none", "imbalance", "looseness", "misalignment", "unclear")
+FAULTS = ("none", "imbalance", "looseness", "misalignment", "blade_pass", "unclear")
 CONFIDENCES = ("high", "medium", "low")
 NEEDS = {"imbalance": "a 1x peak", "misalignment": "a 2x peak",
-         "looseness": f"a 0.5x peak or a row of {fingerprint.MIN_HARMONICS} harmonics"}
+         "looseness": f"a 0.5x peak or a row of {fingerprint.MIN_HARMONICS} harmonics",
+         "blade_pass": "a peak at blade pass (blades x running speed, with the blade count known)"}
 SYNONYMS = [("unbalanc", "imbalance"), ("imbalanc", "imbalance"), ("misalign", "misalignment"),
-            ("loose", "looseness"), ("healthy", "none"), ("no fault", "none"), ("normal", "none"),
+            ("loose", "looseness"), ("blade", "blade_pass"), ("healthy", "none"), ("no fault", "none"), ("normal", "none"),
             ("unclear", "unclear"), ("unknown", "unclear")]
 
 SCHEMA = {
@@ -69,10 +73,10 @@ A phone filmed a running {machine} in slow motion. Our code measured how each pa
 
 {table}
 
-Fault signatures: imbalance shows a dominant 1x; misalignment shows a strong 2x (often with 1x); looseness shows 0.5x and/or a row of 3 or more harmonics. Light flicker is not vibration.
+Fault signatures: imbalance shows a dominant 1x; misalignment shows a strong 2x (often with 1x); looseness shows 0.5x and/or a row of 3 or more harmonics. Light flicker is not vibration.{blade_note}
 
 Return JSON:
-- fault: one of none, imbalance, looseness, misalignment, unclear.
+- fault: one of none, imbalance, looseness, misalignment, blade_pass, unclear.
 - confidence: high, medium or low.
 - evidence: the peaks your diagnosis rests on, copied from the table above: part name exactly as listed, frequency_hz exactly as listed, and its order label (for example "1x"). Cite only peaks that are in the table.
 - explanation: 2 to 4 plain sentences for the technician. If you disagree with the rule verdict, say why.
@@ -115,6 +119,10 @@ def peak_table(result, fp, plan=None):
                      f"{f['e1_share']:.2f}; 2x/1x {f['r21']}; 3x/1x {f['r31']}; harmonics present "
                      f"{f['harmonics'] or 'none'}; 0.5x present {'yes' if f['half_order'] else 'no'} "
                      f"(0.5x/1x {f['half_ratio']}); horizontal/vertical at 1x {f['h_over_v_1x']}.")
+        if f.get("blade_pass"):
+            b = f["blade_pass"]
+            lines.append(f"  blade pass: {b['order']} at {b['hz']:.2f} Hz ({b['blades']} blades); velocity without it "
+                         f"{f['velocity_without_blade_pass']:.2f} {f['velocity_unit']} RMS.")
         lines.append(f"  rule verdict for this part: {pf['verdict']} ({pf['confidence']}): {pf['reason']}")
     if fp.get("phase_1x_x_rad"):
         lines.append("Phase between parts at 1x, horizontal (rad): "
@@ -217,8 +225,27 @@ def check_item(ev, result, need, artifacts=None):
     return {**item, "status": "context", "reason": f"a real {p['label']} peak, but it is not what this fault rests on"}
 
 
-def supported(fault, items):
+def blade_order(fp):
+    """The blade-pass order label ("3x" for three blades) when the blade count is known, else None."""
+    n = (fp or {}).get("blades")
+    return f"{float(n):g}x" if n else None
+
+
+def blade_note(fp, result):
+    bp = blade_order(fp)
+    if not bp:
+        return ""
+    hz = fp["blades"] * result["running_speed"]["hz"]
+    return (f" This machine has {fp['blades']} blades, so {bp} ({hz:.1f} Hz) is blade pass: the blades passing the "
+            "guard and stand. It is expected on a fan, and the rules leave it out of the fault patterns. Only high "
+            "vibration at blade pass, with little else, is the blade_pass verdict (check the blades and the guard); "
+            "blade pass is never evidence for imbalance, misalignment or looseness.")
+
+
+def supported(fault, items, bp=None):
     v = {i["matched"]["label"] for i in items if i["status"] == "verified"}
+    if fault == "blade_pass":
+        return bool(bp) and bp in v
     if fault == "imbalance":
         return "1x" in v
     if fault == "misalignment":
@@ -231,11 +258,19 @@ def supported(fault, items):
 def verify(claim, result, fp):
     """The diagnosis card: rule verdict as the headline, Spark's claim checked and capped beside it."""
     fault = normalise_fault(claim.get("fault"))
+    bp = blade_order(fp)
     need = fingerprint.FAULT_ORDERS.get(fault, set())
+    if fault == "blade_pass":
+        need = {bp} if bp else set()
+    elif bp:
+        need = need - {bp}  # blade pass is left out of the fault patterns, as the rules do
     art = artifact_peaks(fp)
     items = [check_item(ev, result, need, art) for ev in claim.get("evidence") or [] if isinstance(ev, dict)]
+    for i in items:
+        if bp and fault != "blade_pass" and i["status"] == "context" and i["matched"]["label"] == bp:
+            i["reason"] = f"a real {bp} peak, but it is blade pass ({fp['blades']} blades), not a fault pattern"
     counts = {s: sum(i["status"] == s for i in items) for s in ("verified", "context", "dropped")}
-    ok = supported(fault, items)
+    ok = supported(fault, items, bp)
     reasons = []
     if fault != fp["verdict"]:
         reasons.append(f"disagrees with the rule verdict ({fp['verdict']})")
@@ -330,6 +365,7 @@ def diagnose(api: MetaAPI, result, fp, spectrum_png=None, magnified_clip=None, m
     clip_note = (", and the attached video shows the original and a magnified copy side by side"
                  if magnified_file_id else "")
     text = PROMPT.format(machine=machine, clip_note=clip_note, table=peak_table(result, fp, plan),
+                         blade_note=blade_note(fp, result),
                          video_prompt=VIDEO_PROMPT if magnified_file_id else "")
     content = [{"type": "input_text", "text": text}]
     if spectrum_png:
