@@ -79,6 +79,7 @@ class Options:
     api_label: str = "run"  # label prefix of the calls; a replay must use the recording's (the fault for twin runs)
     spark_video: bool = True  # send the side-by-side clip to Spark with the diagnosis request
     user_parts: list = None  # replace Spark's part phrases (still normalised by plan_parts)
+    blades: int = None  # a fan's blade count: blades x running speed is then treated as blade pass
     extra: dict = field(default_factory=dict)
 
     def key(self):
@@ -190,14 +191,17 @@ def _jsonable(o):
     return o
 
 
-def _spectrum_pngs(result, arrays, out):
+def _spectrum_pngs(result, arrays, out, fp=None):
+    skip = {}
+    for part, e in ((fp or {}).get("parts") or {}).items():
+        skip[part] = {(a["axis"], a["hz"]) for a in e["features"].get("artifacts", [])}
     files = {}
     for part in result["parts"]:
         sub = {**result, "parts": {part: result["parts"][part]}}
         name = f"spectrum_{twin.slug(part)}.png"
-        measure.plot_spectra(sub, arrays, out / name, part)
+        measure.plot_spectra(sub, arrays, out / name, part, skip=skip)
         files[part] = name
-    measure.plot_spectra(result, arrays, out / "spectrum.png")  # all parts, for Spark
+    measure.plot_spectra(result, arrays, out / "spectrum.png", skip=skip)  # all parts, for Spark
     return files
 
 
@@ -428,8 +432,6 @@ def run(clip, masks=None, runs_dir="runs", options=None, plan=None, segment=None
         res, arrays = measure.measure(clip, masks, fps, start=start, count=count, rpm=options.rpm,
                                       rpm_range=rpm_range, scale=scale, mains_hz=options.mains_hz, ignore=ignore)
         results["measurement"] = res
-        results["files"]["spectra"] = _spectrum_pngs(res, arrays, out)
-        results["files"]["spectrum"] = "spectrum.png"
         rs = res["running_speed"]
         st.set(step, "done", f"running speed {rs['hz']:.2f} Hz ({rs['rpm']:.0f} rpm, from the "
                              f"{rs['source'].replace('_', ' ')})")
@@ -437,7 +439,15 @@ def run(clip, masks=None, runs_dir="runs", options=None, plan=None, segment=None
         # 5. fingerprint
         step = "fingerprint"
         st.set(step, "running")
-        fp = fingerprint.fingerprint(res)
+        blades, blades_from = options.blades, "given"
+        if not blades and plan_info and plan_info.get("blades"):
+            blades, blades_from = plan_info["blades"], "plan"
+        fp = fingerprint.fingerprint(res, blades=blades)
+        if blades:
+            results["blades"] = {"count": int(blades), "source": blades_from}
+        # spectra after the rules, so peaks they left out as artifacts are not labelled on the plots
+        results["files"]["spectra"] = _spectrum_pngs(res, arrays, out, fp)
+        results["files"]["spectrum"] = "spectrum.png"
         results["fingerprint"] = fp
         st.set(step, "done", f"{fp['verdict']} ({fp['confidence']})")
 
@@ -562,6 +572,8 @@ def twin_options(truth, **kw):
     ref = truth["reference"]
     reference = ((ref["part"], ref["height_mm"], "height") if ref.get("axis") == "height"
                  else (ref["part"], ref["width_mm"]))
+    if truth.get("blades") and "blades" not in kw:
+        kw["blades"] = truth["blades"]  # a fan twin: the renderer's blade count
     return Options(rpm_range=rng, reference=reference, min_seconds=min(4.0, truth["seconds"]), **kw)
 
 
@@ -619,6 +631,7 @@ def main(argv=None):
     p.add_argument("--seconds", type=float, default=4.0)
     p.add_argument("--scale", type=float, default=0.5)
     p.add_argument("--rpm", type=float)
+    p.add_argument("--blades", type=int, help="a fan's blade count: blades x running speed is blade pass")
     p.add_argument("--rpm-range", type=float, nargs=2)
     p.add_argument("--capture-fps", type=float)
     p.add_argument("--ref", help='"part name=length in mm" across the part\'s mask width')
@@ -642,7 +655,7 @@ def main(argv=None):
             part, mm = a.ref.split("=", 1)
             ref = (part, float(mm))
         opts = Options(capture_fps=a.capture_fps, rpm=a.rpm, rpm_range=tuple(a.rpm_range) if a.rpm_range else None,
-                       reference=ref, alpha=alpha, verify=a.verify, api=a.api, cassette=a.cassette,
+                       reference=ref, alpha=alpha, verify=a.verify, api=a.api, cassette=a.cassette, blades=a.blades,
                        spark_video=not a.no_spark_video,
                        user_parts=[s.strip() for s in a.parts.split(",") if s.strip()] if a.parts else None)
         r = run(a.clip, masks, a.runs, opts, progress=show)
