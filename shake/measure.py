@@ -401,6 +401,14 @@ def measure(path, masks, fps, start=0, count=None, rpm=None, rpm_range=None, sca
             result["parts"][k] = entry
         else:
             result["background"] = entry
+    # The background's amplitude at each part peak: whole-frame artifacts (the encoder's, a flicker pattern) show
+    # in the background's motion too, real part motion does not. New fields only; nothing above changes.
+    for k in masks:
+        for axis in "xy":
+            fb, Ab = arrays["spectra"][("background", axis)]
+            for p in result["parts"][k]["axes"][axis]["peaks"]:
+                p["bg_amp_px"] = round(amplitude_at(fb, Ab, p["hz"], search_bins=1.0)[0], 5)
+    result["mains_hz"] = mains_hz
     return result, arrays
 
 
