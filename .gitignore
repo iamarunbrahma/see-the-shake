@@ -4,3 +4,7 @@ __pycache__/
 out/
 runs/
 raw/
+# demo video: renders, captures and the final MP4 (demo/build_video.py)
+demo/build/
+demo/out/
+demo/**/*.mp4
