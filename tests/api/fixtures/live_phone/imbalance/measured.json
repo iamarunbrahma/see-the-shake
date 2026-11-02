@@ -1,0 +1,686 @@
+{
+ "fps": 240.0,
+ "frames": 1440,
+ "start_frame": 0,
+ "seconds": 6.0,
+ "bin_hz": 0.16667,
+ "nyquist_hz": 120.0,
+ "running_speed": {
+  "hz": 16.6433,
+  "rpm": 998.6,
+  "source": "rpm_range"
+ },
+ "scale": {
+  "mm_per_px": 1.8072289156626506,
+  "basis": "washing machine width = 600 mm over 332 px"
+ },
+ "flicker_hz": 100.0,
+ "pixel_noise_grey": 0.4258,
+ "parts": {
+  "washing machine": {
+   "axes": {
+    "x": {
+     "noise_floor_px": 0.000383,
+     "peaks": [
+      {
+       "hz": 16.643,
+       "amp_px": 0.14301,
+       "amp_mm": 0.25846,
+       "order": 1.0,
+       "label": "1x",
+       "phase": -0.7077,
+       "snr": 373.7
+      },
+      {
+       "hz": 33.293,
+       "amp_px": 0.01168,
+       "amp_mm": 0.02111,
+       "order": 2.0,
+       "label": "2x",
+       "phase": 0.7897,
+       "snr": 30.5
+      },
+      {
+       "hz": 43.353,
+       "amp_px": 0.00768,
+       "amp_mm": 0.01387,
+       "order": null,
+       "label": "non-synchronous",
+       "phase": -2.3097,
+       "snr": 20.1
+      },
+      {
+       "hz": 56.62,
+       "amp_px": 0.00414,
+       "amp_mm": 0.00748,
+       "order": null,
+       "label": "non-synchronous",
+       "phase": 2.4514,
+       "snr": 10.8
+      }
+     ],
+     "orders": {
+      "0.5x": {
+       "hz": 8.265,
+       "amp_px": 0.00064,
+       "above_floor": false,
+       "phase": 1.1653
+      },
+      "1x": {
+       "hz": 16.643,
+       "amp_px": 0.14301,
+       "above_floor": true,
+       "phase": -0.7077
+      },
+      "1.5x": {
+       "hz": 24.583,
+       "amp_px": 0.00048,
+       "above_floor": false,
+       "phase": 1.9253
+      },
+      "2x": {
+       "hz": 33.293,
+       "amp_px": 0.01168,
+       "above_floor": true,
+       "phase": 0.7897
+      },
+      "2.5x": {
+       "hz": 41.699,
+       "amp_px": 0.00046,
+       "above_floor": false,
+       "phase": 1.1024
+      },
+      "3x": {
+       "hz": 49.96,
+       "amp_px": 0.00315,
+       "above_floor": true,
+       "phase": 1.0518
+      },
+      "4x": {
+       "hz": 66.724,
+       "amp_px": 0.00072,
+       "above_floor": false,
+       "phase": 2.4728
+      },
+      "5x": {
+       "hz": 83.334,
+       "amp_px": 0.00135,
+       "above_floor": false,
+       "phase": -2.6063
+      },
+      "6x": {
+       "hz": 100.167,
+       "amp_px": 0.00045,
+       "above_floor": false,
+       "phase": -0.4878
+      }
+     }
+    },
+    "y": {
+     "noise_floor_px": 0.000328,
+     "peaks": [
+      {
+       "hz": 16.644,
+       "amp_px": 0.07692,
+       "amp_mm": 0.13902,
+       "order": 1.0,
+       "label": "1x",
+       "phase": 0.8694,
+       "snr": 234.5
+      },
+      {
+       "hz": 33.289,
+       "amp_px": 0.00478,
+       "amp_mm": 0.00864,
+       "order": 2.0,
+       "label": "2x",
+       "phase": 2.3644,
+       "snr": 14.6
+      },
+      {
+       "hz": 43.358,
+       "amp_px": 0.004,
+       "amp_mm": 0.00723,
+       "order": null,
+       "label": "non-synchronous",
+       "phase": 2.3565,
+       "snr": 12.2
+      },
+      {
+       "hz": 56.65,
+       "amp_px": 0.00295,
+       "amp_mm": 0.00533,
+       "order": null,
+       "label": "non-synchronous",
+       "phase": -2.2965,
+       "snr": 9.0
+      },
+      {
+       "hz": 63.349,
+       "amp_px": 0.00405,
+       "amp_mm": 0.00733,
+       "order": null,
+       "label": "non-synchronous",
+       "phase": -0.8114,
+       "snr": 12.4
+      },
+      {
+       "hz": 96.671,
+       "amp_px": 0.00456,
+       "amp_mm": 0.00824,
+       "order": null,
+       "label": "non-synchronous",
+       "phase": -2.1786,
+       "snr": 13.9
+      },
+      {
+       "hz": 99.985,
+       "amp_px": 0.00322,
+       "amp_mm": 0.00582,
+       "order": null,
+       "label": "flicker",
+       "phase": 1.7007,
+       "snr": 9.8
+      }
+     ],
+     "orders": {
+      "0.5x": {
+       "hz": 8.737,
+       "amp_px": 0.00046,
+       "above_floor": false,
+       "phase": 1.3948
+      },
+      "1x": {
+       "hz": 16.644,
+       "amp_px": 0.07692,
+       "above_floor": true,
+       "phase": 0.8694
+      },
+      "1.5x": {
+       "hz": 25.147,
+       "amp_px": 0.00062,
+       "above_floor": false,
+       "phase": -0.9723
+      },
+      "2x": {
+       "hz": 33.289,
+       "amp_px": 0.00478,
+       "above_floor": true,
+       "phase": 2.3644
+      },
+      "2.5x": {
+       "hz": 41.25,
+       "amp_px": 0.00045,
+       "above_floor": false,
+       "phase": -3.1412
+      },
+      "3x": {
+       "hz": 49.937,
+       "amp_px": 0.00191,
+       "above_floor": false,
+       "phase": -1.146
+      },
+      "4x": {
+       "hz": 66.635,
+       "amp_px": 0.0007,
+       "above_floor": false,
+       "phase": 0.9033
+      },
+      "5x": {
+       "hz": 83.353,
+       "amp_px": 0.00171,
+       "above_floor": false,
+       "phase": 1.9531
+      },
+      "6x": {
+       "hz": 99.985,
+       "amp_px": 0.00322,
+       "above_floor": true,
+       "phase": 1.7007
+      }
+     }
+    }
+   },
+   "velocity_rms": 22.807,
+   "velocity_unit": "mm/s",
+   "excluded_rotating_px": 32007
+  },
+  "washer front door": {
+   "axes": {
+    "x": {
+     "noise_floor_px": 0.000403,
+     "peaks": [
+      {
+       "hz": 16.643,
+       "amp_px": 0.15935,
+       "amp_mm": 0.28799,
+       "order": 1.0,
+       "label": "1x",
+       "phase": -0.7108,
+       "snr": 395.8
+      },
+      {
+       "hz": 33.292,
+       "amp_px": 0.0129,
+       "amp_mm": 0.02331,
+       "order": 2.0,
+       "label": "2x",
+       "phase": 0.9138,
+       "snr": 32.0
+      },
+      {
+       "hz": 43.353,
+       "amp_px": 0.00523,
+       "amp_mm": 0.00945,
+       "order": null,
+       "label": "non-synchronous",
+       "phase": -2.3731,
+       "snr": 13.0
+      },
+      {
+       "hz": 56.626,
+       "amp_px": 0.00518,
+       "amp_mm": 0.00936,
+       "order": null,
+       "label": "non-synchronous",
+       "phase": 2.4046,
+       "snr": 12.9
+      },
+      {
+       "hz": 96.636,
+       "amp_px": 0.00371,
+       "amp_mm": 0.00671,
+       "order": null,
+       "label": "non-synchronous",
+       "phase": 2.675,
+       "snr": 9.2
+      }
+     ],
+     "orders": {
+      "0.5x": {
+       "hz": 8.75,
+       "amp_px": 0.00068,
+       "above_floor": false,
+       "phase": 2.9748
+      },
+      "1x": {
+       "hz": 16.643,
+       "amp_px": 0.15935,
+       "above_floor": true,
+       "phase": -0.7108
+      },
+      "1.5x": {
+       "hz": 24.93,
+       "amp_px": 0.00063,
+       "above_floor": false,
+       "phase": -1.6026
+      },
+      "2x": {
+       "hz": 33.292,
+       "amp_px": 0.0129,
+       "above_floor": true,
+       "phase": 0.9138
+      },
+      "2.5x": {
+       "hz": 41.753,
+       "amp_px": 0.00051,
+       "above_floor": false,
+       "phase": -1.927
+      },
+      "3x": {
+       "hz": 49.94,
+       "amp_px": 0.00262,
+       "above_floor": false,
+       "phase": 1.0624
+      },
+      "4x": {
+       "hz": 66.587,
+       "amp_px": 0.00101,
+       "above_floor": false,
+       "phase": -2.9558
+      },
+      "5x": {
+       "hz": 83.279,
+       "amp_px": 0.00224,
+       "above_floor": false,
+       "phase": -3.0951
+      },
+      "6x": {
+       "hz": 100.038,
+       "amp_px": 0.0009,
+       "above_floor": false,
+       "phase": 2.0899
+      }
+     }
+    },
+    "y": {
+     "noise_floor_px": 0.000334,
+     "peaks": [
+      {
+       "hz": 16.644,
+       "amp_px": 0.07743,
+       "amp_mm": 0.13993,
+       "order": 1.0,
+       "label": "1x",
+       "phase": 0.8598,
+       "snr": 231.6
+      },
+      {
+       "hz": 33.284,
+       "amp_px": 0.0051,
+       "amp_mm": 0.00922,
+       "order": 2.0,
+       "label": "2x",
+       "phase": 2.4021,
+       "snr": 15.3
+      },
+      {
+       "hz": 59.994,
+       "amp_px": 0.00277,
+       "amp_mm": 0.005,
+       "order": null,
+       "label": "non-synchronous",
+       "phase": -1.5691,
+       "snr": 8.3
+      },
+      {
+       "hz": 63.353,
+       "amp_px": 0.00325,
+       "amp_mm": 0.00588,
+       "order": null,
+       "label": "non-synchronous",
+       "phase": -0.9117,
+       "snr": 9.7
+      },
+      {
+       "hz": 96.656,
+       "amp_px": 0.00342,
+       "amp_mm": 0.00618,
+       "order": null,
+       "label": "non-synchronous",
+       "phase": -2.1612,
+       "snr": 10.2
+      }
+     ],
+     "orders": {
+      "0.5x": {
+       "hz": 8.43,
+       "amp_px": 0.00061,
+       "above_floor": false,
+       "phase": 2.4314
+      },
+      "1x": {
+       "hz": 16.644,
+       "amp_px": 0.07743,
+       "above_floor": true,
+       "phase": 0.8598
+      },
+      "1.5x": {
+       "hz": 25.177,
+       "amp_px": 0.00068,
+       "above_floor": false,
+       "phase": -0.7173
+      },
+      "2x": {
+       "hz": 33.284,
+       "amp_px": 0.0051,
+       "above_floor": true,
+       "phase": 2.4021
+      },
+      "2.5x": {
+       "hz": 41.352,
+       "amp_px": 0.00042,
+       "above_floor": false,
+       "phase": 2.8454
+      },
+      "3x": {
+       "hz": 50.2,
+       "amp_px": 0.00053,
+       "above_floor": false,
+       "phase": -0.3455
+      },
+      "4x": {
+       "hz": 66.68,
+       "amp_px": 0.00046,
+       "above_floor": false,
+       "phase": 1.6073
+      },
+      "5x": {
+       "hz": 83.323,
+       "amp_px": 0.00173,
+       "above_floor": false,
+       "phase": 2.3519
+      },
+      "6x": {
+       "hz": 100.047,
+       "amp_px": 0.00073,
+       "above_floor": false,
+       "phase": 2.4895
+      }
+     }
+    }
+   },
+   "velocity_rms": 24.556,
+   "velocity_unit": "mm/s",
+   "excluded_rotating_px": 32007
+  }
+ },
+ "background": {
+  "axes": {
+   "x": {
+    "noise_floor_px": 0.000172,
+    "peaks": [
+     {
+      "hz": 2.167,
+      "amp_px": 0.00182,
+      "amp_mm": 0.00329,
+      "order": null,
+      "label": "non-synchronous",
+      "phase": -0.3407,
+      "snr": 10.6
+     },
+     {
+      "hz": 2.832,
+      "amp_px": 0.00281,
+      "amp_mm": 0.00508,
+      "order": null,
+      "label": "non-synchronous",
+      "phase": 2.1378,
+      "snr": 16.4
+     },
+     {
+      "hz": 16.65,
+      "amp_px": 0.00524,
+      "amp_mm": 0.00947,
+      "order": 1.0,
+      "label": "1x",
+      "phase": -1.0439,
+      "snr": 30.5
+     },
+     {
+      "hz": 76.637,
+      "amp_px": 0.00147,
+      "amp_mm": 0.00266,
+      "order": null,
+      "label": "non-synchronous",
+      "phase": 2.2512,
+      "snr": 8.6
+     },
+     {
+      "hz": 83.363,
+      "amp_px": 0.00154,
+      "amp_mm": 0.00279,
+      "order": 5.0,
+      "label": "5x",
+      "phase": -2.3245,
+      "snr": 9.0
+     },
+     {
+      "hz": 96.653,
+      "amp_px": 0.00226,
+      "amp_mm": 0.00409,
+      "order": null,
+      "label": "non-synchronous",
+      "phase": 2.1033,
+      "snr": 13.2
+     }
+    ],
+    "orders": {
+     "0.5x": {
+      "hz": 8.289,
+      "amp_px": 0.00111,
+      "above_floor": false,
+      "phase": -0.5819
+     },
+     "1x": {
+      "hz": 16.65,
+      "amp_px": 0.00524,
+      "above_floor": true,
+      "phase": -1.0439
+     },
+     "1.5x": {
+      "hz": 24.943,
+      "amp_px": 0.00041,
+      "above_floor": false,
+      "phase": 1.1812
+     },
+     "2x": {
+      "hz": 32.929,
+      "amp_px": 0.00053,
+      "above_floor": false,
+      "phase": -2.7159
+     },
+     "2.5x": {
+      "hz": 41.25,
+      "amp_px": 0.00041,
+      "above_floor": false,
+      "phase": 2.7289
+     },
+     "3x": {
+      "hz": 49.999,
+      "amp_px": 0.00021,
+      "above_floor": false,
+      "phase": 0.9735
+     },
+     "4x": {
+      "hz": 66.613,
+      "amp_px": 0.00027,
+      "above_floor": false,
+      "phase": -2.4245
+     },
+     "5x": {
+      "hz": 83.363,
+      "amp_px": 0.00154,
+      "above_floor": true,
+      "phase": -2.3245
+     },
+     "6x": {
+      "hz": 100.015,
+      "amp_px": 0.00086,
+      "above_floor": false,
+      "phase": 1.5404
+     }
+    }
+   },
+   "y": {
+    "noise_floor_px": 0.000173,
+    "peaks": [
+     {
+      "hz": 3.268,
+      "amp_px": 0.0026,
+      "amp_mm": 0.0047,
+      "order": null,
+      "label": "non-synchronous",
+      "phase": -2.4516,
+      "snr": 15.0
+     },
+     {
+      "hz": 16.618,
+      "amp_px": 0.00159,
+      "amp_mm": 0.00288,
+      "order": 1.0,
+      "label": "1x",
+      "phase": 0.451,
+      "snr": 9.2
+     },
+     {
+      "hz": 19.997,
+      "amp_px": 0.00206,
+      "amp_mm": 0.00373,
+      "order": null,
+      "label": "non-synchronous",
+      "phase": 2.0354,
+      "snr": 11.9
+     },
+     {
+      "hz": 60.001,
+      "amp_px": 0.00185,
+      "amp_mm": 0.00335,
+      "order": null,
+      "label": "non-synchronous",
+      "phase": 1.7394,
+      "snr": 10.7
+     }
+    ],
+    "orders": {
+     "0.5x": {
+      "hz": 8.076,
+      "amp_px": 0.00054,
+      "above_floor": false,
+      "phase": 2.0834
+     },
+     "1x": {
+      "hz": 16.618,
+      "amp_px": 0.00159,
+      "above_floor": true,
+      "phase": 0.451
+     },
+     "1.5x": {
+      "hz": 25.123,
+      "amp_px": 0.0003,
+      "above_floor": false,
+      "phase": 1.456
+     },
+     "2x": {
+      "hz": 33.105,
+      "amp_px": 0.00027,
+      "above_floor": false,
+      "phase": -0.1243
+     },
+     "2.5x": {
+      "hz": 42.01,
+      "amp_px": 0.00024,
+      "above_floor": false,
+      "phase": 2.349
+     },
+     "3x": {
+      "hz": 50.003,
+      "amp_px": 0.0003,
+      "above_floor": false,
+      "phase": 1.793
+     },
+     "4x": {
+      "hz": 66.521,
+      "amp_px": 0.00017,
+      "above_floor": false,
+      "phase": 0.314
+     },
+     "5x": {
+      "hz": 83.174,
+      "amp_px": 0.00038,
+      "above_floor": false,
+      "phase": -2.0442
+     },
+     "6x": {
+      "hz": 100.021,
+      "amp_px": 0.00098,
+      "above_floor": false,
+      "phase": 0.3668
+     }
+    }
+   }
+  },
+  "velocity_rms": 2.531,
+  "velocity_unit": "mm/s"
+ }
+}

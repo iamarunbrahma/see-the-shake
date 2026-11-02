@@ -1,0 +1,315 @@
+{
+ "fault": "misalignment",
+ "seed": 1,
+ "seconds": 6.0,
+ "expected_verdict": "misalignment",
+ "encoding": {
+  "name": "phone",
+  "codec": "libx264",
+  "bitrate": "24M",
+  "preset": "medium",
+  "tune": null,
+  "note": "assumed phone-like bitrate",
+  "pix_fmt": "yuv420p"
+ },
+ "size": [
+  1280,
+  720
+ ],
+ "out_scale": 0.6666666666666666,
+ "window": {
+  "start_frame": 0,
+  "frames": 1440
+ },
+ "fps": 240.0,
+ "plan": {
+  "machine_type": "washing machine",
+  "rpm_range": [
+   126.0,
+   1600.0
+  ],
+  "rpm_reason": "Wide range covers slow wash tumble through fast front load spin.",
+  "parts": [
+   "washing machine",
+   "washer front door"
+  ],
+  "parts_not_clear": [],
+  "rotating_parts_seen": [
+   "drum"
+  ],
+  "warnings": [
+   "rpm range clamped from 30-1600 to 126-1600 (measurable band)"
+  ]
+ },
+ "true_rpm": 1000.0,
+ "rpm_in_plan_range": true,
+ "segment": {
+  "subclip": {
+   "start_frame": 690,
+   "frames": 60
+  },
+  "missing": [],
+  "added_for_iou": [],
+  "parts": {
+   "washing machine": {
+    "objects": 1,
+    "frames_sent": 60,
+    "found": true,
+    "object_id": "0",
+    "frames_returned": 60,
+    "frames_decoded": 8,
+    "present_share": 1.0,
+    "confidence": 0.9494,
+    "area_px": 153790,
+    "bbox": [
+     474,
+     124,
+     806,
+     594
+    ],
+    "unstable_share": 0.015,
+    "usd": 0.012,
+    "frames_billed": 60
+   },
+   "washer front door": {
+    "objects": 1,
+    "frames_sent": 60,
+    "found": true,
+    "object_id": "0",
+    "frames_returned": 58,
+    "frames_decoded": 8,
+    "present_share": 0.967,
+    "confidence": 0.7344,
+    "area_px": 42033,
+    "bbox": [
+     525,
+     269,
+     760,
+     499
+    ],
+    "unstable_share": 0.0181,
+    "usd": 0.012,
+    "frames_billed": 60
+   }
+  }
+ },
+ "iou": {
+  "washing machine": {
+   "iou": 0.9836,
+   "phrase": "washing machine",
+   "added_for_iou": false
+  },
+  "door": {
+   "iou": 0.9743,
+   "phrase": "washer front door",
+   "added_for_iou": false
+  }
+ },
+ "measured_parts": [
+  "washing machine",
+  "washer front door"
+ ],
+ "scale_basis": "washing machine width = 600 mm over 332 px",
+ "running_speed": {
+  "hz": 16.6406,
+  "rpm": 998.4,
+  "source": "rpm_range"
+ },
+ "rule_verdict": "misalignment",
+ "rule_confidence": "high",
+ "rule_reason": "2x is 2.41 of 1x",
+ "rule_ok": true,
+ "spark": {
+  "fault": "misalignment",
+  "confidence_reported": "high",
+  "confidence": "high",
+  "agrees": true,
+  "supported": true,
+  "cap_reasons": [],
+  "counts": {
+   "verified": 2,
+   "context": 2,
+   "dropped": 0
+  },
+  "error": null
+ },
+ "card": {
+  "headline": {
+   "fault": "misalignment",
+   "confidence": "high",
+   "reason": "2x is 2.41 of 1x",
+   "lead_part": "washer front door",
+   "evidence": [
+    {
+     "axis": "x",
+     "hz": 16.638,
+     "order": 1.0,
+     "label": "1x",
+     "amp_px": 0.04447
+    },
+    {
+     "axis": "y",
+     "hz": 16.644,
+     "order": 1.0,
+     "label": "1x",
+     "amp_px": 0.03392
+    },
+    {
+     "axis": "x",
+     "hz": 33.289,
+     "order": 2.0,
+     "label": "2x",
+     "amp_px": 0.12581
+    },
+    {
+     "axis": "y",
+     "hz": 33.29,
+     "order": 2.0,
+     "label": "2x",
+     "amp_px": 0.04879
+    }
+   ],
+   "source": "fixed rules"
+  },
+  "spark": {
+   "fault": "misalignment",
+   "fault_reported": "misalignment",
+   "confidence": "high",
+   "confidence_reported": "high",
+   "capped": false,
+   "cap_reasons": [],
+   "agrees": true,
+   "supported": true,
+   "evidence": [
+    {
+     "part": "washer front door",
+     "frequency_hz": 16.638,
+     "order": "1x",
+     "matched": {
+      "part": "washer front door",
+      "axis": "x",
+      "hz": 16.638,
+      "label": "1x",
+      "amp_px": 0.04447,
+      "snr": 105.0
+     },
+     "status": "context",
+     "reason": "a real 1x peak, but it is not what this fault rests on"
+    },
+    {
+     "part": "washer front door",
+     "frequency_hz": 33.289,
+     "order": "2x",
+     "matched": {
+      "part": "washer front door",
+      "axis": "x",
+      "hz": 33.289,
+      "label": "2x",
+      "amp_px": 0.12581,
+      "snr": 297.1
+     },
+     "status": "verified",
+     "reason": "matches the measured 2x peak"
+    },
+    {
+     "part": "washing machine",
+     "frequency_hz": 16.637,
+     "order": "1x",
+     "matched": {
+      "part": "washing machine",
+      "axis": "x",
+      "hz": 16.637,
+      "label": "1x",
+      "amp_px": 0.03068,
+      "snr": 73.7
+     },
+     "status": "context",
+     "reason": "a real 1x peak, but it is not what this fault rests on"
+    },
+    {
+     "part": "washing machine",
+     "frequency_hz": 33.288,
+     "order": "2x",
+     "matched": {
+      "part": "washing machine",
+      "axis": "x",
+      "hz": 33.288,
+      "label": "2x",
+      "amp_px": 0.12413,
+      "snr": 298.1
+     },
+     "status": "verified",
+     "reason": "matches the measured 2x peak"
+    }
+   ],
+   "counts": {
+    "verified": 2,
+    "context": 2,
+    "dropped": 0
+   },
+   "explanation": "The horizontal 2x peak is more than twice the 1x peak on both the door and the body, which is the classic sign of misalignment. The 1x is still strong and there is no 0.5x peak, so pure imbalance and looseness do not fit as well. I agree with the rule verdict of misalignment. Velocity near 38 mm per s RMS is well above the 7 mm per s alert, so action is needed.",
+   "fix": [
+    "Stop the machine and disconnect power before touching it",
+    "Redistribute the laundry and level the machine on all feet",
+    "Tighten feet and mounts and inspect shocks, springs and motor fixings",
+    "Run an empty spin test to confirm vibration is lower"
+   ],
+   "check_next": [
+    "Recheck level and run an empty spin to see if 2x drops",
+    "Look for loose panels, feet, dampers or mounts",
+    "Check load size and distribution on next wash"
+   ]
+  },
+  "show_both": false,
+  "spark_raw": {
+   "check_next": [
+    "Recheck level and run an empty spin to see if 2x drops",
+    "Look for loose panels, feet, dampers or mounts",
+    "Check load size and distribution on next wash"
+   ],
+   "confidence": "high",
+   "evidence": [
+    {
+     "frequency_hz": 16.638,
+     "order": "1x",
+     "part": "washer front door"
+    },
+    {
+     "frequency_hz": 33.289,
+     "order": "2x",
+     "part": "washer front door"
+    },
+    {
+     "frequency_hz": 16.637,
+     "order": "1x",
+     "part": "washing machine"
+    },
+    {
+     "frequency_hz": 33.288,
+     "order": "2x",
+     "part": "washing machine"
+    }
+   ],
+   "explanation": "The horizontal 2x peak is more than twice the 1x peak on both the door and the body, which is the classic sign of misalignment. The 1x is still strong and there is no 0.5x peak, so pure imbalance and looseness do not fit as well. I agree with the rule verdict of misalignment. Velocity near 38 mm per s RMS is well above the 7 mm per s alert, so action is needed.",
+   "fault": "misalignment",
+   "fix": [
+    "Stop the machine and disconnect power before touching it",
+    "Redistribute the laundry and level the machine on all feet",
+    "Tighten feet and mounts and inspect shocks, springs and motor fixings",
+    "Run an empty spin test to confirm vibration is lower"
+   ]
+  },
+  "usd": 0.011809,
+  "usage": {
+   "input_tokens": 2212,
+   "output_tokens": 2128
+  }
+ },
+ "costs_usd": {
+  "plan": 0.010226,
+  "segment": 0.024,
+  "diagnose": 0.011809,
+  "total": 0.046035
+ },
+ "seconds_elapsed": 97.6
+}

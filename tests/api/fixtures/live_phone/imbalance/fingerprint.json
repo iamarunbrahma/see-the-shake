@@ -1,0 +1,128 @@
+{
+ "verdict": "imbalance",
+ "confidence": "high",
+ "reason": "1x holds 99% of the vibration energy",
+ "lead_part": "washer front door",
+ "evidence": [
+  {
+   "axis": "x",
+   "hz": 16.643,
+   "order": 1.0,
+   "label": "1x",
+   "amp_px": 0.15935
+  },
+  {
+   "axis": "y",
+   "hz": 16.644,
+   "order": 1.0,
+   "label": "1x",
+   "amp_px": 0.07743
+  }
+ ],
+ "alert_level": 7.0,
+ "alert_unit": "mm/s",
+ "scaled": true,
+ "phase_1x_x_rad": {
+  "washing machine -> washer front door": -0.003
+ },
+ "parts": {
+  "washing machine": {
+   "features": {
+    "amp_1x_px": 0.16238,
+    "e1_share": 0.989,
+    "r21": 0.078,
+    "r31": 0.023,
+    "harmonics": [
+     "2x",
+     "3x",
+     "6x"
+    ],
+    "n_harmonics": 3,
+    "half_order": false,
+    "half_ratio": 0.005,
+    "h_over_v_1x": 1.859,
+    "velocity_rms": 22.66,
+    "velocity_unit": "mm/s",
+    "present": {
+     "1x": true,
+     "2x": true,
+     "3x": true,
+     "6x": true
+    }
+   },
+   "verdict": "looseness",
+   "confidence": "medium",
+   "reason": "3 harmonics (2x, 3x, 6x)",
+   "evidence": [
+    {
+     "axis": "x",
+     "hz": 16.643,
+     "order": 1.0,
+     "label": "1x",
+     "amp_px": 0.14301
+    },
+    {
+     "axis": "y",
+     "hz": 16.644,
+     "order": 1.0,
+     "label": "1x",
+     "amp_px": 0.07692
+    },
+    {
+     "axis": "x",
+     "hz": 33.293,
+     "order": 2.0,
+     "label": "2x",
+     "amp_px": 0.01168
+    },
+    {
+     "axis": "y",
+     "hz": 33.289,
+     "order": 2.0,
+     "label": "2x",
+     "amp_px": 0.00478
+    }
+   ]
+  },
+  "washer front door": {
+   "features": {
+    "amp_1x_px": 0.17717,
+    "e1_share": 0.991,
+    "r21": 0.078,
+    "r31": 0.015,
+    "harmonics": [
+     "2x"
+    ],
+    "n_harmonics": 1,
+    "half_order": false,
+    "half_ratio": 0.005,
+    "h_over_v_1x": 2.058,
+    "velocity_rms": 24.556,
+    "velocity_unit": "mm/s",
+    "present": {
+     "1x": true,
+     "2x": true
+    }
+   },
+   "verdict": "imbalance",
+   "confidence": "high",
+   "reason": "1x holds 99% of the vibration energy",
+   "evidence": [
+    {
+     "axis": "x",
+     "hz": 16.643,
+     "order": 1.0,
+     "label": "1x",
+     "amp_px": 0.15935
+    },
+    {
+     "axis": "y",
+     "hz": 16.644,
+     "order": 1.0,
+     "label": "1x",
+     "amp_px": 0.07743
+    }
+   ]
+  }
+ }
+}

@@ -1,0 +1,317 @@
+{
+ "fault": "imbalance",
+ "seed": 1,
+ "seconds": 6.0,
+ "expected_verdict": "imbalance",
+ "encoding": {
+  "name": "phone",
+  "codec": "libx264",
+  "bitrate": "24M",
+  "preset": "medium",
+  "tune": null,
+  "note": "assumed phone-like bitrate",
+  "pix_fmt": "yuv420p"
+ },
+ "size": [
+  1280,
+  720
+ ],
+ "out_scale": 0.6666666666666666,
+ "window": {
+  "start_frame": 0,
+  "frames": 1440
+ },
+ "fps": 240.0,
+ "plan": {
+  "machine_type": "washing machine",
+  "rpm_range": [
+   400.0,
+   1600.0
+  ],
+  "rpm_reason": "Typical front load washer spin speeds span this broad range.",
+  "parts": [
+   "washing machine",
+   "washer front door"
+  ],
+  "parts_not_clear": [],
+  "rotating_parts_seen": [
+   "drum"
+  ],
+  "warnings": []
+ },
+ "true_rpm": 1000.0,
+ "rpm_in_plan_range": true,
+ "segment": {
+  "subclip": {
+   "start_frame": 690,
+   "frames": 60
+  },
+  "missing": [],
+  "added_for_iou": [],
+  "parts": {
+   "washing machine": {
+    "objects": 1,
+    "frames_sent": 60,
+    "found": true,
+    "object_id": "0",
+    "frames_returned": 60,
+    "frames_decoded": 8,
+    "present_share": 1.0,
+    "confidence": 0.9494,
+    "area_px": 153804,
+    "bbox": [
+     474,
+     124,
+     806,
+     594
+    ],
+    "unstable_share": 0.0146,
+    "usd": 0.012,
+    "frames_billed": 60
+   },
+   "washer front door": {
+    "objects": 1,
+    "frames_sent": 60,
+    "found": true,
+    "object_id": "0",
+    "frames_returned": 58,
+    "frames_decoded": 8,
+    "present_share": 0.967,
+    "confidence": 0.7538,
+    "area_px": 42054,
+    "bbox": [
+     525,
+     269,
+     760,
+     500
+    ],
+    "unstable_share": 0.0144,
+    "usd": 0.012,
+    "frames_billed": 60
+   }
+  }
+ },
+ "iou": {
+  "washing machine": {
+   "iou": 0.9837,
+   "phrase": "washing machine",
+   "added_for_iou": false
+  },
+  "door": {
+   "iou": 0.9745,
+   "phrase": "washer front door",
+   "added_for_iou": false
+  }
+ },
+ "measured_parts": [
+  "washing machine",
+  "washer front door"
+ ],
+ "scale_basis": "washing machine width = 600 mm over 332 px",
+ "running_speed": {
+  "hz": 16.6433,
+  "rpm": 998.6,
+  "source": "rpm_range"
+ },
+ "rule_verdict": "imbalance",
+ "rule_confidence": "high",
+ "rule_reason": "1x holds 99% of the vibration energy",
+ "rule_ok": true,
+ "spark": {
+  "fault": "imbalance",
+  "confidence_reported": "high",
+  "confidence": "high",
+  "agrees": true,
+  "supported": true,
+  "cap_reasons": [],
+  "counts": {
+   "verified": 3,
+   "context": 2,
+   "dropped": 0
+  },
+  "error": null
+ },
+ "card": {
+  "headline": {
+   "fault": "imbalance",
+   "confidence": "high",
+   "reason": "1x holds 99% of the vibration energy",
+   "lead_part": "washer front door",
+   "evidence": [
+    {
+     "axis": "x",
+     "hz": 16.643,
+     "order": 1.0,
+     "label": "1x",
+     "amp_px": 0.15935
+    },
+    {
+     "axis": "y",
+     "hz": 16.644,
+     "order": 1.0,
+     "label": "1x",
+     "amp_px": 0.07743
+    }
+   ],
+   "source": "fixed rules"
+  },
+  "spark": {
+   "fault": "imbalance",
+   "fault_reported": "imbalance",
+   "confidence": "high",
+   "confidence_reported": "high",
+   "capped": false,
+   "cap_reasons": [],
+   "agrees": true,
+   "supported": true,
+   "evidence": [
+    {
+     "part": "washer front door",
+     "frequency_hz": 16.643,
+     "order": "1x",
+     "matched": {
+      "part": "washer front door",
+      "axis": "x",
+      "hz": 16.643,
+      "label": "1x",
+      "amp_px": 0.15935,
+      "snr": 395.8
+     },
+     "status": "verified",
+     "reason": "matches the measured 1x peak"
+    },
+    {
+     "part": "washer front door",
+     "frequency_hz": 16.644,
+     "order": "1x",
+     "matched": {
+      "part": "washer front door",
+      "axis": "y",
+      "hz": 16.644,
+      "label": "1x",
+      "amp_px": 0.07743,
+      "snr": 231.6
+     },
+     "status": "verified",
+     "reason": "matches the measured 1x peak"
+    },
+    {
+     "part": "washing machine",
+     "frequency_hz": 16.643,
+     "order": "1x",
+     "matched": {
+      "part": "washing machine",
+      "axis": "x",
+      "hz": 16.643,
+      "label": "1x",
+      "amp_px": 0.14301,
+      "snr": 373.7
+     },
+     "status": "verified",
+     "reason": "matches the measured 1x peak"
+    },
+    {
+     "part": "washer front door",
+     "frequency_hz": 33.292,
+     "order": "2x",
+     "matched": {
+      "part": "washer front door",
+      "axis": "x",
+      "hz": 33.292,
+      "label": "2x",
+      "amp_px": 0.0129,
+      "snr": 32.0
+     },
+     "status": "context",
+     "reason": "a real 2x peak, but it is not what this fault rests on"
+    },
+    {
+     "part": "washing machine",
+     "frequency_hz": 33.293,
+     "order": "2x",
+     "matched": {
+      "part": "washing machine",
+      "axis": "x",
+      "hz": 33.293,
+      "label": "2x",
+      "amp_px": 0.01168,
+      "snr": 30.5
+     },
+     "status": "context",
+     "reason": "a real 2x peak, but it is not what this fault rests on"
+    }
+   ],
+   "counts": {
+    "verified": 3,
+    "context": 2,
+    "dropped": 0
+   },
+   "explanation": "The 1x peak at running speed is very large at about 0.29 mm and holds 99 percent of the vibration energy, with very high SNR. The 2x peak is less than 8 percent of 1x and there is no 0.5x, so this is not misalignment or looseness. The looseness flag on the body comes from very tiny harmonic peaks and both parts move together in phase, which supports one common imbalance source.",
+   "fix": [
+    "Stop the machine and redistribute the laundry evenly around the drum",
+    "Check the machine is level and all feet sit firmly on the floor",
+    "Run a test spin with a small balanced load",
+    "If it repeats empty, inspect drum counterweights, springs and dampers"
+   ],
+   "check_next": [
+    "Re-run spin after rebalancing to see if 1x amplitude drops",
+    "Check leveling feet and if floor flexes during spin"
+   ]
+  },
+  "show_both": false,
+  "spark_raw": {
+   "check_next": [
+    "Re-run spin after rebalancing to see if 1x amplitude drops",
+    "Check leveling feet and if floor flexes during spin"
+   ],
+   "confidence": "high",
+   "evidence": [
+    {
+     "frequency_hz": 16.643,
+     "order": "1x",
+     "part": "washer front door"
+    },
+    {
+     "frequency_hz": 16.644,
+     "order": "1x",
+     "part": "washer front door"
+    },
+    {
+     "frequency_hz": 16.643,
+     "order": "1x",
+     "part": "washing machine"
+    },
+    {
+     "frequency_hz": 33.292,
+     "order": "2x",
+     "part": "washer front door"
+    },
+    {
+     "frequency_hz": 33.293,
+     "order": "2x",
+     "part": "washing machine"
+    }
+   ],
+   "explanation": "The 1x peak at running speed is very large at about 0.29 mm and holds 99 percent of the vibration energy, with very high SNR. The 2x peak is less than 8 percent of 1x and there is no 0.5x, so this is not misalignment or looseness. The looseness flag on the body comes from very tiny harmonic peaks and both parts move together in phase, which supports one common imbalance source.",
+   "fault": "imbalance",
+   "fix": [
+    "Stop the machine and redistribute the laundry evenly around the drum",
+    "Check the machine is level and all feet sit firmly on the floor",
+    "Run a test spin with a small balanced load",
+    "If it repeats empty, inspect drum counterweights, springs and dampers"
+   ]
+  },
+  "usd": 0.013415,
+  "usage": {
+   "input_tokens": 2266,
+   "output_tokens": 2490
+  }
+ },
+ "costs_usd": {
+  "plan": 0.012756,
+  "segment": 0.024,
+  "diagnose": 0.013415,
+  "total": 0.050171
+ },
+ "seconds_elapsed": 105.3
+}

@@ -1,0 +1,284 @@
+{
+ "fault": "healthy",
+ "seed": 1,
+ "seconds": 6.0,
+ "expected_verdict": "none",
+ "encoding": {
+  "name": "phone",
+  "codec": "libx264",
+  "bitrate": "24M",
+  "preset": "medium",
+  "tune": null,
+  "note": "assumed phone-like bitrate",
+  "pix_fmt": "yuv420p"
+ },
+ "size": [
+  1280,
+  720
+ ],
+ "out_scale": 0.6666666666666666,
+ "window": {
+  "start_frame": 0,
+  "frames": 1440
+ },
+ "fps": 240.0,
+ "plan": {
+  "machine_type": "washing machine",
+  "rpm_range": [
+   400.0,
+   1600.0
+  ],
+  "rpm_reason": "Standard front load washer spin speeds fall in this wide range.",
+  "parts": [
+   "washing machine",
+   "washer door"
+  ],
+  "parts_not_clear": [],
+  "rotating_parts_seen": [
+   "drum"
+  ],
+  "warnings": []
+ },
+ "true_rpm": 1000.0,
+ "rpm_in_plan_range": true,
+ "segment": {
+  "subclip": {
+   "start_frame": 690,
+   "frames": 60
+  },
+  "missing": [],
+  "added_for_iou": [],
+  "parts": {
+   "washing machine": {
+    "objects": 1,
+    "frames_sent": 60,
+    "found": true,
+    "object_id": "0",
+    "frames_returned": 60,
+    "frames_decoded": 8,
+    "present_share": 1.0,
+    "confidence": 0.9494,
+    "area_px": 153475,
+    "bbox": [
+     474,
+     125,
+     805,
+     592
+    ],
+    "unstable_share": 0.012,
+    "usd": 0.012,
+    "frames_billed": 60
+   },
+   "washer door": {
+    "objects": 1,
+    "frames_sent": 60,
+    "found": true,
+    "object_id": "0",
+    "frames_returned": 60,
+    "frames_decoded": 8,
+    "present_share": 1.0,
+    "confidence": 0.9024,
+    "area_px": 41611,
+    "bbox": [
+     525,
+     269,
+     758,
+     500
+    ],
+    "unstable_share": 0.0273,
+    "usd": 0.012,
+    "frames_billed": 60
+   }
+  }
+ },
+ "iou": {
+  "washing machine": {
+   "iou": 0.9816,
+   "phrase": "washing machine",
+   "added_for_iou": false
+  },
+  "door": {
+   "iou": 0.9727,
+   "phrase": "washer door",
+   "added_for_iou": false
+  }
+ },
+ "measured_parts": [
+  "washing machine",
+  "washer door"
+ ],
+ "scale_basis": "washing machine width = 600 mm over 331 px",
+ "running_speed": {
+  "hz": 16.6432,
+  "rpm": 998.6,
+  "source": "rpm_range"
+ },
+ "rule_verdict": "none",
+ "rule_confidence": "medium",
+ "rule_reason": "velocity 6.10 mm/s is below the alert level 7",
+ "rule_ok": true,
+ "spark": {
+  "fault": "none",
+  "confidence_reported": "medium",
+  "confidence": "medium",
+  "agrees": true,
+  "supported": true,
+  "cap_reasons": [],
+  "counts": {
+   "verified": 0,
+   "context": 4,
+   "dropped": 0
+  },
+  "error": null
+ },
+ "card": {
+  "headline": {
+   "fault": "none",
+   "confidence": "medium",
+   "reason": "velocity 6.10 mm/s is below the alert level 7",
+   "lead_part": "washing machine",
+   "evidence": [],
+   "source": "fixed rules"
+  },
+  "spark": {
+   "fault": "none",
+   "fault_reported": "none",
+   "confidence": "medium",
+   "confidence_reported": "medium",
+   "capped": false,
+   "cap_reasons": [],
+   "agrees": true,
+   "supported": true,
+   "evidence": [
+    {
+     "part": "washing machine",
+     "frequency_hz": 16.643,
+     "order": "1x",
+     "matched": {
+      "part": "washing machine",
+      "axis": "x",
+      "hz": 16.643,
+      "label": "1x",
+      "amp_px": 0.0179,
+      "snr": 68.0
+     },
+     "status": "context",
+     "reason": "a real 1x peak, but it is not what this fault rests on"
+    },
+    {
+     "part": "washing machine",
+     "frequency_hz": 16.648,
+     "order": "1x",
+     "matched": {
+      "part": "washing machine",
+      "axis": "y",
+      "hz": 16.648,
+      "label": "1x",
+      "amp_px": 0.00532,
+      "snr": 21.1
+     },
+     "status": "context",
+     "reason": "a real 1x peak, but it is not what this fault rests on"
+    },
+    {
+     "part": "washing machine",
+     "frequency_hz": 83.363,
+     "order": "5x",
+     "matched": {
+      "part": "washing machine",
+      "axis": "x",
+      "hz": 83.363,
+      "label": "5x",
+      "amp_px": 0.00299,
+      "snr": 11.4
+     },
+     "status": "context",
+     "reason": "a real 5x peak, but it is not what this fault rests on"
+    },
+    {
+     "part": "washing machine",
+     "frequency_hz": 116.659,
+     "order": "7x",
+     "matched": {
+      "part": "washing machine",
+      "axis": "x",
+      "hz": 116.659,
+      "label": "7x",
+      "amp_px": 0.00291,
+      "snr": 11.1
+     },
+     "status": "context",
+     "reason": "a real 7x peak, but it is not what this fault rests on"
+    }
+   ],
+   "counts": {
+    "verified": 0,
+    "context": 4,
+    "dropped": 0
+   },
+   "explanation": "Overall velocity on the washing machine is 6.1 mm per s RMS which is below the 7 mm per s alert level. The 1x peak is the largest but its amplitude is small and the 2x to 1x ratio is only 0.033 with no 0.5x, so there is no sign of misalignment or looseness. The door moves in phase with the body at 1x, which fits normal rigid motion. This agrees with the rule verdict of none.",
+   "fix": [
+    "Keep machine in service, no repair needed now",
+    "Check feet are level and locked and load is balanced",
+    "Recheck vibration if noise grows or after moving machine",
+    "Clean filter and check hoses for wear"
+   ],
+   "check_next": [
+    "Trend overall velocity weekly for change",
+    "Confirm speed stays near 999 rpm in spin",
+    "Look for loose feet or panels if 1x rises"
+   ]
+  },
+  "show_both": false,
+  "spark_raw": {
+   "check_next": [
+    "Trend overall velocity weekly for change",
+    "Confirm speed stays near 999 rpm in spin",
+    "Look for loose feet or panels if 1x rises"
+   ],
+   "confidence": "medium",
+   "evidence": [
+    {
+     "frequency_hz": 16.643,
+     "order": "1x",
+     "part": "washing machine"
+    },
+    {
+     "frequency_hz": 16.648,
+     "order": "1x",
+     "part": "washing machine"
+    },
+    {
+     "frequency_hz": 83.363,
+     "order": "5x",
+     "part": "washing machine"
+    },
+    {
+     "frequency_hz": 116.659,
+     "order": "7x",
+     "part": "washing machine"
+    }
+   ],
+   "explanation": "Overall velocity on the washing machine is 6.1 mm per s RMS which is below the 7 mm per s alert level. The 1x peak is the largest but its amplitude is small and the 2x to 1x ratio is only 0.033 with no 0.5x, so there is no sign of misalignment or looseness. The door moves in phase with the body at 1x, which fits normal rigid motion. This agrees with the rule verdict of none.",
+   "fault": "none",
+   "fix": [
+    "Keep machine in service, no repair needed now",
+    "Check feet are level and locked and load is balanced",
+    "Recheck vibration if noise grows or after moving machine",
+    "Clean filter and check hoses for wear"
+   ]
+  },
+  "usd": 0.019199,
+  "usage": {
+   "input_tokens": 2079,
+   "output_tokens": 3906
+  }
+ },
+ "costs_usd": {
+  "plan": 0.015217,
+  "segment": 0.024,
+  "diagnose": 0.019199,
+  "total": 0.058416
+ },
+ "seconds_elapsed": 118.3
+}
