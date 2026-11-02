@@ -91,3 +91,24 @@ def test_twin_run(client):
     res = j["results"]
     assert res["mask_source"] == "twin renderer" and res["truth"]["fault"] == "looseness"
     assert "truth_comparison" in res and res["truth_comparison"]["scored"] > 0
+
+
+def test_twin_replay_run(client):
+    """The twin demo on recorded Muse Spark and SAM 3.1 responses: same run as tests/test_pipeline_api.py."""
+    r = client.post("/api/twin", json={"fault": "imbalance", "seconds": 1, "api": "replay"})
+    assert r.status_code == 200, r.text
+    j = wait(client, r.json()["job_id"], timeout=400)
+    assert j["state"] == "done", j
+    res = j["results"]
+    assert res["mask_source"] == "SAM 3.1" and res["api"]["mode"] == "replay" and res["api"]["usd"]["total"] > 0
+    assert res["diagnosis"]["spark"]["evidence"] and res["plan"]["status"] == "done"
+    assert client.get(j["base"] + res["files"]["masks"]["washing machine"]).status_code == 200
+
+
+def test_api_mode_errors(client):
+    assert client.post("/api/twin", json={"fault": "imbalance", "api": "sometimes"}).status_code == 400
+    assert client.post("/api/twin", json={"fault": "imbalance", "api": "replay", "seconds": 8}).status_code == 400
+    d = twin_clip("healthy")
+    clip = ("clip", ("clip.mp4", (d / "clip.mp4").read_bytes(), "video/mp4"))
+    r = client.post("/api/runs", files=[clip], data={"api": "maybe", "boxes": "machine: 1, 1, 5, 5"})
+    assert r.status_code == 400
