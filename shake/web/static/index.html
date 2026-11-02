@@ -1,0 +1,321 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>See the Shake</title>
+<style>
+  :root {
+    --bg: #f6f5f2; --panel: #ffffff; --ink: #1d2126; --muted: #5d6670; --line: #dfe2e6;
+    --accent: #0b6bcb; --accent-ink: #ffffff; --ok: #1f7a3f; --warn: #9a5b00; --bad: #b42318; --chip: #eef1f4;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg: #14171a; --panel: #1c2024; --ink: #e8eaed; --muted: #a0a8b1; --line: #2e343a;
+            --accent: #5aa9ff; --accent-ink: #0b0d0f; --ok: #5cc98a; --warn: #f0b45a; --bad: #ff7b6e; --chip: #262b30; }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font: 15px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif; }
+  header { padding: 20px 16px 8px; max-width: 1100px; margin: 0 auto; }
+  header h1 { margin: 0; font-size: 26px; letter-spacing: -0.01em; }
+  header p { margin: 4px 0 0; color: var(--muted); }
+  main { max-width: 1100px; margin: 0 auto; padding: 8px 16px 48px; }
+  .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 16px; margin: 12px 0; }
+  .panel h2 { margin: 0 0 10px; font-size: 17px; }
+  .tabs { display: flex; gap: 8px; margin-bottom: 12px; }
+  .tabs button { background: var(--chip); color: var(--ink); border: 1px solid var(--line); }
+  .tabs button[aria-selected="true"] { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+  button { font: inherit; padding: 8px 14px; border-radius: 8px; border: 1px solid var(--accent); background: var(--accent);
+           color: var(--accent-ink); cursor: pointer; }
+  button:disabled { opacity: 0.5; cursor: progress; }
+  label { display: block; font-size: 13px; color: var(--muted); margin-bottom: 4px; }
+  input, select, textarea { font: inherit; color: var(--ink); background: var(--bg); border: 1px solid var(--line);
+                            border-radius: 6px; padding: 6px 8px; width: 100%; }
+  textarea { min-height: 60px; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; align-items: end; }
+  .hint { color: var(--muted); font-size: 13px; margin: 8px 0 0; }
+  ol.steps { list-style: none; padding: 0; margin: 0; display: grid; gap: 6px; }
+  ol.steps li { display: flex; gap: 10px; align-items: baseline; flex-wrap: wrap; }
+  .chip { font-size: 12px; padding: 1px 8px; border-radius: 999px; background: var(--chip); color: var(--muted); min-width: 92px; text-align: center; }
+  .chip.done { color: var(--ok); } .chip.running { color: var(--accent); } .chip.failed { color: var(--bad); }
+  .chip.skipped { color: var(--warn); }
+  .detail { color: var(--muted); font-size: 13px; }
+  .verdict { display: flex; gap: 16px; align-items: baseline; flex-wrap: wrap; }
+  .verdict .big { font-size: 30px; font-weight: 700; }
+  .verdict .conf { color: var(--muted); }
+  table { border-collapse: collapse; width: 100%; font-size: 14px; }
+  th, td { text-align: left; padding: 5px 8px; border-bottom: 1px solid var(--line); }
+  th { color: var(--muted); font-weight: 600; }
+  .scroll { overflow-x: auto; }
+  video, img.wide { width: 100%; height: auto; border-radius: 8px; background: #000; display: block; }
+  img.spec { width: 100%; height: auto; border-radius: 6px; background: #fff; }
+  .slot { border-style: dashed; }
+  .slot .state { color: var(--warn); font-size: 13px; }
+  .warn { color: var(--warn); }
+  .err { color: var(--bad); white-space: pre-wrap; }
+  .hidden { display: none; }
+  .two { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  @media (max-width: 760px) { .two { grid-template-columns: 1fr; } }
+  a { color: var(--accent); }
+</style>
+</head>
+<body>
+<header>
+  <h1>See the Shake</h1>
+  <p>Film a running machine in slow motion. See how each part vibrates, watch the shake magnified, and get the likely fault.</p>
+</header>
+<main>
+  <section class="panel">
+    <div class="tabs" role="tablist">
+      <button id="tab-twin" role="tab" aria-selected="true">Digital twin</button>
+      <button id="tab-clip" role="tab" aria-selected="false">Your clip</button>
+    </div>
+
+    <form id="form-twin">
+      <div class="grid">
+        <div><label for="fault">Injected fault</label><select id="fault"></select></div>
+        <div><label for="seed">Seed</label><input id="seed" type="number" value="1" min="1"></div>
+        <div><label for="seconds">Seconds at 240 fps</label><input id="seconds" type="number" value="4" min="1" max="10" step="1"></div>
+        <div><label for="scale">Resolution</label>
+          <select id="scale"><option value="0.5">960 x 540</option><option value="0.6667">1280 x 720</option><option value="1">1920 x 1080</option></select></div>
+        <div><button type="submit">Render and analyse</button></div>
+      </div>
+      <p class="hint">The twin is a rendered washing machine with a known fault, camera shake, light flicker and sensor noise.
+        Its exact part masks stand in for SAM 3.1, and the true running speed plus or minus 10% stands in for the Muse Spark plan.
+        Results are compared with the truth.</p>
+    </form>
+
+    <form id="form-clip" class="hidden">
+      <div class="grid">
+        <div><label for="clip">Slow-motion clip (MP4 or MOV)</label><input id="clip" type="file" accept="video/mp4,video/quicktime,.mp4,.mov" required></div>
+        <div><label for="masks">Part masks (PNG, white = part, same size as the clip)</label><input id="masks" type="file" accept="image/png" multiple></div>
+        <div><label for="mask_names">Part names for the masks, in order (comma separated)</label><input id="mask_names" placeholder="washing machine, door"></div>
+      </div>
+      <div style="margin-top:12px"><label for="boxes">Or parts as boxes, one per line: name: x, y, width, height</label>
+        <textarea id="boxes" placeholder="ceiling fan motor housing: 820, 140, 260, 180"></textarea></div>
+      <div class="grid" style="margin-top:12px">
+        <div><label for="capture_fps">Captured at (fps)</label><input id="capture_fps" placeholder="from the file"></div>
+        <div><label for="rpm">Running speed (rpm)</label><input id="rpm" placeholder="optional"></div>
+        <div><label for="rpm_min">Or rpm range, lowest</label><input id="rpm_min" placeholder="optional"></div>
+        <div><label for="rpm_max">Highest</label><input id="rpm_max" placeholder="optional"></div>
+        <div><label for="ref_part">Reference part</label><input id="ref_part" placeholder="washing machine"></div>
+        <div><label for="ref_mm">Its width (mm)</label><input id="ref_mm" placeholder="600"></div>
+        <div><label for="alpha">Magnification</label><input id="alpha" value="auto"></div>
+        <div><button type="submit">Analyse</button></div>
+      </div>
+      <p class="hint">Until SAM 3.1 is connected, mark the parts yourself with a mask or a box. Prefer parts that do not rotate:
+        measure a fan through its motor housing, not its blades.</p>
+    </form>
+  </section>
+
+  <section id="progress" class="panel hidden">
+    <h2>Progress</h2>
+    <ol class="steps" id="steps"></ol>
+    <p id="phase" class="hint"></p>
+    <p id="error" class="err"></p>
+  </section>
+
+  <section id="results" class="hidden">
+    <div class="panel">
+      <h2>Verdict from the fixed rules</h2>
+      <div class="verdict"><span class="big" id="verdict"></span><span class="conf" id="confidence"></span></div>
+      <p id="reason"></p>
+      <p id="warnings" class="warn"></p>
+      <h2 style="margin-top:14px">The peaks it rests on</h2>
+      <div class="scroll"><table id="evidence"><thead><tr><th>Part</th><th>Axis</th><th>Frequency</th><th>Order</th><th>Amplitude</th></tr></thead><tbody></tbody></table></div>
+      <p class="hint" id="speed"></p>
+    </div>
+
+    <div class="two">
+      <div class="panel slot" id="plan-slot">
+        <h2>Inspection plan (Muse Spark)</h2>
+        <p class="state" id="plan-state"></p>
+        <div id="plan-body"></div>
+      </div>
+      <div class="panel slot" id="diagnosis-slot">
+        <h2>Diagnosis and fix (Muse Spark)</h2>
+        <p class="state" id="diagnosis-state"></p>
+        <div id="diagnosis-body"></div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2>Original and magnified</h2>
+      <video id="video" controls loop muted autoplay playsinline></video>
+      <p class="hint" id="mag-info"></p>
+    </div>
+
+    <div class="panel">
+      <h2>Spectrum of each part</h2>
+      <div id="spectra"></div>
+    </div>
+
+    <div class="panel">
+      <h2>Features per part</h2>
+      <div class="scroll"><table id="features"><thead><tr><th>Part</th><th>Rule result</th><th>Velocity</th><th>1x share</th><th>2x / 1x</th><th>Harmonics</th><th>0.5x</th></tr></thead><tbody></tbody></table></div>
+    </div>
+
+    <div class="panel">
+      <h2>Space-time slice</h2>
+      <img class="wide" id="slice" alt="One row of pixels across the part's edge, stacked over half a second: original on the left, magnified on the right">
+      <p class="hint">One row of pixels across the part's left edge, stacked down the image over half a second. Left: original. Right: magnified.</p>
+    </div>
+
+    <div class="panel hidden" id="truth-panel">
+      <h2>Compared with the twin's truth</h2>
+      <p id="truth-summary"></p>
+      <div class="scroll"><table id="truth"><thead><tr><th>Part</th><th>Axis</th><th>Order</th><th>True (px)</th><th>Measured (px)</th><th>Error</th><th>Within tolerance</th></tr></thead><tbody></tbody></table></div>
+    </div>
+
+    <p><a id="download" download="see-the-shake-report.json">Download the JSON report</a></p>
+  </section>
+</main>
+
+<script>
+const $ = (id) => document.getElementById(id);
+const VERDICT = { none: "No fault found", imbalance: "Imbalance", looseness: "Looseness", misalignment: "Misalignment", unclear: "Unclear" };
+const STATUS = { pending: "waiting", running: "running", done: "done", skipped: "not connected", failed: "failed" };
+let steps = [], timer = null;
+
+function el(tag, text, cls) { const e = document.createElement(tag); if (text !== undefined && text !== null) e.textContent = text; if (cls) e.className = cls; return e; }
+function row(tbody, cells) { const tr = el("tr"); cells.forEach(c => tr.appendChild(el("td", c))); tbody.appendChild(tr); }
+function clear(node) { while (node.firstChild) node.removeChild(node.firstChild); }
+function fmt(v, d = 3) { return (v === null || v === undefined) ? "" : Number(v).toFixed(d); }
+
+async function init() {
+  const s = await (await fetch("/api/samples")).json();
+  steps = s.steps;
+  for (const f of s.twin_faults) { const o = el("option", f.label); o.value = f.key; $("fault").appendChild(o); }
+  $("fault").value = "imbalance";
+}
+
+function selectTab(which) {
+  $("tab-twin").setAttribute("aria-selected", which === "twin");
+  $("tab-clip").setAttribute("aria-selected", which === "clip");
+  $("form-twin").classList.toggle("hidden", which !== "twin");
+  $("form-clip").classList.toggle("hidden", which !== "clip");
+}
+$("tab-twin").onclick = () => selectTab("twin");
+$("tab-clip").onclick = () => selectTab("clip");
+
+function showSteps(status) {
+  const ol = $("steps"); clear(ol);
+  const byKey = {}; (status ? status.steps : []).forEach(s => byKey[s.key] = s);
+  for (const st of steps) {
+    const s = byKey[st.key] || { status: "pending" };
+    const li = el("li");
+    li.appendChild(el("span", STATUS[s.status] || s.status, "chip " + s.status));
+    li.appendChild(el("span", st.label));
+    if (s.detail) li.appendChild(el("span", s.detail + (s.seconds ? ` (${s.seconds} s)` : ""), "detail"));
+    ol.appendChild(li);
+  }
+}
+
+function busy(on) { document.querySelectorAll("form button").forEach(b => b.disabled = on); }
+
+async function start(url, init) {
+  busy(true); $("results").classList.add("hidden"); $("progress").classList.remove("hidden");
+  $("error").textContent = ""; $("phase").textContent = "Queued"; showSteps(null);
+  const r = await fetch(url, init);
+  const body = await r.json();
+  if (!r.ok) { $("error").textContent = body.detail || "The request failed"; busy(false); return; }
+  poll(body.job_id);
+}
+
+async function poll(jobId) {
+  clearTimeout(timer);
+  const j = await (await fetch(`/api/jobs/${jobId}`)).json();
+  showSteps(j.status);
+  $("phase").textContent = j.state === "done" ? "Done" : (j.phase ? `Working: ${j.phase}` : (j.state === "queued" ? "Queued" : "Working"));
+  if (j.state === "failed") { $("error").textContent = j.error || (j.status && j.status.error) || "The run failed"; busy(false); return; }
+  if (j.state === "done" && j.results) { busy(false); showResults(j.results, j.base); return; }
+  timer = setTimeout(() => poll(jobId), 1000);
+}
+
+function showResults(r, base) {
+  $("results").classList.remove("hidden");
+  const fp = r.fingerprint, m = r.measurement, mm = m.scale.mm_per_px;
+  $("verdict").textContent = VERDICT[fp.verdict] || fp.verdict;
+  $("confidence").textContent = `${fp.confidence} confidence, from the ${fp.lead_part}`;
+  $("reason").textContent = fp.reason.charAt(0).toUpperCase() + fp.reason.slice(1) + ".";
+  const warns = [...(r.ingest.clip.warnings || [])]; if (r.warning) warns.unshift(r.warning);
+  $("warnings").textContent = warns.join(" ");
+  const ev = $("evidence").querySelector("tbody"); clear(ev);
+  if (!fp.evidence.length) row(ev, ["", "", "", "", fp.verdict === "none" ? "Vibration is below the alert level" : "No peaks cited"]);
+  for (const e of fp.evidence) {
+    const amp = mm ? `${fmt(e.amp_px * mm, 3)} mm (${fmt(e.amp_px, 4)} px)` : `${fmt(e.amp_px, 4)} px`;
+    row(ev, [fp.lead_part, e.axis === "x" ? "horizontal" : "vertical", `${fmt(e.hz, 2)} Hz`, e.label, amp]);
+  }
+  const rs = m.running_speed;
+  $("speed").textContent = `Running speed ${fmt(rs.hz, 2)} Hz (${Math.round(rs.rpm)} rpm, from ${rs.source.replace("_", " ")}). ` +
+    `${fmt(m.seconds, 1)} s analysed at ${m.fps} fps, frequency resolution ${fmt(m.bin_hz, 2)} Hz. ` +
+    `Overall velocity ${fmt(fp.parts[fp.lead_part].features.velocity_rms, 1)} ${fp.parts[fp.lead_part].features.velocity_unit} RMS; alert level ${fp.alert_level} ${fp.alert_unit}.`;
+
+  // Muse Spark slots
+  const plan = r.plan || {}, dg = r.diagnosis || {};
+  clear($("plan-body")); clear($("diagnosis-body"));
+  if (plan.status === "not_connected") {
+    $("plan-state").textContent = "Not connected yet. Parts came with the masks (" + r.mask_source + ").";
+    $("plan-body").appendChild(el("p", "Parts measured: " + plan.parts.join(", ")));
+  } else {
+    $("plan-state").textContent = "";
+    if (plan.machine) $("plan-body").appendChild(el("p", "Machine: " + plan.machine));
+    if (plan.rpm_range) $("plan-body").appendChild(el("p", `Running speed range: ${plan.rpm_range[0]} to ${plan.rpm_range[1]} rpm`));
+    if (plan.parts) $("plan-body").appendChild(el("p", "Parts: " + plan.parts.join(", ")));
+  }
+  if (dg.status === "not_connected") {
+    $("diagnosis-state").textContent = "Not connected yet. The rule verdict above is the official result.";
+  } else {
+    $("diagnosis-state").textContent = "";
+    if (dg.explanation) $("diagnosis-body").appendChild(el("p", dg.explanation));
+    if (dg.fix && dg.fix.length) { const ul = el("ul"); dg.fix.forEach(s => ul.appendChild(el("li", s))); $("diagnosis-body").appendChild(ul); }
+    if (!dg.explanation && !dg.fix) $("diagnosis-body").appendChild(el("pre", JSON.stringify(dg, null, 2)));
+  }
+
+  const v = $("video"); v.src = base + r.files.side_by_side + "?v=" + r.run_id; v.load();
+  const mg = r.magnify;
+  $("mag-info").textContent = `Magnified ${Math.round(mg.alpha)}x in the band ${fmt(mg.band_hz[0], 1)} to ${fmt(mg.band_hz[1], 1)} Hz (around 1x), ` +
+    `played ${mg.slow_factor}x slower than real time. Part outlines show where each part sits at rest.`;
+
+  const sp = $("spectra"); clear(sp);
+  for (const [part, file] of Object.entries(r.files.spectra)) {
+    const img = el("img", null, "spec"); img.src = base + file; img.alt = `Spectrum of the ${part}`; sp.appendChild(img);
+  }
+  const ft = $("features").querySelector("tbody"); clear(ft);
+  for (const [part, p] of Object.entries(fp.parts)) {
+    const f = p.features;
+    row(ft, [part, VERDICT[p.verdict] || p.verdict, `${fmt(f.velocity_rms, 1)} ${f.velocity_unit}`, `${Math.round(f.e1_share * 100)}%`,
+             fmt(f.r21, 2), f.harmonics.join(", ") || "none", f.half_order ? "yes" : "no"]);
+  }
+  $("slice").src = base + r.files.slice;
+
+  const tc = r.truth_comparison;
+  $("truth-panel").classList.toggle("hidden", !tc);
+  if (tc) {
+    $("truth-summary").textContent = `Injected: ${VERDICT[r.truth.expected_verdict] || r.truth.fault}. Rule verdict ${tc.verdict_ok ? "matches" : "does not match"}. ` +
+      `${tc.passed} of ${tc.scored} components within one frequency bin and 20% amplitude. Masks are the renderer's.`;
+    const tb = $("truth").querySelector("tbody"); clear(tb);
+    for (const x of tc.rows.filter(x => x.scored)) {
+      row(tb, [x.part, x.axis, `${x.order}x`, fmt(x.true_amp_px, 4), fmt(x.meas_amp_px, 4),
+               x.amp_err === null ? "missed" : `${(x.amp_err * 100).toFixed(1)}%`, x.pass ? "yes" : "no"]);
+    }
+  }
+  $("download").href = base + "results.json";
+}
+
+$("form-twin").onsubmit = (e) => {
+  e.preventDefault();
+  start("/api/twin", { method: "POST", headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ fault: $("fault").value, seed: +$("seed").value, seconds: +$("seconds").value, scale: +$("scale").value }) });
+};
+$("form-clip").onsubmit = (e) => {
+  e.preventDefault();
+  const fd = new FormData();
+  fd.append("clip", $("clip").files[0]);
+  for (const f of $("masks").files) fd.append("masks", f);
+  for (const k of ["mask_names", "boxes", "capture_fps", "rpm", "rpm_min", "rpm_max", "ref_part", "ref_mm", "alpha"]) fd.append(k, $(k).value);
+  start("/api/runs", { method: "POST", body: fd });
+};
+init();
+</script>
+</body>
+</html>
