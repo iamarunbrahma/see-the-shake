@@ -220,7 +220,7 @@ function fillFaults() {
   for (const f of m.faults) { const o = el("option", f.label); o.value = f.key; $("fault").appendChild(o); }
   if (m.faults.some(f => f.key === keep)) $("fault").value = keep;
   const replay = $("twin_api").querySelector('option[value="replay"]');
-  replay.disabled = m.key !== "washer";  // recorded live runs exist for the washing machine only
+  replay.disabled = !m.faults.some(f => f.recorded);  // recorded live runs exist for this machine
   if (replay.disabled && $("twin_api").value === "replay") $("twin_api").value = "off";
 }
 

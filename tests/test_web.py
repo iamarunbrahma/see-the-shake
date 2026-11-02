@@ -149,7 +149,9 @@ def test_fan_twin_run(client):
     fan = next(m for m in s["machines"] if m["key"] == "fan")
     assert [f["key"] for f in fan["faults"]] == ["healthy", "imbalance", "looseness"]
     assert client.post("/api/twin", json={"machine": "fan", "fault": "misalignment"}).status_code == 400
-    assert client.post("/api/twin", json={"machine": "fan", "fault": "imbalance", "api": "replay"}).status_code == 400
+    assert all(f["recorded"] for f in fan["faults"])  # recorded live fan runs: tests/api/fixtures/live/fan-*
+    assert client.post("/api/twin", json={"machine": "fan", "fault": "imbalance", "api": "replay",
+                                          "seconds": 8}).status_code == 400
     r = client.post("/api/twin", json={"machine": "fan", "fault": "imbalance", "seed": 3, "seconds": 1, "scale": 0.5})
     assert r.status_code == 200, r.text
     j = wait(client, r.json()["job_id"], timeout=300)

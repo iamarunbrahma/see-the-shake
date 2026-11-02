@@ -112,7 +112,8 @@ def create_app(runs_dir=None):
                               "faults": [{"key": k, "label": FAULT_LABELS[k], "recorded": pipeline.recording(k).exists()}
                                          for k in twin.FAULTS]},
                              {"key": "fan", "label": pipeline.MACHINES["fan"],
-                              "faults": [{"key": k, "label": FAN_FAULT_LABELS[k], "recorded": False}
+                              "faults": [{"key": k, "label": FAN_FAULT_LABELS[k],
+                                          "recorded": pipeline.recording(f"fan-{k}").exists()}
                                          for k in pipeline.twin_faults("fan")]}],
                 "recorded_twin": pipeline.RECORDED_TWIN,
                 "twin_defaults": TwinRequest(fault="imbalance").model_dump(),
@@ -124,13 +125,12 @@ def create_app(runs_dir=None):
             raise HTTPException(400, f"Unknown machine {req.machine}")
         if req.fault not in pipeline.twin_faults(req.machine):
             raise HTTPException(400, f"Unknown fault {req.fault} for the {pipeline.MACHINES[req.machine].lower()}")
-        if req.api == "replay" and req.machine != "washer":
-            raise HTTPException(400, "Recorded live runs exist for the washing machine only")
         if not (0.5 <= req.seconds <= 10 and 0.2 <= req.scale <= 1.0):
             raise HTTPException(400, "Twin clips are 0.5 to 10 s long at a scale of 0.2 to 1")
         if req.api not in ("off", "replay", "live"):
             raise HTTPException(400, "Muse Spark and SAM 3.1 must be off, replay or live")
-        if req.api == "replay" and not pipeline.recording(req.fault).exists():
+        if req.api == "replay" and not pipeline.recording(
+                f"fan-{req.fault}" if req.machine == "fan" else req.fault).exists():
             raise HTTPException(400, f"There is no recorded live run for {req.fault}")
         if req.api == "replay" and req.seconds > pipeline.RECORDED_TWIN["seconds"]:
             raise HTTPException(400, "A recorded run covers at most 6 s")
