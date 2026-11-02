@@ -18,7 +18,8 @@ def client():
 
 def main():
     try:
-        r = client().chat.completions.create(model=MODEL, max_tokens=5,
+        # Spark reasons before it answers, so a small max_tokens ends in finish_reason=length with no content.
+        r = client().chat.completions.create(model=MODEL, max_tokens=4096,
                                              messages=[{"role": "user", "content": "Reply with exactly: ok"}])
     except openai.APIStatusError as e:
         print(f"{MODEL}: HTTP {e.status_code}")
@@ -32,7 +33,11 @@ def main():
     except openai.APIConnectionError as e:
         print(f"{MODEL}: connection error: {e}")
         return 1
-    print(f"{MODEL}: ok, reply {r.choices[0].message.content!r}, usage {r.usage}")
+    ch = r.choices[0]
+    if ch.finish_reason != "stop" or not ch.message.content:
+        print(f"{MODEL}: HTTP 200 but finish_reason={ch.finish_reason!r}, content {ch.message.content!r}")
+        return 1
+    print(f"{MODEL}: ok, reply {ch.message.content!r}, usage {r.usage}")
     return 0
 
 
