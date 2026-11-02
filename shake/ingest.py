@@ -288,8 +288,11 @@ def ingest(path, capture_fps=None, min_fps=MIN_CAPTURE_FPS, min_s=4.0, max_s=10.
                              "rate (e.g. 1080p 120 fps).")
     elif check["status"] == "inconclusive":
         info.warnings.append("too little sensor noise to check for synthesised frames")
-    gdiff = frame_energies(path, max_frames=None, scale=0.25, grid=1)["global_diff"]
-    window = steady_window(gdiff, info.capture_fps, min_s=min_s, max_s=max_s)
+    if info.frames and info.frames <= int(round(max_s * info.capture_fps)):
+        window = (0, info.frames)  # the whole clip fits the window: steady_window would return it unchanged
+    else:
+        gdiff = frame_energies(path, max_frames=None, scale=0.25, grid=1)["global_diff"]
+        window = steady_window(gdiff, info.capture_fps, min_s=min_s, max_s=max_s)
     if window[1] / info.capture_fps < min_s:
         info.warnings.append(f"only {window[1] / info.capture_fps:.1f} s of video; {min_s:g} s or more is better")
     return Ingested(info, check, window)
