@@ -168,3 +168,11 @@ def test_blade_count_is_checked(client):
     for bad in ("three", "1", "40"):
         r = client.post("/api/runs", files=[clip], data={"boxes": "machine: 10, 10, 200, 200", "blades": bad})
         assert r.status_code == 400 and "blades" in r.json()["detail"].lower()
+
+
+def test_reference_axis_is_checked(client):
+    d = twin_clip("healthy")
+    clip = ("clip", ("clip.mp4", (d / "clip.mp4").read_bytes(), "video/mp4"))
+    r = client.post("/api/runs", files=[clip], data={"boxes": "machine: 10, 10, 200, 200", "ref_part": "machine",
+                                                    "ref_mm": "600", "ref_axis": "depth"})
+    assert r.status_code == 400 and "width or height" in r.json()["detail"]

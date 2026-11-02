@@ -51,6 +51,7 @@ STEPS = [
 ]
 CODE_FILES = ("pipeline.py", "ingest.py", "measure.py", "fingerprint.py", "magnify.py", "meta_api.py",
               "plan_parts.py", "segment.py", "diagnose.py")
+BG_STEP_WARN = 0.3  # background 1x at this share of the part's 1x or more: warn
 RPM_RANGE_TWIN = 0.1  # twin runs without Spark stand in for its running-speed range with the true rpm +/- 10%
 API_MODES = ("off", "live", "record", "replay")
 # Recorded live twin runs (scripts/live_twin.py): seed 1, 6 s, 1920x1080, labels prefixed with the fault name.
@@ -370,9 +371,19 @@ def run(clip, masks=None, runs_dir="runs", options=None, plan=None, segment=None
             st.set(step, "running")
             shape = _frame_shape(clip)
             sub_start = start + max(0, count // 2 - seg_mod.SUB_FRAMES // 2)
+            # The whole machine is segmented too when it is not one of the parts, so that every moving thing SAM
+            # can see stays out of the camera-shake reference (an unmasked shaft read as "background" halved the
+            # disc's motion on the rotor rig). A replay asks for it only if its recording holds that call.
+            machine = plan_info.get("fallback_phrase")
+            context = []
+            if machine and machine not in plan_info["parts"]:
+                recorded = [it for it in getattr(getattr(api, "cassette", None), "items", []) or []
+                            if it.get("op") == "sam" and it.get("key") == machine]
+                if options.api != "replay" or recorded:
+                    context = [machine]
             try:
                 with _workers_can_start():
-                    sam_masks, seg = seg_mod.segment_parts(api, clip, plan_info["parts"], shape,
+                    sam_masks, seg = seg_mod.segment_parts(api, clip, plan_info["parts"] + context, shape,
                                                            start_frame=sub_start,
                                                            fallback_phrase=plan_info["fallback_phrase"], workdir=out,
                                                            label=f"{options.api_label}:segment")
@@ -384,11 +395,20 @@ def run(clip, masks=None, runs_dir="runs", options=None, plan=None, segment=None
             results["segment"] = {k: v for k, v in seg.items() if k != "parts"}
             results["segment"]["parts"] = {p: {k: v for k, v in i.items() if k != "per_object"}
                                            for p, i in (seg.get("parts") or {}).items()}
+            parts_found = {p_: m_ for p_, m_ in sam_masks.items() if p_ not in context}
+            ctx_found = {p_: m_ for p_, m_ in sam_masks.items() if p_ in context}
+            if ctx_found and not parts_found:  # only the whole machine was found: measure it
+                parts_found, ctx_found = ctx_found, {}
+            if ctx_found:
+                ctx = np.max(np.stack(list(load_masks(ctx_found).values())), axis=0)
+                ignore = ctx if ignore is None else np.maximum(ignore, ctx)
+                results["segment"]["background_excludes"] = sorted(ctx_found)
+            sam_masks = parts_found
             if sam_masks:
                 if supplied and truth is not None:
                     results["sam_iou"] = _iou_table(sam_masks, supplied)
                 masks, mask_source = load_masks(sam_masks), "SAM 3.1"
-                missing = seg.get("missing") or []
+                missing = [p_ for p_ in plan_info["parts"] if p_ not in sam_masks]
                 st.set(step, "done", f"{len(masks)} parts" + (f"; not found: {', '.join(missing)}" if missing else ""))
             elif supplied:
                 why = seg.get("error") or "SAM 3.1 found none of the parts"
@@ -433,6 +453,18 @@ def run(clip, masks=None, runs_dir="runs", options=None, plan=None, segment=None
                                       rpm_range=rpm_range, scale=scale, mains_hz=options.mains_hz, ignore=ignore)
         results["measurement"] = res
         rs = res["running_speed"]
+        if rs.get("ambiguous"):
+            alts = ", ".join(f"{h * 60:.0f}" for h in rs["alternatives_hz"])
+            results["warnings"].append(f"The running speed is ambiguous: {rs['rpm']:.0f} rpm was taken, but {alts} rpm "
+                                       "also fits the peaks. Enter the rpm and run again to be sure.")
+        lead_1x = max((float(np.hypot(e["axes"]["x"]["orders"]["1x"]["amp_px"], e["axes"]["y"]["orders"]["1x"]["amp_px"]))
+                       for e in res["parts"].values()), default=0.0)
+        bg = res["background"]["axes"]
+        bg_1x = float(np.hypot(bg["x"]["orders"]["1x"]["amp_px"], bg["y"]["orders"]["1x"]["amp_px"]))
+        if lead_1x > 0 and bg_1x >= BG_STEP_WARN * lead_1x:
+            results["warnings"].append(f"The background moves with the machine at running speed ({bg_1x / lead_1x:.0%} "
+                                       "of the part's 1x): the camera or its support is shaking, or a moving part is "
+                                       "not masked. Readings may be low.")
         st.set(step, "done", f"running speed {rs['hz']:.2f} Hz ({rs['rpm']:.0f} rpm, from the "
                              f"{rs['source'].replace('_', ' ')})")
 
@@ -449,6 +481,7 @@ def run(clip, masks=None, runs_dir="runs", options=None, plan=None, segment=None
         results["files"]["spectra"] = _spectrum_pngs(res, arrays, out, fp)
         results["files"]["spectrum"] = "spectrum.png"
         results["fingerprint"] = fp
+        results["warnings"].extend(fp.get("notes", []))
         st.set(step, "done", f"{fp['verdict']} ({fp['confidence']})")
 
         # 6. magnify
@@ -616,6 +649,16 @@ def parse_twin(name):
     return machine, fault
 
 
+def parse_reference(text):
+    """'part=600' (the part's mask width is 600 mm) or 'part=150:height' (its height) -> (part, mm[, axis])."""
+    part, rest = text.split("=", 1)
+    mm, _, axis = rest.partition(":")
+    axis = axis.strip().lower() or "width"
+    if axis not in ("width", "height"):
+        raise ValueError(f"reference axis must be width or height, not {axis!r}")
+    return (part.strip(), float(mm)) if axis == "width" else (part.strip(), float(mm), "height")
+
+
 def main(argv=None):
     p = argparse.ArgumentParser(description="Run See the Shake on one clip")
     p.add_argument("clip", nargs="?")
@@ -634,7 +677,7 @@ def main(argv=None):
     p.add_argument("--blades", type=int, help="a fan's blade count: blades x running speed is blade pass")
     p.add_argument("--rpm-range", type=float, nargs=2)
     p.add_argument("--capture-fps", type=float)
-    p.add_argument("--ref", help='"part name=length in mm" across the part\'s mask width')
+    p.add_argument("--ref", help='"part name=length in mm" across the part\'s mask width, or "part=150:height"')
     p.add_argument("--alpha", default="auto")
     p.add_argument("--verify", action="store_true")
     p.add_argument("--runs", default="runs")
@@ -652,8 +695,7 @@ def main(argv=None):
         masks = dict(m.split("=", 1) for m in a.mask)
         ref = None
         if a.ref:
-            part, mm = a.ref.split("=", 1)
-            ref = (part, float(mm))
+            ref = parse_reference(a.ref)
         opts = Options(capture_fps=a.capture_fps, rpm=a.rpm, rpm_range=tuple(a.rpm_range) if a.rpm_range else None,
                        reference=ref, alpha=alpha, verify=a.verify, api=a.api, cassette=a.cassette, blades=a.blades,
                        spark_video=not a.no_spark_video,

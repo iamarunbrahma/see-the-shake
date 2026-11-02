@@ -129,3 +129,82 @@ def test_recorded_rule_verdict_is_read_from_the_recording():
     seen = {f: pipeline._recorded_rule_verdict(MetaAPI("replay", cassette=pipeline.recording(f)), f"{f}:diagnose")
             for f in ("imbalance", "misalignment")}
     assert seen == {"imbalance": "imbalance", "misalignment": "looseness"}  # misalignment predates the rule fix
+
+
+def test_the_whole_machine_stays_out_of_the_background(monkeypatch, tmp_path):
+    """When the parts are not the whole machine, it is segmented too and left out of the camera-shake reference,
+    not measured."""
+    from shake import plan_parts, segment
+    clip, masks, truth = _small_twin()
+    m = pipeline.load_masks(masks)
+    plan = {"machine_type": "washing machine", "fallback_phrase": "washing machine", "parts": ["door"],
+            "rpm_range": [900, 1100], "usd": 0.0}
+    monkeypatch.setattr(plan_parts, "plan_parts", lambda *a, **k: dict(plan))
+    asked = []
+
+    def fake_segment(api, clip, phrases, shape=None, **k):
+        asked.extend(phrases)
+        return {p: m[p] for p in phrases}, {"parts": {}, "missing": [], "usd": 0.0}
+    monkeypatch.setattr(segment, "segment_parts", fake_segment)
+    opts = pipeline.Options(api="live", reference=("door", 350.0), min_seconds=1.0, max_seconds=1.0,
+                            video_seconds=0.5, spark_video=False)
+    monkeypatch.setattr(pipeline, "make_api", lambda o, out: _NoCallAPI())
+    r = pipeline.run(clip, None, tmp_path, opts)
+    assert asked == ["door", "washing machine"]
+    assert list(r["measurement"]["parts"]) == ["door"] and r["segment"]["background_excludes"] == ["washing machine"]
+
+
+class _NoCallAPI:
+    """Stands in for MetaAPI where every model call is patched out; Spark's diagnosis fails and the rules stand."""
+    from shake.meta_api import Ledger
+    ledger = Ledger()
+    cassette = None
+
+    def spark(self, *a, **k):
+        raise APIError("no API in this test")
+
+    def upload(self, *a, **k):
+        raise APIError("no API in this test")
+
+
+def test_reference_by_height():
+    assert pipeline.parse_reference("large metal disc=150:height") == ("large metal disc", 150.0, "height")
+    assert pipeline.parse_reference("washing machine=600") == ("washing machine", 600.0)
+    with pytest.raises(ValueError):
+        pipeline.parse_reference("disc=150:depth")
+
+
+def _replay_real():
+    import importlib.util
+    spec = importlib.util.spec_from_file_location("replay_real", pipeline.ROOT / "scripts" / "replay_real.py")
+    rr = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(rr)
+    return rr
+
+
+def test_real_rotor_replay_reads_imbalance_at_3000_rpm(tmp_path):
+    """The rig at 3000 rpm with the eddy-current probes showing a clean 1x: replayed through today's pipeline
+    (Spark and SAM 3.1 from the recording), the rules say imbalance and the frames check is inconclusive."""
+    rec, now = _replay_real().replay("rotor-3000rpm-Unb1", tmp_path, rotor_ref_height=True)
+    assert rec["fingerprint"]["verdict"] == "looseness"  # what the recording said
+    assert now["fingerprint"]["verdict"] == "imbalance"
+    assert now["ingest"]["interpolation"]["status"] == "inconclusive"
+    assert "height" in now["measurement"]["scale"]["basis"]
+
+
+def test_real_rotor_replay_at_1000_rpm_matches_the_probes(tmp_path):
+    """At 1000 rpm the probes show 2x as large as 1x (2x/1x 0.96 to 1.48), 3x to 6x under 6% of 1x, and 3.7 to
+    8.5 mm/s on one vertical axis. The recording read looseness from 3x to 6x that turning texture made up."""
+    rr = _replay_real()
+    rec, now = rr.replay("rotor-1000rpm-Unb2", tmp_path, rotor_ref_height=True)
+    assert rec["fingerprint"]["verdict"] == "looseness"
+    parts = now["measurement"]["parts"]
+    shaft, disc = (next(e for p_, e in parts.items() if w in p_) for w in ("shaft", "disc"))
+    assert shaft["excluded_texture_px"] > 0 and disc["excluded_texture_px"] > 0
+    assert shaft["axis_confidence"]["x"] < 0.05  # a horizontal shaft has no edges to fix its horizontal motion
+    y = shaft["axes"]["y"]["orders"]
+    assert all(y[k]["amp_px"] < 0.1 * y["1x"]["amp_px"] for k in ("3x", "4x", "5x", "6x")), y
+    fp = now["fingerprint"]
+    lead = fp["parts"][fp["lead_part"]]["features"]
+    assert 0.8 <= lead["r21"] <= 1.6 and 3.7 <= lead["velocity_rms"] <= 8.6, lead
+    assert rr.pattern_verdict(now).startswith("misalignment")
