@@ -14,6 +14,8 @@ Files API and passed as an input_file. It returns strict JSON; code validates an
   outline stays the same as it turns (a plain shaft, a solid disc) is kept and measured directly, as an
   eddy-current probe would. For phrases without that mark (earlier recordings), names that sound like rotating
   parts are dropped while a static part remains.
+On a fan, Spark also counts the blades when it can (the pipeline then treats blades x running speed as blade pass),
+and is asked for the parts that hold the blades: the motor housing, the guard rim and the stand.
 The range only gates which spectral peak counts as 1x, so Spark is asked for a deliberately wide range from the
 machine type and visible clues, not from apparent rotation (the real-time preview aliases it). An RPM the user
 enters overrides the range downstream. The user can also replace the part list (user_parts); it goes through the
@@ -34,6 +36,7 @@ PREVIEW_SECONDS = 4.0
 F_MIN_HZ = 2.0  # measure.F_MIN: lowest frequency the peak picker reports
 MIN_SPAN = 0.20  # an rpm range narrower than +/-20% of its centre is widened to that
 DEFAULT_RPM = (300.0, 3000.0)  # when Spark gives no usable range
+MIN_BLADES, MAX_BLADES = 2, 12  # a counted blade count outside this is ignored
 
 ROTATING = {"blade", "blades", "rotor", "rotors", "impeller", "propeller", "drum", "pulley", "belt", "shaft",
             "spindle", "flywheel", "gear", "gears", "agitator", "fan blade", "fan blades", "spinner", "turbine"}
@@ -56,8 +59,9 @@ SCHEMA = {
                            "rotation": {"type": "string", "enum": list(ROTATION)}},
             "required": ["phrase", "visibility", "rotation"], "additionalProperties": False}},
         "rotating_parts_seen": {"type": "array", "items": {"type": "string"}},
+        "blades": {"type": "integer"},
     },
-    "required": ["machine_type", "rpm_min", "rpm_max", "rpm_reason", "parts", "rotating_parts_seen"],
+    "required": ["machine_type", "rpm_min", "rpm_max", "rpm_reason", "parts", "rotating_parts_seen", "blades"],
     "additionalProperties": False,
 }
 
@@ -73,9 +77,10 @@ Return JSON with:
 - parts: 1 to 4 parts to measure, each with:
   - phrase: a short noun phrase (2 to 4 words, common nouns) that a segmentation model could match to one object.
   - visibility: "clear" only if the part is a distinct object with its own visible outline that stands out from what surrounds it; "partial" if it is small, faint, blends into a larger surface or is partly hidden; "unsure" otherwise.
-  The first must be the whole machine (its machine_type), marked "clear". Add another part only if it is clearly visible as a separate object, such as a door with a visible rim, a motor housing or a downrod. A flat area or strip of a larger surface is not a separate part. Fewer parts are better than a doubtful one: the whole machine alone is fine. Do not name hidden parts or sides that are out of view.
+  The first must be the whole machine (its machine_type), marked "clear". Add another part only if it is clearly visible as a separate object, such as a door with a visible rim, a motor housing or a downrod. On a fan, name each part that holds the blades as its own part when you can see it: the motor housing, the guard rim (the outer ring of the guard) and the stand or pole; on a ceiling fan, the motor housing and the downrod. A flat area or strip of a larger surface is not a separate part. Fewer parts are better than a doubtful one: the whole machine alone is fine. Do not name hidden parts or sides that are out of view.
   - rotation: "none" if the part does not turn; "smooth" if it turns but its outline stays the same as it turns (a plain shaft, a solid disc, a coupling sleeve), so its wobble can be measured directly; "changing" if its outline changes as it turns (fan blades, spokes, a drum's contents, a belt). Do not name "changing" parts: they are measured through the static part that holds them.
 - rotating_parts_seen: rotating parts you can see, so they can be excluded.
+- blades: the number of blades if the machine has visible blades (a fan) and you can count them clearly; otherwise 0. The blades may be blurred; count them only if you are sure.
 Do not use em dashes."""
 
 
@@ -187,6 +192,20 @@ def clear_phrases(parts, warnings):
     return keep, [normalise_phrase(u) for u in unclear], smooth
 
 
+def blade_count(v, warnings):
+    """Spark's blade count as an int from MIN_BLADES to MAX_BLADES, or None (no blades, not counted, or implausible)."""
+    try:
+        n = int(v)
+    except (TypeError, ValueError):
+        return None
+    if n == 0:
+        return None
+    if not MIN_BLADES <= n <= MAX_BLADES:
+        warnings.append(f"ignored a blade count of {n}")
+        return None
+    return n
+
+
 def validate(raw, capture_fps, user_parts=None):
     """Validated plan from Spark's JSON (raw dict)."""
     if not isinstance(raw, dict):
@@ -204,6 +223,7 @@ def validate(raw, capture_fps, user_parts=None):
     return {"machine_type": machine, "rpm_range": list(rpm) if rpm else None, "rpm_reason": str(raw.get("rpm_reason", ""))[:300],
             "parts": parts, "parts_source": source, "fallback_phrase": machine, "parts_not_clear": unclear,
             "rotating_parts_seen": [normalise_phrase(p) for p in raw.get("rotating_parts_seen") or []][:8],
+            "blades": blade_count(raw.get("blades"), warnings),
             "warnings": warnings, "spark_raw": raw}
 
 

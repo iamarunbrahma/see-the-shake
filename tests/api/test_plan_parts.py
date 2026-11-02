@@ -102,3 +102,27 @@ def test_schema_asks_for_rotation():
 def test_user_parts_are_never_dropped_for_sounding_rotating():
     p = validate(raw(["door"]), 500, user_parts=["large metal disc", "long metal shaft"])
     assert p["parts"] == ["large metal disc", "long metal shaft"] and p["parts_source"] == "user"
+
+
+def test_blade_count_from_the_plan():
+    def with_blades(n):
+        r = raw(["pedestal fan"], 600, 1500, machine="pedestal fan")
+        if n is not None:
+            r["blades"] = n
+        return validate(r, 240)
+    assert with_blades(3)["blades"] == 3
+    assert with_blades(0)["blades"] is None and with_blades(None)["blades"] is None  # earlier recordings: no field
+    p = with_blades(40)
+    assert p["blades"] is None and any("blade count" in w for w in p["warnings"])
+    assert "blades" in plan_parts.SCHEMA["required"]
+
+
+def test_fan_parts_are_asked_for():
+    assert "guard rim" in plan_parts.PROMPT and "motor housing" in plan_parts.PROMPT and "stand" in plan_parts.PROMPT
+    p = validate(raw([{"phrase": "pedestal fan", "visibility": "clear", "rotation": "none"},
+                      {"phrase": "fan motor housing", "visibility": "clear", "rotation": "none"},
+                      {"phrase": "fan guard rim", "visibility": "clear", "rotation": "none"},
+                      {"phrase": "fan stand", "visibility": "clear", "rotation": "none"},
+                      {"phrase": "fan blades", "visibility": "clear", "rotation": "changing"}],
+                     machine="pedestal fan"), 240)
+    assert p["parts"] == ["pedestal fan", "fan motor housing", "fan guard rim", "fan stand"]
