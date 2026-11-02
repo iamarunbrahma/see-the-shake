@@ -150,7 +150,8 @@ def create_app(runs_dir=None):
     async def start_upload(clip: UploadFile = File(...), masks: list[UploadFile] = File(default=[]),
                            mask_names: str = Form(""), boxes: str = Form(""), capture_fps: str = Form(""),
                            rpm: str = Form(""), rpm_min: str = Form(""), rpm_max: str = Form(""),
-                           ref_part: str = Form(""), ref_mm: str = Form(""), alpha: str = Form("auto"),
+                           ref_part: str = Form(""), ref_mm: str = Form(""), ref_axis: str = Form("width"),
+                           alpha: str = Form("auto"),
                            min_seconds: str = Form("4"), verify: bool = Form(False), api: str = Form("off"),
                            parts: str = Form(""), blades: str = Form("")):
         if api not in ("off", "live"):
@@ -211,7 +212,10 @@ def create_app(runs_dir=None):
         if ref_part.strip() and ref_mm.strip():
             if api == "off" and ref_part.strip() not in part_masks:
                 raise HTTPException(400, f"The reference part '{ref_part}' is not one of the parts")
-            ref = (ref_part.strip(), _opt_float(ref_mm, "Reference length"))
+            axis = (ref_axis or "width").strip().lower()
+            if axis not in ("width", "height"):
+                raise HTTPException(400, "The reference length is the part's width or height")
+            ref = (ref_part.strip(), _opt_float(ref_mm, "Reference length")) + (("height",) if axis == "height" else ())
         opts = pipeline.Options(capture_fps=_opt_float(capture_fps, "Capture fps"), rpm=_opt_float(rpm, "Rpm"),
                                 rpm_range=(rmin, rmax) if rmin and rmax else None, reference=ref,
                                 alpha=_alpha(alpha), min_seconds=_opt_float(min_seconds, "Shortest window") or 4.0,

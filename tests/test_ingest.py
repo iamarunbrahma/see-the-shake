@@ -5,7 +5,7 @@ import pytest
 
 from shake import ingest
 
-from .conftest import CACHE, twin_clip
+from .conftest import CACHE, ROOT, twin_clip
 
 
 def _ffmpeg(*args):
@@ -125,3 +125,27 @@ def test_variable_rate_containers(phone, name):
 def test_synthesised_frames_flagged_in_a_slowed_container(phone):
     r = ingest.ingest(phone["synth30"], capture_fps=240, min_s=1.0)
     assert r.interpolation["flagged"] and any("synthesised" in w for w in r.info.warnings)
+
+
+# ---------------------------------------------------------------- real footage and phone tags
+
+REAL = ROOT / "samples" / "real"
+
+
+@pytest.mark.parametrize("clip,fps", [("aeg-washer-120fps/aeg-washer-1400rpm-120fps.webm", None),
+                                      ("xjtu-rotor-500fps/3000rpm-Unb1.avi", 500)])
+def test_real_compressed_clips_are_inconclusive_not_synthesised(clip, fps):
+    """A web re-encode (VP9) and a lab camera (MPEG-4 Part 2) lose the sensor noise the check needs; the probes
+    show their spectra are right, so the check must not call them synthesised."""
+    info = ingest.clip_info(REAL / clip, capture_fps=fps)
+    c = ingest.interpolation_check(REAL / clip, info=info)
+    assert c["status"] == "inconclusive" and not c["flagged"] and "compression" in c["reason"]
+    assert not any("SAM" in w for w in info.warnings)  # the SAM sub-clip is re-encoded anyway
+
+
+def test_phone_tag_at_960_fps_is_flagged(clips):
+    tagged = CACHE / "ingest" / "phone_tag_960.mp4"
+    _ffmpeg("-i", clips["src"], "-c", "copy", "-movflags", "use_metadata_tags",
+            "-metadata", "com.android.capture.fps=960.000000", tagged)
+    c = ingest.interpolation_check(tagged)
+    assert c["flagged"] and "inventing frames" in c["reason"]

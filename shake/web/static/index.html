@@ -105,7 +105,9 @@
         <div><label for="rpm_min">Or rpm range, lowest</label><input id="rpm_min" placeholder="optional"></div>
         <div><label for="rpm_max">Highest</label><input id="rpm_max" placeholder="optional"></div>
         <div><label for="ref_part">Reference part</label><input id="ref_part" placeholder="washing machine"></div>
-        <div><label for="ref_mm">Its width (mm)</label><input id="ref_mm" placeholder="600"></div>
+        <div><label for="ref_mm">Its size (mm)</label><input id="ref_mm" placeholder="600"></div>
+        <div><label for="ref_axis">Measured across its</label>
+          <select id="ref_axis"><option value="width">width</option><option value="height">height</option></select></div>
         <div><label for="alpha">Magnification</label><input id="alpha" value="auto"></div>
         <div><label for="clip_api">Muse Spark and SAM 3.1</label>
           <select id="clip_api"><option value="live">Live: find the parts and explain, costs money</option>
@@ -470,7 +472,7 @@ $("form-clip").onsubmit = (e) => {
   fd.append("clip", $("clip").files[0]);
   for (const f of $("masks").files) fd.append("masks", f);
   $("capture_fps").classList.remove("needs");
-  for (const k of ["mask_names", "boxes", "capture_fps", "rpm", "rpm_min", "rpm_max", "ref_part", "ref_mm", "alpha", "parts", "blades"]) fd.append(k, $(k).value);
+  for (const k of ["mask_names", "boxes", "capture_fps", "rpm", "rpm_min", "rpm_max", "ref_part", "ref_mm", "ref_axis", "alpha", "parts", "blades"]) fd.append(k, $(k).value);
   fd.append("api", $("clip_api").value);
   start("/api/runs", { method: "POST", body: fd });
 };

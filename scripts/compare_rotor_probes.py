@@ -9,7 +9,9 @@ recorded live runs (tests/api/fixtures/real/rotor-*) and the probe CSVs (samples
   its SAM 3.1 mask's bounding box.
 - Both use the pipeline's own spectrum estimator (detrend, Hann, refined peak).
 
-usage: python scripts/compare_rotor_probes.py [--out docs/results/rotor_table.md]
+usage: python scripts/compare_rotor_probes.py [--out docs/results/rotor_table.md] [--runs out/real_replay]
+  --runs  compare the runs scripts/replay_real.py wrote there (today's code on the same recordings) instead of the
+          recordings, with the verdict before and after, 3x to 6x against 1x, and the velocity.
 """
 import argparse
 import json
@@ -38,8 +40,10 @@ def probes(name, rpm):
         f, Z = measure.spectrum(a[:, c], PROBE_FS)
         A = np.abs(Z)
         a1, h1, _ = measure.amplitude_at(f, A, rpm / 60.0, search_bins=3)
-        a2, _, _ = measure.amplitude_at(f, A, 2 * h1, search_bins=3)
-        out[c + 1] = {"f1_hz": h1, "a1_um": a1 * 1000, "a2_um": a2 * 1000}
+        amps = [a1] + [measure.amplitude_at(f, A, k * h1, search_bins=3)[0] for k in range(2, 7)]
+        vel = float(np.sqrt(sum((2 * np.pi * k * h1 * am) ** 2 / 2 for k, am in enumerate(amps, 1))))
+        out[c + 1] = {"f1_hz": h1, "a1_um": a1 * 1000, "a2_um": amps[1] * 1000,
+                      "h36": max(amps[2:]) / a1 if a1 > 0 else None, "velocity_mm_s": vel}
     return out
 
 
@@ -48,8 +52,12 @@ def fixture(name):
     return next(iter(sorted(FIX.glob(f"rotor-{name}*"))), None)
 
 
-def video(name):
-    r = json.loads((fixture(name) / "results.json").read_text())
+def video(name, runs=None):
+    rec = json.loads((fixture(name) / "results.json").read_text())
+    r = rec
+    if runs:
+        index = json.loads((Path(runs) / "index.json").read_text())
+        r = json.loads((Path(runs) / index[fixture(name).name] / "results.json").read_text())
     seg = r["segment"]["parts"]
     disc = next(p for p in seg if "disc" in p)
     x0, y0, x1, y1 = seg[disc]["bbox"]
@@ -58,18 +66,58 @@ def video(name):
     for p, e in r["measurement"]["parts"].items():
         o = e["axes"]["y"]["orders"]
         parts["disc" if "disc" in p else "shaft" if "shaft" in p else p] = {
-            "f1_hz": o["1x"]["hz"], "a1_um": o["1x"]["amp_px"] * mm_px * 1000, "a2_um": o["2x"]["amp_px"] * mm_px * 1000}
+            "f1_hz": o["1x"]["hz"], "a1_um": o["1x"]["amp_px"] * mm_px * 1000, "a2_um": o["2x"]["amp_px"] * mm_px * 1000,
+            "h36": max(o[k]["amp_px"] for k in ("3x", "4x", "5x", "6x")) / o["1x"]["amp_px"]}
     sp = r["diagnosis"]["spark"]
-    return {"parts": parts, "mm_per_px": mm_px, "rules": r["fingerprint"]["verdict"], "reason": r["fingerprint"]["reason"],
+    fp = r["fingerprint"]
+    lead = fp["parts"][fp["lead_part"]]["features"]
+    pattern = None
+    if runs:
+        from shake import fingerprint
+        pattern = fingerprint.fingerprint(r["measurement"], alert=0.0)["verdict"]
+    return {"parts": parts, "mm_per_px": mm_px, "rules": fp["verdict"], "reason": fp["reason"],
+            "rules_before": rec["fingerprint"]["verdict"], "pattern": pattern,
+            "velocity": lead["velocity_rms"] if lead["velocity_unit"] == "mm/s" else None,
             "spark": sp.get("fault"), "spark_conf": sp.get("confidence"), "agrees": sp.get("agrees"),
             "visual": (sp.get("visual") or {}).get("status"), "usd": r["api"]["usd"]["total"],
             "seconds": round(sum(s["seconds"] or 0 for s in r["steps"]), 0)}
 
 
+def after_table(runs):
+    """Today's code on the recordings, against the probes: amplitudes, 2x/1x, the largest of 3x to 6x over 1x
+    (vertical), velocity, and the rule verdict before and after."""
+    lines = ["| run | disc 1x (um) | probe #1 1x (um) | 2x/1x disc / probes | 3x to 6x over 1x: shaft, disc / probes | "
+             "velocity (mm/s): video / probes | rules before | rules now | pattern without the alert |",
+             "|---|---|---|---|---|---|---|---|---|"]
+    for rpm in (1000, 2000, 3000):
+        for u in (1, 2, 3):
+            name = f"{rpm}rpm-Unb{u}"
+            if fixture(name) is None:
+                continue
+            v, pr = video(name, runs), probes(name, rpm)
+            d, s = v["parts"]["disc"], v["parts"]["shaft"]
+            r21p = [x["a2_um"] / x["a1_um"] for x in pr.values()]
+            h36p = max(x["h36"] for x in pr.values())
+            velp = [x["velocity_mm_s"] for x in pr.values()]
+            vel = f"{v['velocity']:.1f}" if v["velocity"] is not None else "n/a"
+            lines.append(
+                f"| {name} | {d['a1_um']:.1f} | {pr[1]['a1_um']:.1f} | {d['a2_um'] / d['a1_um']:.2f} / "
+                f"{min(r21p):.2f} to {max(r21p):.2f} | {s['h36']:.2f}, {d['h36']:.2f} / {h36p:.2f} or less | "
+                f"{vel} / {min(velp):.1f} to {max(velp):.1f} | {v['rules_before']} | {v['rules']} | {v['pattern']} |")
+    return "\n".join(lines) + "\n"
+
+
 def main(argv=None):
     p = argparse.ArgumentParser()
     p.add_argument("--out")
+    p.add_argument("--runs", help="runs written by scripts/replay_real.py (out/real_replay)")
     a = p.parse_args(argv)
+    if a.runs:
+        md = after_table(a.runs)
+        if a.out:
+            Path(a.out).write_text(md)
+        print(md)
+        return 0
     rows, base = [], {}
     lines = ["| run | 1x video / probes (Hz) | disc 1x (um) | shaft 1x (um) | probe #1 1x (um) | probes 1x range (um) | "
              "2x/1x video / probes | vs Unb1: disc, shaft, probe #1 | rules | Spark | visual check | cost |",
