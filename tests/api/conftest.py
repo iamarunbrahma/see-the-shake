@@ -16,5 +16,7 @@ def pytest_collection_modifyitems(config, items):
         return
     skip = pytest.mark.skip(reason="live API test; run with: pytest -m live")
     for item in items:
-        if "live" in item.keywords:
+        # the marker itself, not the keywords: a parametrize id such as [live] is a keyword too, and matching it
+        # used to skip an offline test
+        if item.get_closest_marker("live") is not None:
             item.add_marker(skip)
