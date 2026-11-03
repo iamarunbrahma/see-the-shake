@@ -1,161 +1,161 @@
-encoding,fault,seed,part,axis,order,true_hz,true_amp_px,true_amp_centroid_px,floor_px,scored,found,meas_hz,meas_amp_px,freq_err_bins,amp_err,amp_err_centroid,pass
-grain,healthy,1,washing machine,x,1.0,16.6667,0.042233,0.028418,0.000173,True,True,16.644,0.03774,0.136,-0.1064,0.328,True
-grain,healthy,1,washing machine,y,1.0,16.6667,0.015107,0.015,0.000142,True,True,16.641,0.01348,0.154,-0.1077,-0.1013,True
-grain,healthy,1,door,x,1.0,16.6667,0.021616,0.021549,0.000181,True,True,16.644,0.01859,0.136,-0.14,-0.1373,True
-grain,healthy,1,door,y,1.0,16.6667,0.015002,0.015,0.000148,True,True,16.642,0.01355,0.148,-0.0968,-0.0967,True
-grain,healthy,2,washing machine,x,1.0,16.6667,0.042233,0.028418,0.000171,True,True,16.644,0.0375,0.136,-0.1121,0.3196,True
-grain,healthy,2,washing machine,y,1.0,16.6667,0.015107,0.015,0.000141,True,True,16.641,0.01338,0.154,-0.1143,-0.108,True
-grain,healthy,2,door,x,1.0,16.6667,0.021616,0.021549,0.000184,True,True,16.645,0.01835,0.13,-0.1511,-0.1485,True
-grain,healthy,2,door,y,1.0,16.6667,0.015002,0.015,0.000147,True,True,16.642,0.01331,0.148,-0.1128,-0.1127,True
-grain,healthy,3,washing machine,x,1.0,16.6667,0.042233,0.028418,0.000185,True,True,16.643,0.03755,0.142,-0.1109,0.3213,True
-grain,healthy,3,washing machine,y,1.0,16.6667,0.015107,0.015,0.000143,True,True,16.646,0.01344,0.124,-0.1103,-0.104,True
-grain,healthy,3,door,x,1.0,16.6667,0.021616,0.021549,0.000175,True,True,16.643,0.01829,0.142,-0.1539,-0.1512,True
-grain,healthy,3,door,y,1.0,16.6667,0.015002,0.015,0.000143,True,True,16.645,0.01336,0.13,-0.1095,-0.1093,True
-grain,imbalance,1,washing machine,x,1.0,16.6667,0.222767,0.236582,0.000261,True,True,16.642,0.21827,0.148,-0.0202,-0.0774,True
-grain,imbalance,1,washing machine,y,1.0,16.6667,0.120013,0.12,0.000203,True,True,16.644,0.1224,0.136,0.0199,0.02,True
-grain,imbalance,1,washing machine,x,2.0,33.3333,0.02,0.02,0.000261,True,True,33.326,0.01991,0.044,-0.0045,-0.0045,True
-grain,imbalance,1,washing machine,y,2.0,33.3333,0.01,0.01,0.000203,True,True,33.275,0.01081,0.35,0.081,0.081,True
-grain,imbalance,1,door,x,1.0,16.6667,0.243384,0.243451,0.000315,True,True,16.643,0.25166,0.142,0.034,0.0337,True
-grain,imbalance,1,door,y,1.0,16.6667,0.12,0.12,0.000228,True,True,16.643,0.12024,0.142,0.002,0.002,True
-grain,imbalance,1,door,x,2.0,33.3333,0.02,0.02,0.000315,True,True,33.319,0.02319,0.086,0.1595,0.1595,True
-grain,imbalance,1,door,y,2.0,33.3333,0.01,0.01,0.000228,True,True,33.274,0.01063,0.356,0.063,0.063,True
-grain,imbalance,2,washing machine,x,1.0,16.6667,0.222767,0.236582,0.000253,True,True,16.644,0.21674,0.136,-0.0271,-0.0839,True
-grain,imbalance,2,washing machine,y,1.0,16.6667,0.120013,0.12,0.000185,True,True,16.643,0.12142,0.142,0.0117,0.0118,True
-grain,imbalance,2,washing machine,x,2.0,33.3333,0.02,0.02,0.000253,True,True,33.301,0.01727,0.194,-0.1365,-0.1365,True
-grain,imbalance,2,washing machine,y,2.0,33.3333,0.01,0.01,0.000185,True,True,33.293,0.0088,0.242,-0.12,-0.12,True
-grain,imbalance,2,door,x,1.0,16.6667,0.243384,0.243451,0.00029,True,True,16.644,0.24971,0.136,0.026,0.0257,True
-grain,imbalance,2,door,y,1.0,16.6667,0.12,0.12,0.000213,True,True,16.643,0.11933,0.142,-0.0056,-0.0056,True
-grain,imbalance,2,door,x,2.0,33.3333,0.02,0.02,0.00029,True,True,33.296,0.02029,0.224,0.0145,0.0145,True
-grain,imbalance,2,door,y,2.0,33.3333,0.01,0.01,0.000213,True,True,33.291,0.00862,0.254,-0.138,-0.138,True
-grain,imbalance,3,washing machine,x,1.0,16.6667,0.222767,0.236582,0.000265,True,True,16.644,0.21695,0.136,-0.0261,-0.083,True
-grain,imbalance,3,washing machine,y,1.0,16.6667,0.120013,0.12,0.000209,True,True,16.644,0.12232,0.136,0.0192,0.0193,True
-grain,imbalance,3,washing machine,x,2.0,33.3333,0.02,0.02,0.000265,True,True,33.281,0.01802,0.314,-0.099,-0.099,True
-grain,imbalance,3,washing machine,y,2.0,33.3333,0.01,0.01,0.000209,True,True,33.287,0.01058,0.278,0.058,0.058,True
-grain,imbalance,3,door,x,1.0,16.6667,0.243384,0.243451,0.000321,True,True,16.644,0.24953,0.136,0.0253,0.025,True
-grain,imbalance,3,door,y,1.0,16.6667,0.12,0.12,0.000224,True,True,16.643,0.12054,0.142,0.0045,0.0045,True
-grain,imbalance,3,door,x,2.0,33.3333,0.02,0.02,0.000321,True,True,33.282,0.02052,0.308,0.026,0.026,True
-grain,imbalance,3,door,y,2.0,33.3333,0.01,0.01,0.000224,True,True,33.285,0.01035,0.29,0.035,0.035,True
-grain,looseness,1,washing machine,x,0.5,8.3333,0.05,0.05,0.000261,True,True,8.326,0.04795,0.044,-0.041,-0.041,True
-grain,looseness,1,washing machine,y,0.5,8.3333,0.03,0.03,0.000216,True,True,8.32,0.0309,0.08,0.03,0.03,True
-grain,looseness,1,washing machine,x,1.0,16.6667,0.16893,0.113671,0.000261,True,True,16.642,0.15417,0.148,-0.0874,0.3563,True
-grain,looseness,1,washing machine,y,1.0,16.6667,0.100257,0.100001,0.000216,True,True,16.645,0.10299,0.13,0.0273,0.0299,True
-grain,looseness,1,washing machine,x,2.0,33.3333,0.09,0.09,0.000261,True,True,33.293,0.08048,0.242,-0.1058,-0.1058,True
-grain,looseness,1,washing machine,y,2.0,33.3333,0.07,0.07,0.000216,True,True,33.288,0.06898,0.272,-0.0146,-0.0146,True
-grain,looseness,1,washing machine,x,3.0,50.0,0.06,0.06,0.000261,True,True,49.932,0.0515,0.408,-0.1417,-0.1417,True
-grain,looseness,1,washing machine,y,3.0,50.0,0.05,0.05,0.000216,True,True,49.931,0.04569,0.414,-0.0862,-0.0862,True
-grain,looseness,1,door,x,0.5,8.3333,0.05,0.05,0.000291,True,True,8.324,0.05058,0.056,0.0116,0.0116,True
-grain,looseness,1,door,y,0.5,8.3333,0.03,0.03,0.000249,True,True,8.319,0.0308,0.086,0.0267,0.0267,True
-grain,looseness,1,door,x,1.0,16.6667,0.086462,0.086195,0.000291,True,True,16.642,0.08184,0.148,-0.0535,-0.0505,True
-grain,looseness,1,door,y,1.0,16.6667,0.100005,0.1,0.000249,True,True,16.645,0.1017,0.13,0.0169,0.017,True
-grain,looseness,1,door,x,2.0,33.3333,0.09,0.09,0.000291,True,True,33.291,0.08534,0.254,-0.0518,-0.0518,True
-grain,looseness,1,door,y,2.0,33.3333,0.07,0.07,0.000249,True,True,33.288,0.06788,0.272,-0.0303,-0.0303,True
-grain,looseness,1,door,x,3.0,50.0,0.06,0.06,0.000291,True,True,49.932,0.05319,0.408,-0.1135,-0.1135,True
-grain,looseness,1,door,y,3.0,50.0,0.05,0.05,0.000249,True,True,49.931,0.04496,0.414,-0.1008,-0.1008,True
-grain,looseness,2,washing machine,x,0.5,8.3333,0.05,0.05,0.000247,True,True,8.324,0.04728,0.056,-0.0544,-0.0544,True
-grain,looseness,2,washing machine,y,0.5,8.3333,0.03,0.03,0.000209,True,True,8.322,0.03055,0.068,0.0183,0.0183,True
-grain,looseness,2,washing machine,x,1.0,16.6667,0.16893,0.113671,0.000247,True,True,16.643,0.15164,0.142,-0.1024,0.334,True
-grain,looseness,2,washing machine,y,1.0,16.6667,0.100257,0.100001,0.000209,True,True,16.643,0.10181,0.142,0.0155,0.0181,True
-grain,looseness,2,washing machine,x,2.0,33.3333,0.09,0.09,0.000247,True,True,33.291,0.07902,0.254,-0.122,-0.122,True
-grain,looseness,2,washing machine,y,2.0,33.3333,0.07,0.07,0.000209,True,True,33.289,0.06749,0.266,-0.0359,-0.0359,True
-grain,looseness,2,washing machine,x,3.0,50.0,0.06,0.06,0.000247,True,True,49.937,0.05173,0.378,-0.1378,-0.1378,True
-grain,looseness,2,washing machine,y,3.0,50.0,0.05,0.05,0.000209,True,True,49.936,0.0438,0.384,-0.124,-0.124,True
-grain,looseness,2,door,x,0.5,8.3333,0.05,0.05,0.000277,True,True,8.324,0.0503,0.056,0.006,0.006,True
-grain,looseness,2,door,y,0.5,8.3333,0.03,0.03,0.000248,True,True,8.321,0.03032,0.074,0.0107,0.0107,True
-grain,looseness,2,door,x,1.0,16.6667,0.086462,0.086195,0.000277,True,True,16.643,0.08055,0.142,-0.0684,-0.0655,True
-grain,looseness,2,door,y,1.0,16.6667,0.100005,0.1,0.000248,True,True,16.643,0.10052,0.142,0.0051,0.0052,True
-grain,looseness,2,door,x,2.0,33.3333,0.09,0.09,0.000277,True,True,33.291,0.08438,0.254,-0.0624,-0.0624,True
-grain,looseness,2,door,y,2.0,33.3333,0.07,0.07,0.000248,True,True,33.289,0.06619,0.266,-0.0544,-0.0544,True
-grain,looseness,2,door,x,3.0,50.0,0.06,0.06,0.000277,True,True,49.936,0.05298,0.384,-0.117,-0.117,True
-grain,looseness,2,door,y,3.0,50.0,0.05,0.05,0.000248,True,True,49.936,0.04309,0.384,-0.1382,-0.1382,True
-grain,looseness,3,washing machine,x,0.5,8.3333,0.05,0.05,0.000268,True,True,8.322,0.04659,0.068,-0.0682,-0.0682,True
-grain,looseness,3,washing machine,y,0.5,8.3333,0.03,0.03,0.000212,True,True,8.322,0.03123,0.068,0.041,0.041,True
-grain,looseness,3,washing machine,x,1.0,16.6667,0.16893,0.113671,0.000268,True,True,16.645,0.15112,0.13,-0.1054,0.3295,True
-grain,looseness,3,washing machine,y,1.0,16.6667,0.100257,0.100001,0.000212,True,True,16.645,0.1034,0.13,0.0313,0.034,True
-grain,looseness,3,washing machine,x,2.0,33.3333,0.09,0.09,0.000268,True,True,33.288,0.07923,0.272,-0.1197,-0.1197,True
-grain,looseness,3,washing machine,y,2.0,33.3333,0.07,0.07,0.000212,True,True,33.289,0.06915,0.266,-0.0121,-0.0121,True
-grain,looseness,3,washing machine,x,3.0,50.0,0.06,0.06,0.000268,True,True,49.932,0.05217,0.408,-0.1305,-0.1305,True
-grain,looseness,3,washing machine,y,3.0,50.0,0.05,0.05,0.000212,True,True,49.934,0.04514,0.396,-0.0972,-0.0972,True
-grain,looseness,3,door,x,0.5,8.3333,0.05,0.05,0.000288,True,True,8.322,0.04958,0.068,-0.0084,-0.0084,True
-grain,looseness,3,door,y,0.5,8.3333,0.03,0.03,0.000253,True,True,8.322,0.03102,0.068,0.034,0.034,True
-grain,looseness,3,door,x,1.0,16.6667,0.086462,0.086195,0.000288,True,True,16.645,0.08037,0.13,-0.0705,-0.0676,True
-grain,looseness,3,door,y,1.0,16.6667,0.100005,0.1,0.000253,True,True,16.645,0.10182,0.13,0.0181,0.0182,True
-grain,looseness,3,door,x,2.0,33.3333,0.09,0.09,0.000288,True,True,33.289,0.08456,0.266,-0.0604,-0.0604,True
-grain,looseness,3,door,y,2.0,33.3333,0.07,0.07,0.000253,True,True,33.289,0.06808,0.266,-0.0274,-0.0274,True
-grain,looseness,3,door,x,3.0,50.0,0.06,0.06,0.000288,True,True,49.933,0.0533,0.402,-0.1117,-0.1117,True
-grain,looseness,3,door,y,3.0,50.0,0.05,0.05,0.000253,True,True,49.934,0.04462,0.396,-0.1076,-0.1076,True
-grain,misalignment,1,washing machine,x,1.0,16.6667,0.042767,0.056582,0.000246,True,True,16.627,0.04319,0.238,0.0099,-0.2367,True
-grain,misalignment,1,washing machine,y,1.0,16.6667,0.050032,0.05,0.000185,True,True,16.644,0.05228,0.136,0.0449,0.0456,True
-grain,misalignment,1,washing machine,x,2.0,33.3333,0.2,0.2,0.000246,True,True,33.289,0.18882,0.266,-0.0559,-0.0559,True
-grain,misalignment,1,washing machine,y,2.0,33.3333,0.08,0.08,0.000185,True,True,33.289,0.07895,0.266,-0.0131,-0.0131,True
-grain,misalignment,1,washing machine,x,3.0,50.0,0.03,0.03,0.000246,True,True,49.94,0.02872,0.36,-0.0427,-0.0427,True
-grain,misalignment,1,washing machine,y,3.0,50.0,0.015,0.015,0.000185,True,True,49.929,0.01455,0.426,-0.03,-0.03,True
-grain,misalignment,1,door,x,1.0,16.6667,0.063384,0.063451,0.000296,True,True,16.63,0.06813,0.22,0.0749,0.0737,True
-grain,misalignment,1,door,y,1.0,16.6667,0.050001,0.05,0.000218,True,True,16.644,0.05167,0.136,0.0334,0.0334,True
-grain,misalignment,1,door,x,2.0,33.3333,0.2,0.2,0.000296,True,True,33.289,0.19759,0.266,-0.0121,-0.0121,True
-grain,misalignment,1,door,y,2.0,33.3333,0.08,0.08,0.000218,True,True,33.29,0.07695,0.26,-0.0381,-0.0381,True
-grain,misalignment,1,door,x,3.0,50.0,0.03,0.03,0.000296,True,True,49.941,0.03024,0.354,0.008,0.008,True
-grain,misalignment,1,door,y,3.0,50.0,0.015,0.015,0.000218,True,True,49.928,0.01412,0.432,-0.0587,-0.0587,True
-grain,misalignment,2,washing machine,x,1.0,16.6667,0.042767,0.056582,0.000257,True,True,16.637,0.04263,0.178,-0.0032,-0.2466,True
-grain,misalignment,2,washing machine,y,1.0,16.6667,0.050032,0.05,0.000191,True,True,16.643,0.05134,0.142,0.0261,0.0268,True
-grain,misalignment,2,washing machine,x,2.0,33.3333,0.2,0.2,0.000257,True,True,33.29,0.18648,0.26,-0.0676,-0.0676,True
-grain,misalignment,2,washing machine,y,2.0,33.3333,0.08,0.08,0.000191,True,True,33.289,0.07822,0.266,-0.0223,-0.0223,True
-grain,misalignment,2,washing machine,x,3.0,50.0,0.03,0.03,0.000257,True,True,49.934,0.02761,0.396,-0.0797,-0.0797,True
-grain,misalignment,2,washing machine,y,3.0,50.0,0.015,0.015,0.000191,True,True,49.933,0.01323,0.402,-0.118,-0.118,True
-grain,misalignment,2,door,x,1.0,16.6667,0.063384,0.063451,0.000286,True,True,16.637,0.06714,0.178,0.0593,0.0581,True
-grain,misalignment,2,door,y,1.0,16.6667,0.050001,0.05,0.000205,True,True,16.643,0.05068,0.142,0.0136,0.0136,True
-grain,misalignment,2,door,x,2.0,33.3333,0.2,0.2,0.000286,True,True,33.29,0.19527,0.26,-0.0237,-0.0237,True
-grain,misalignment,2,door,y,2.0,33.3333,0.08,0.08,0.000205,True,True,33.289,0.07588,0.266,-0.0515,-0.0515,True
-grain,misalignment,2,door,x,3.0,50.0,0.03,0.03,0.000286,True,True,49.933,0.02856,0.402,-0.048,-0.048,True
-grain,misalignment,2,door,y,3.0,50.0,0.015,0.015,0.000205,True,True,49.935,0.01302,0.39,-0.132,-0.132,True
-grain,misalignment,3,washing machine,x,1.0,16.6667,0.042767,0.056582,0.000275,True,True,16.649,0.0415,0.106,-0.0296,-0.2666,True
-grain,misalignment,3,washing machine,y,1.0,16.6667,0.050032,0.05,0.0002,True,True,16.645,0.05242,0.13,0.0477,0.0484,True
-grain,misalignment,3,washing machine,x,2.0,33.3333,0.2,0.2,0.000275,True,True,33.29,0.18712,0.26,-0.0644,-0.0644,True
-grain,misalignment,3,washing machine,y,2.0,33.3333,0.08,0.08,0.0002,True,True,33.289,0.07889,0.266,-0.0139,-0.0139,True
-grain,misalignment,3,washing machine,x,3.0,50.0,0.03,0.03,0.000275,True,True,49.935,0.02792,0.39,-0.0693,-0.0693,True
-grain,misalignment,3,washing machine,y,3.0,50.0,0.015,0.015,0.0002,True,True,49.933,0.01401,0.402,-0.066,-0.066,True
-grain,misalignment,3,door,x,1.0,16.6667,0.063384,0.063451,0.000282,True,True,16.648,0.06548,0.112,0.0331,0.032,True
-grain,misalignment,3,door,y,1.0,16.6667,0.050001,0.05,0.00021,True,True,16.644,0.05185,0.136,0.037,0.037,True
-grain,misalignment,3,door,x,2.0,33.3333,0.2,0.2,0.000282,True,True,33.29,0.19558,0.26,-0.0221,-0.0221,True
-grain,misalignment,3,door,y,2.0,33.3333,0.08,0.08,0.00021,True,True,33.289,0.07661,0.266,-0.0424,-0.0424,True
-grain,misalignment,3,door,x,3.0,50.0,0.03,0.03,0.000282,True,True,49.935,0.02898,0.39,-0.034,-0.034,True
-grain,misalignment,3,door,y,3.0,50.0,0.015,0.015,0.00021,True,True,49.935,0.01368,0.39,-0.088,-0.088,True
-phone,healthy,1,washing machine,x,1.0,16.6667,0.027205,0.018945,0.000233,True,True,16.646,0.01691,0.124,-0.3784,-0.1074,False
-phone,healthy,1,washing machine,y,1.0,16.6667,0.010083,0.01,0.000232,True,True,16.633,0.00553,0.202,-0.4516,-0.447,False
-phone,healthy,1,door,x,1.0,16.6667,0.014411,0.014366,0.000241,True,True,16.646,0.00821,0.124,-0.4303,-0.4285,False
-phone,healthy,1,door,y,1.0,16.6667,0.010001,0.01,0.000288,True,True,16.634,0.00701,0.196,-0.2991,-0.299,False
-phone,imbalance,1,washing machine,x,1.0,16.6667,0.149461,0.157721,0.000362,True,True,16.643,0.13822,0.142,-0.0752,-0.1236,True
-phone,imbalance,1,washing machine,y,1.0,16.6667,0.080011,0.08,0.000325,True,True,16.644,0.07559,0.136,-0.0553,-0.0551,True
-phone,imbalance,1,washing machine,x,2.0,33.3333,0.013333,0.013333,0.000362,True,True,33.299,0.01089,0.206,-0.1832,-0.1832,True
-phone,imbalance,1,washing machine,y,2.0,33.3333,0.006667,0.006667,0.000325,True,True,33.281,0.00499,0.314,-0.2515,-0.2515,False
-phone,imbalance,1,door,x,1.0,16.6667,0.162255,0.162301,0.000417,True,True,16.643,0.15866,0.142,-0.0222,-0.0224,True
-phone,imbalance,1,door,y,1.0,16.6667,0.08,0.08,0.000367,True,True,16.644,0.07713,0.136,-0.0359,-0.0359,True
-phone,imbalance,1,door,x,2.0,33.3333,0.013333,0.013333,0.000417,True,True,33.298,0.0125,0.212,-0.0625,-0.0625,True
-phone,imbalance,1,door,y,2.0,33.3333,0.006667,0.006667,0.000367,True,True,33.274,0.00513,0.356,-0.2305,-0.2305,False
-phone,looseness,1,washing machine,x,0.5,8.3333,0.033333,0.033333,0.000366,True,True,8.323,0.03083,0.062,-0.0751,-0.0751,True
-phone,looseness,1,washing machine,y,0.5,8.3333,0.02,0.02,0.000312,True,True,8.324,0.0194,0.056,-0.03,-0.03,True
-phone,looseness,1,washing machine,x,1.0,16.6667,0.10882,0.075781,0.000366,True,True,16.644,0.08716,0.136,-0.199,0.1502,True
-phone,looseness,1,washing machine,y,1.0,16.6667,0.066868,0.066667,0.000312,True,True,16.645,0.06622,0.13,-0.0097,-0.0067,True
-phone,looseness,1,washing machine,x,2.0,33.3333,0.06,0.06,0.000366,True,True,33.292,0.04897,0.248,-0.1838,-0.1838,True
-phone,looseness,1,washing machine,y,2.0,33.3333,0.046667,0.046667,0.000312,True,True,33.289,0.04386,0.266,-0.0601,-0.0601,True
-phone,looseness,1,washing machine,x,3.0,50.0,0.04,0.04,0.000366,True,True,49.929,0.03231,0.426,-0.1923,-0.1923,True
-phone,looseness,1,washing machine,y,3.0,50.0,0.033333,0.033333,0.000312,True,True,49.936,0.02502,0.384,-0.2494,-0.2494,False
-phone,looseness,1,door,x,0.5,8.3333,0.033333,0.033333,0.000391,True,True,8.323,0.03266,0.062,-0.0202,-0.0202,True
-phone,looseness,1,door,y,0.5,8.3333,0.02,0.02,0.00036,True,True,8.325,0.01923,0.05,-0.0385,-0.0385,True
-phone,looseness,1,door,x,1.0,16.6667,0.057645,0.057463,0.000391,True,True,16.645,0.04648,0.13,-0.1937,-0.1911,True
-phone,looseness,1,door,y,1.0,16.6667,0.066671,0.066667,0.00036,True,True,16.645,0.0659,0.13,-0.0116,-0.0115,True
-phone,looseness,1,door,x,2.0,33.3333,0.06,0.06,0.000391,True,True,33.291,0.05437,0.254,-0.0938,-0.0938,True
-phone,looseness,1,door,y,2.0,33.3333,0.046667,0.046667,0.00036,True,True,33.29,0.04306,0.26,-0.0773,-0.0773,True
-phone,looseness,1,door,x,3.0,50.0,0.04,0.04,0.000391,True,True,49.932,0.03388,0.408,-0.153,-0.153,True
-phone,looseness,1,door,y,3.0,50.0,0.033333,0.033333,0.00036,True,True,49.938,0.0257,0.372,-0.229,-0.229,False
-phone,misalignment,1,washing machine,x,1.0,16.6667,0.029461,0.037721,0.000392,True,True,16.639,0.03042,0.166,0.0326,-0.1936,True
-phone,misalignment,1,washing machine,y,1.0,16.6667,0.033359,0.033333,0.000312,True,True,16.645,0.0344,0.13,0.0312,0.032,True
-phone,misalignment,1,washing machine,x,2.0,33.3333,0.133333,0.133333,0.000392,True,True,33.289,0.11909,0.266,-0.1068,-0.1068,True
-phone,misalignment,1,washing machine,y,2.0,33.3333,0.053333,0.053333,0.000312,True,True,33.291,0.04545,0.254,-0.1478,-0.1478,True
-phone,misalignment,1,washing machine,x,3.0,50.0,0.02,0.02,0.000392,True,True,49.936,0.01754,0.384,-0.123,-0.123,True
-phone,misalignment,1,washing machine,y,3.0,50.0,0.01,0.01,0.000312,True,True,49.931,0.00937,0.414,-0.063,-0.063,True
-phone,misalignment,1,door,x,1.0,16.6667,0.042255,0.042301,0.000385,True,True,16.639,0.04436,0.166,0.0498,0.0487,True
-phone,misalignment,1,door,y,1.0,16.6667,0.033334,0.033333,0.000357,True,True,16.645,0.03352,0.13,0.0056,0.0056,True
-phone,misalignment,1,door,x,2.0,33.3333,0.133333,0.133333,0.000385,True,True,33.289,0.12592,0.266,-0.0556,-0.0556,True
-phone,misalignment,1,door,y,2.0,33.3333,0.053333,0.053333,0.000357,True,True,33.29,0.04853,0.26,-0.0901,-0.0901,True
-phone,misalignment,1,door,x,3.0,50.0,0.02,0.02,0.000385,True,True,49.938,0.01841,0.372,-0.0795,-0.0795,True
-phone,misalignment,1,door,y,3.0,50.0,0.01,0.01,0.000357,True,True,49.936,0.00787,0.384,-0.213,-0.213,False
+encoding,fault,seed,part,axis,order,true_hz,true_amp_px,true_amp_applied_px,drift_factor,true_amp_centroid_px,floor_px,scored,found,meas_hz,meas_amp_px,freq_err_bins,amp_err,amp_err_centroid,pass
+grain,healthy,1,washing machine,x,1.0,16.6667,0.041783,0.042233,0.9894,0.028115,0.000173,True,True,16.644,0.03774,0.136,-0.0968,0.3423,True
+grain,healthy,1,washing machine,y,1.0,16.6667,0.014946,0.015107,0.9894,0.01484,0.000142,True,True,16.641,0.01348,0.154,-0.0981,-0.0917,True
+grain,healthy,1,door,x,1.0,16.6667,0.021386,0.021616,0.9894,0.02132,0.000181,True,True,16.644,0.01859,0.136,-0.1307,-0.128,True
+grain,healthy,1,door,y,1.0,16.6667,0.014842,0.015002,0.9894,0.01484,0.000148,True,True,16.642,0.01355,0.148,-0.0871,-0.0869,True
+grain,healthy,2,washing machine,x,1.0,16.6667,0.041783,0.042233,0.9894,0.028115,0.000171,True,True,16.644,0.0375,0.136,-0.1025,0.3338,True
+grain,healthy,2,washing machine,y,1.0,16.6667,0.014946,0.015107,0.9894,0.01484,0.000141,True,True,16.641,0.01338,0.154,-0.1048,-0.0984,True
+grain,healthy,2,door,x,1.0,16.6667,0.021386,0.021616,0.9894,0.02132,0.000184,True,True,16.645,0.01835,0.13,-0.142,-0.1393,True
+grain,healthy,2,door,y,1.0,16.6667,0.014842,0.015002,0.9894,0.01484,0.000147,True,True,16.642,0.01331,0.148,-0.1032,-0.1031,True
+grain,healthy,3,washing machine,x,1.0,16.6667,0.041783,0.042233,0.9894,0.028115,0.000185,True,True,16.643,0.03755,0.142,-0.1013,0.3356,True
+grain,healthy,3,washing machine,y,1.0,16.6667,0.014946,0.015107,0.9894,0.01484,0.000143,True,True,16.646,0.01344,0.124,-0.1008,-0.0944,True
+grain,healthy,3,door,x,1.0,16.6667,0.021386,0.021616,0.9894,0.02132,0.000175,True,True,16.643,0.01829,0.142,-0.1448,-0.1421,True
+grain,healthy,3,door,y,1.0,16.6667,0.014842,0.015002,0.9894,0.01484,0.000143,True,True,16.645,0.01336,0.13,-0.0999,-0.0997,True
+grain,imbalance,1,washing machine,x,1.0,16.6667,0.220395,0.222767,0.9894,0.234063,0.000261,True,True,16.642,0.21827,0.148,-0.0096,-0.0675,True
+grain,imbalance,1,washing machine,y,1.0,16.6667,0.118735,0.120013,0.9894,0.118723,0.000203,True,True,16.644,0.1224,0.136,0.0309,0.031,True
+grain,imbalance,1,washing machine,x,2.0,33.3333,0.019066,0.02,0.9533,0.019066,0.000261,True,True,33.326,0.01991,0.044,0.0443,0.0443,True
+grain,imbalance,1,washing machine,y,2.0,33.3333,0.009533,0.01,0.9533,0.009533,0.000203,True,True,33.275,0.01081,0.35,0.134,0.134,True
+grain,imbalance,1,door,x,1.0,16.6667,0.240793,0.243384,0.9894,0.240859,0.000315,True,True,16.643,0.25166,0.142,0.0451,0.0448,True
+grain,imbalance,1,door,y,1.0,16.6667,0.118723,0.12,0.9894,0.118723,0.000228,True,True,16.643,0.12024,0.142,0.0128,0.0128,True
+grain,imbalance,1,door,x,2.0,33.3333,0.019066,0.02,0.9533,0.019066,0.000315,True,True,33.319,0.02319,0.086,0.2163,0.2163,False
+grain,imbalance,1,door,y,2.0,33.3333,0.009533,0.01,0.9533,0.009533,0.000228,True,True,33.274,0.01063,0.356,0.1151,0.1151,True
+grain,imbalance,2,washing machine,x,1.0,16.6667,0.220395,0.222767,0.9894,0.234063,0.000253,True,True,16.644,0.21674,0.136,-0.0166,-0.074,True
+grain,imbalance,2,washing machine,y,1.0,16.6667,0.118735,0.120013,0.9894,0.118723,0.000185,True,True,16.643,0.12142,0.142,0.0226,0.0227,True
+grain,imbalance,2,washing machine,x,2.0,33.3333,0.019066,0.02,0.9533,0.019066,0.000253,True,True,33.301,0.01727,0.194,-0.0942,-0.0942,True
+grain,imbalance,2,washing machine,y,2.0,33.3333,0.009533,0.01,0.9533,0.009533,0.000185,True,True,33.293,0.0088,0.242,-0.0769,-0.0769,True
+grain,imbalance,2,door,x,1.0,16.6667,0.240793,0.243384,0.9894,0.240859,0.00029,True,True,16.644,0.24971,0.136,0.037,0.0367,True
+grain,imbalance,2,door,y,1.0,16.6667,0.118723,0.12,0.9894,0.118723,0.000213,True,True,16.643,0.11933,0.142,0.0051,0.0051,True
+grain,imbalance,2,door,x,2.0,33.3333,0.019066,0.02,0.9533,0.019066,0.00029,True,True,33.296,0.02029,0.224,0.0642,0.0642,True
+grain,imbalance,2,door,y,2.0,33.3333,0.009533,0.01,0.9533,0.009533,0.000213,True,True,33.291,0.00862,0.254,-0.0958,-0.0958,True
+grain,imbalance,3,washing machine,x,1.0,16.6667,0.220395,0.222767,0.9894,0.234063,0.000265,True,True,16.644,0.21695,0.136,-0.0156,-0.0731,True
+grain,imbalance,3,washing machine,y,1.0,16.6667,0.118735,0.120013,0.9894,0.118723,0.000209,True,True,16.644,0.12232,0.136,0.0302,0.0303,True
+grain,imbalance,3,washing machine,x,2.0,33.3333,0.019066,0.02,0.9533,0.019066,0.000265,True,True,33.281,0.01802,0.314,-0.0548,-0.0548,True
+grain,imbalance,3,washing machine,y,2.0,33.3333,0.009533,0.01,0.9533,0.009533,0.000209,True,True,33.287,0.01058,0.278,0.1099,0.1099,True
+grain,imbalance,3,door,x,1.0,16.6667,0.240793,0.243384,0.9894,0.240859,0.000321,True,True,16.644,0.24953,0.136,0.0363,0.036,True
+grain,imbalance,3,door,y,1.0,16.6667,0.118723,0.12,0.9894,0.118723,0.000224,True,True,16.643,0.12054,0.142,0.0153,0.0153,True
+grain,imbalance,3,door,x,2.0,33.3333,0.019066,0.02,0.9533,0.019066,0.000321,True,True,33.282,0.02052,0.308,0.0763,0.0763,True
+grain,imbalance,3,door,y,2.0,33.3333,0.009533,0.01,0.9533,0.009533,0.000224,True,True,33.285,0.01035,0.29,0.0857,0.0857,True
+grain,looseness,1,washing machine,x,0.5,8.3333,0.049871,0.05,0.9974,0.049871,0.000261,True,True,8.326,0.04795,0.044,-0.0385,-0.0385,True
+grain,looseness,1,washing machine,y,0.5,8.3333,0.029923,0.03,0.9974,0.029923,0.000216,True,True,8.32,0.0309,0.08,0.0327,0.0327,True
+grain,looseness,1,washing machine,x,1.0,16.6667,0.167132,0.16893,0.9894,0.112461,0.000261,True,True,16.642,0.15417,0.148,-0.0776,0.3709,True
+grain,looseness,1,washing machine,y,1.0,16.6667,0.09919,0.100257,0.9894,0.098936,0.000216,True,True,16.645,0.10299,0.13,0.0383,0.041,True
+grain,looseness,1,washing machine,x,2.0,33.3333,0.085795,0.09,0.9533,0.085795,0.000261,True,True,33.293,0.08048,0.242,-0.0619,-0.0619,True
+grain,looseness,1,washing machine,y,2.0,33.3333,0.066729,0.07,0.9533,0.066729,0.000216,True,True,33.288,0.06898,0.272,0.0337,0.0337,True
+grain,looseness,1,washing machine,x,3.0,50.0,0.053667,0.06,0.8944,0.053667,0.000261,True,True,49.932,0.0515,0.408,-0.0404,-0.0404,True
+grain,looseness,1,washing machine,y,3.0,50.0,0.044722,0.05,0.8944,0.044722,0.000216,True,True,49.931,0.04569,0.414,0.0216,0.0216,True
+grain,looseness,1,door,x,0.5,8.3333,0.049871,0.05,0.9974,0.049871,0.000291,True,True,8.324,0.05058,0.056,0.0142,0.0142,True
+grain,looseness,1,door,y,0.5,8.3333,0.029923,0.03,0.9974,0.029923,0.000249,True,True,8.319,0.0308,0.086,0.0293,0.0293,True
+grain,looseness,1,door,x,1.0,16.6667,0.085542,0.086462,0.9894,0.085277,0.000291,True,True,16.642,0.08184,0.148,-0.0433,-0.0403,True
+grain,looseness,1,door,y,1.0,16.6667,0.09894,0.100005,0.9894,0.098935,0.000249,True,True,16.645,0.1017,0.13,0.0279,0.0279,True
+grain,looseness,1,door,x,2.0,33.3333,0.085795,0.09,0.9533,0.085795,0.000291,True,True,33.291,0.08534,0.254,-0.0053,-0.0053,True
+grain,looseness,1,door,y,2.0,33.3333,0.066729,0.07,0.9533,0.066729,0.000249,True,True,33.288,0.06788,0.272,0.0172,0.0172,True
+grain,looseness,1,door,x,3.0,50.0,0.053667,0.06,0.8944,0.053667,0.000291,True,True,49.932,0.05319,0.408,-0.0089,-0.0089,True
+grain,looseness,1,door,y,3.0,50.0,0.044722,0.05,0.8944,0.044722,0.000249,True,True,49.931,0.04496,0.414,0.0053,0.0053,True
+grain,looseness,2,washing machine,x,0.5,8.3333,0.049871,0.05,0.9974,0.049871,0.000247,True,True,8.324,0.04728,0.056,-0.052,-0.052,True
+grain,looseness,2,washing machine,y,0.5,8.3333,0.029923,0.03,0.9974,0.029923,0.000209,True,True,8.322,0.03055,0.068,0.021,0.021,True
+grain,looseness,2,washing machine,x,1.0,16.6667,0.167132,0.16893,0.9894,0.112461,0.000247,True,True,16.643,0.15164,0.142,-0.0927,0.3484,True
+grain,looseness,2,washing machine,y,1.0,16.6667,0.09919,0.100257,0.9894,0.098936,0.000209,True,True,16.643,0.10181,0.142,0.0264,0.029,True
+grain,looseness,2,washing machine,x,2.0,33.3333,0.085795,0.09,0.9533,0.085795,0.000247,True,True,33.291,0.07902,0.254,-0.079,-0.079,True
+grain,looseness,2,washing machine,y,2.0,33.3333,0.066729,0.07,0.9533,0.066729,0.000209,True,True,33.289,0.06749,0.266,0.0114,0.0114,True
+grain,looseness,2,washing machine,x,3.0,50.0,0.053667,0.06,0.8944,0.053667,0.000247,True,True,49.937,0.05173,0.378,-0.0361,-0.0361,True
+grain,looseness,2,washing machine,y,3.0,50.0,0.044722,0.05,0.8944,0.044722,0.000209,True,True,49.936,0.0438,0.384,-0.0206,-0.0206,True
+grain,looseness,2,door,x,0.5,8.3333,0.049871,0.05,0.9974,0.049871,0.000277,True,True,8.324,0.0503,0.056,0.0086,0.0086,True
+grain,looseness,2,door,y,0.5,8.3333,0.029923,0.03,0.9974,0.029923,0.000248,True,True,8.321,0.03032,0.074,0.0133,0.0133,True
+grain,looseness,2,door,x,1.0,16.6667,0.085542,0.086462,0.9894,0.085277,0.000277,True,True,16.643,0.08055,0.142,-0.0584,-0.0554,True
+grain,looseness,2,door,y,1.0,16.6667,0.09894,0.100005,0.9894,0.098935,0.000248,True,True,16.643,0.10052,0.142,0.016,0.016,True
+grain,looseness,2,door,x,2.0,33.3333,0.085795,0.09,0.9533,0.085795,0.000277,True,True,33.291,0.08438,0.254,-0.0165,-0.0165,True
+grain,looseness,2,door,y,2.0,33.3333,0.066729,0.07,0.9533,0.066729,0.000248,True,True,33.289,0.06619,0.266,-0.0081,-0.0081,True
+grain,looseness,2,door,x,3.0,50.0,0.053667,0.06,0.8944,0.053667,0.000277,True,True,49.936,0.05298,0.384,-0.0128,-0.0128,True
+grain,looseness,2,door,y,3.0,50.0,0.044722,0.05,0.8944,0.044722,0.000248,True,True,49.936,0.04309,0.384,-0.0365,-0.0365,True
+grain,looseness,3,washing machine,x,0.5,8.3333,0.049871,0.05,0.9974,0.049871,0.000268,True,True,8.322,0.04659,0.068,-0.0658,-0.0658,True
+grain,looseness,3,washing machine,y,0.5,8.3333,0.029923,0.03,0.9974,0.029923,0.000212,True,True,8.322,0.03123,0.068,0.0437,0.0437,True
+grain,looseness,3,washing machine,x,1.0,16.6667,0.167132,0.16893,0.9894,0.112461,0.000268,True,True,16.645,0.15112,0.13,-0.0958,0.3438,True
+grain,looseness,3,washing machine,y,1.0,16.6667,0.09919,0.100257,0.9894,0.098936,0.000212,True,True,16.645,0.1034,0.13,0.0424,0.0451,True
+grain,looseness,3,washing machine,x,2.0,33.3333,0.085795,0.09,0.9533,0.085795,0.000268,True,True,33.288,0.07923,0.272,-0.0765,-0.0765,True
+grain,looseness,3,washing machine,y,2.0,33.3333,0.066729,0.07,0.9533,0.066729,0.000212,True,True,33.289,0.06915,0.266,0.0363,0.0363,True
+grain,looseness,3,washing machine,x,3.0,50.0,0.053667,0.06,0.8944,0.053667,0.000268,True,True,49.932,0.05217,0.408,-0.0279,-0.0279,True
+grain,looseness,3,washing machine,y,3.0,50.0,0.044722,0.05,0.8944,0.044722,0.000212,True,True,49.934,0.04514,0.396,0.0093,0.0093,True
+grain,looseness,3,door,x,0.5,8.3333,0.049871,0.05,0.9974,0.049871,0.000288,True,True,8.322,0.04958,0.068,-0.0058,-0.0058,True
+grain,looseness,3,door,y,0.5,8.3333,0.029923,0.03,0.9974,0.029923,0.000253,True,True,8.322,0.03102,0.068,0.0367,0.0367,True
+grain,looseness,3,door,x,1.0,16.6667,0.085542,0.086462,0.9894,0.085277,0.000288,True,True,16.645,0.08037,0.13,-0.0605,-0.0575,True
+grain,looseness,3,door,y,1.0,16.6667,0.09894,0.100005,0.9894,0.098935,0.000253,True,True,16.645,0.10182,0.13,0.0291,0.0292,True
+grain,looseness,3,door,x,2.0,33.3333,0.085795,0.09,0.9533,0.085795,0.000288,True,True,33.289,0.08456,0.266,-0.0144,-0.0144,True
+grain,looseness,3,door,y,2.0,33.3333,0.066729,0.07,0.9533,0.066729,0.000253,True,True,33.289,0.06808,0.266,0.0202,0.0202,True
+grain,looseness,3,door,x,3.0,50.0,0.053667,0.06,0.8944,0.053667,0.000288,True,True,49.933,0.0533,0.402,-0.0068,-0.0068,True
+grain,looseness,3,door,y,3.0,50.0,0.044722,0.05,0.8944,0.044722,0.000253,True,True,49.934,0.04462,0.396,-0.0023,-0.0023,True
+grain,misalignment,1,washing machine,x,1.0,16.6667,0.042312,0.042767,0.9894,0.05598,0.000246,True,True,16.627,0.04319,0.238,0.0208,-0.2285,True
+grain,misalignment,1,washing machine,y,1.0,16.6667,0.049499,0.050032,0.9894,0.049468,0.000185,True,True,16.644,0.05228,0.136,0.0562,0.0569,True
+grain,misalignment,1,washing machine,x,2.0,33.3333,0.190655,0.2,0.9533,0.190655,0.000246,True,True,33.289,0.18882,0.266,-0.0096,-0.0096,True
+grain,misalignment,1,washing machine,y,2.0,33.3333,0.076262,0.08,0.9533,0.076262,0.000185,True,True,33.289,0.07895,0.266,0.0352,0.0352,True
+grain,misalignment,1,washing machine,x,3.0,50.0,0.026833,0.03,0.8944,0.026833,0.000246,True,True,49.94,0.02872,0.36,0.0703,0.0703,True
+grain,misalignment,1,washing machine,y,3.0,50.0,0.013417,0.015,0.8944,0.013417,0.000185,True,True,49.929,0.01455,0.426,0.0845,0.0845,True
+grain,misalignment,1,door,x,1.0,16.6667,0.062709,0.063384,0.9894,0.062776,0.000296,True,True,16.63,0.06813,0.22,0.0864,0.0853,True
+grain,misalignment,1,door,y,1.0,16.6667,0.049469,0.050001,0.9894,0.049468,0.000218,True,True,16.644,0.05167,0.136,0.0445,0.0445,True
+grain,misalignment,1,door,x,2.0,33.3333,0.190655,0.2,0.9533,0.190655,0.000296,True,True,33.289,0.19759,0.266,0.0364,0.0364,True
+grain,misalignment,1,door,y,2.0,33.3333,0.076262,0.08,0.9533,0.076262,0.000218,True,True,33.29,0.07695,0.26,0.009,0.009,True
+grain,misalignment,1,door,x,3.0,50.0,0.026833,0.03,0.8944,0.026833,0.000296,True,True,49.941,0.03024,0.354,0.127,0.127,True
+grain,misalignment,1,door,y,3.0,50.0,0.013417,0.015,0.8944,0.013417,0.000218,True,True,49.928,0.01412,0.432,0.0524,0.0524,True
+grain,misalignment,2,washing machine,x,1.0,16.6667,0.042312,0.042767,0.9894,0.05598,0.000257,True,True,16.637,0.04263,0.178,0.0075,-0.2385,True
+grain,misalignment,2,washing machine,y,1.0,16.6667,0.049499,0.050032,0.9894,0.049468,0.000191,True,True,16.643,0.05134,0.142,0.0372,0.0378,True
+grain,misalignment,2,washing machine,x,2.0,33.3333,0.190655,0.2,0.9533,0.190655,0.000257,True,True,33.29,0.18648,0.26,-0.0219,-0.0219,True
+grain,misalignment,2,washing machine,y,2.0,33.3333,0.076262,0.08,0.9533,0.076262,0.000191,True,True,33.289,0.07822,0.266,0.0257,0.0257,True
+grain,misalignment,2,washing machine,x,3.0,50.0,0.026833,0.03,0.8944,0.026833,0.000257,True,True,49.934,0.02761,0.396,0.0289,0.0289,True
+grain,misalignment,2,washing machine,y,3.0,50.0,0.013417,0.015,0.8944,0.013417,0.000191,True,True,49.933,0.01323,0.402,-0.0139,-0.0139,True
+grain,misalignment,2,door,x,1.0,16.6667,0.062709,0.063384,0.9894,0.062776,0.000286,True,True,16.637,0.06714,0.178,0.0707,0.0695,True
+grain,misalignment,2,door,y,1.0,16.6667,0.049469,0.050001,0.9894,0.049468,0.000205,True,True,16.643,0.05068,0.142,0.0245,0.0245,True
+grain,misalignment,2,door,x,2.0,33.3333,0.190655,0.2,0.9533,0.190655,0.000286,True,True,33.29,0.19527,0.26,0.0242,0.0242,True
+grain,misalignment,2,door,y,2.0,33.3333,0.076262,0.08,0.9533,0.076262,0.000205,True,True,33.289,0.07588,0.266,-0.005,-0.005,True
+grain,misalignment,2,door,x,3.0,50.0,0.026833,0.03,0.8944,0.026833,0.000286,True,True,49.933,0.02856,0.402,0.0643,0.0643,True
+grain,misalignment,2,door,y,3.0,50.0,0.013417,0.015,0.8944,0.013417,0.000205,True,True,49.935,0.01302,0.39,-0.0296,-0.0296,True
+grain,misalignment,3,washing machine,x,1.0,16.6667,0.042312,0.042767,0.9894,0.05598,0.000275,True,True,16.649,0.0415,0.106,-0.0192,-0.2587,True
+grain,misalignment,3,washing machine,y,1.0,16.6667,0.049499,0.050032,0.9894,0.049468,0.0002,True,True,16.645,0.05242,0.13,0.059,0.0597,True
+grain,misalignment,3,washing machine,x,2.0,33.3333,0.190655,0.2,0.9533,0.190655,0.000275,True,True,33.29,0.18712,0.26,-0.0185,-0.0185,True
+grain,misalignment,3,washing machine,y,2.0,33.3333,0.076262,0.08,0.9533,0.076262,0.0002,True,True,33.289,0.07889,0.266,0.0345,0.0345,True
+grain,misalignment,3,washing machine,x,3.0,50.0,0.026833,0.03,0.8944,0.026833,0.000275,True,True,49.935,0.02792,0.39,0.0405,0.0405,True
+grain,misalignment,3,washing machine,y,3.0,50.0,0.013417,0.015,0.8944,0.013417,0.0002,True,True,49.933,0.01401,0.402,0.0442,0.0442,True
+grain,misalignment,3,door,x,1.0,16.6667,0.062709,0.063384,0.9894,0.062776,0.000282,True,True,16.648,0.06548,0.112,0.0442,0.0431,True
+grain,misalignment,3,door,y,1.0,16.6667,0.049469,0.050001,0.9894,0.049468,0.00021,True,True,16.644,0.05185,0.136,0.0481,0.0482,True
+grain,misalignment,3,door,x,2.0,33.3333,0.190655,0.2,0.9533,0.190655,0.000282,True,True,33.29,0.19558,0.26,0.0258,0.0258,True
+grain,misalignment,3,door,y,2.0,33.3333,0.076262,0.08,0.9533,0.076262,0.00021,True,True,33.289,0.07661,0.266,0.0046,0.0046,True
+grain,misalignment,3,door,x,3.0,50.0,0.026833,0.03,0.8944,0.026833,0.000282,True,True,49.935,0.02898,0.39,0.08,0.08,True
+grain,misalignment,3,door,y,3.0,50.0,0.013417,0.015,0.8944,0.013417,0.00021,True,True,49.935,0.01368,0.39,0.0196,0.0196,True
+phone,healthy,1,washing machine,x,1.0,16.6667,0.026915,0.027205,0.9894,0.018743,0.000254,True,True,16.646,0.01689,0.124,-0.3725,-0.0989,False
+phone,healthy,1,washing machine,y,1.0,16.6667,0.009976,0.010083,0.9894,0.009894,0.000232,True,True,16.645,0.0055,0.13,-0.4487,-0.4441,False
+phone,healthy,1,door,x,1.0,16.6667,0.014258,0.014411,0.9894,0.014213,0.000248,True,True,16.643,0.00843,0.142,-0.4087,-0.4069,False
+phone,healthy,1,door,y,1.0,16.6667,0.009895,0.010001,0.9894,0.009894,0.000292,True,True,16.644,0.00663,0.136,-0.3299,-0.3299,False
+phone,imbalance,1,washing machine,x,1.0,16.6667,0.14787,0.149461,0.9894,0.156042,0.000348,True,True,16.644,0.13835,0.136,-0.0644,-0.1134,True
+phone,imbalance,1,washing machine,y,1.0,16.6667,0.079159,0.080011,0.9894,0.079148,0.000331,True,True,16.644,0.07569,0.136,-0.0438,-0.0437,True
+phone,imbalance,1,washing machine,x,2.0,33.3333,0.01271,0.013333,0.9533,0.01271,0.000348,True,True,33.296,0.0109,0.224,-0.1424,-0.1424,True
+phone,imbalance,1,washing machine,y,2.0,33.3333,0.006356,0.006667,0.9533,0.006356,0.000331,True,True,33.286,0.00471,0.284,-0.2589,-0.2589,False
+phone,imbalance,1,door,x,1.0,16.6667,0.160528,0.162255,0.9894,0.160573,0.000386,True,True,16.643,0.15885,0.142,-0.0105,-0.0107,True
+phone,imbalance,1,door,y,1.0,16.6667,0.079148,0.08,0.9894,0.079148,0.000353,True,True,16.644,0.07706,0.136,-0.0264,-0.0264,True
+phone,imbalance,1,door,x,2.0,33.3333,0.01271,0.013333,0.9533,0.01271,0.000386,True,True,33.299,0.01273,0.206,0.0016,0.0016,True
+phone,imbalance,1,door,y,2.0,33.3333,0.006356,0.006667,0.9533,0.006356,0.000353,True,True,33.278,0.00512,0.332,-0.1944,-0.1944,True
+phone,looseness,1,washing machine,x,0.5,8.3333,0.033247,0.033333,0.9974,0.033247,0.000387,True,True,8.323,0.03095,0.062,-0.0691,-0.0691,True
+phone,looseness,1,washing machine,y,0.5,8.3333,0.019949,0.02,0.9974,0.019949,0.000343,True,True,8.325,0.01977,0.05,-0.009,-0.009,True
+phone,looseness,1,washing machine,x,1.0,16.6667,0.107662,0.10882,0.9894,0.074974,0.000387,True,True,16.643,0.08731,0.142,-0.189,0.1645,True
+phone,looseness,1,washing machine,y,1.0,16.6667,0.066156,0.066868,0.9894,0.065957,0.000343,True,True,16.645,0.06602,0.13,-0.0021,0.001,True
+phone,looseness,1,washing machine,x,2.0,33.3333,0.057197,0.06,0.9533,0.057197,0.000387,True,True,33.292,0.04879,0.248,-0.147,-0.147,True
+phone,looseness,1,washing machine,y,2.0,33.3333,0.044487,0.046667,0.9533,0.044487,0.000343,True,True,33.288,0.04393,0.272,-0.0125,-0.0125,True
+phone,looseness,1,washing machine,x,3.0,50.0,0.035778,0.04,0.8944,0.035778,0.000387,True,True,49.929,0.03175,0.426,-0.1126,-0.1126,True
+phone,looseness,1,washing machine,y,3.0,50.0,0.029815,0.033333,0.8944,0.029815,0.000343,True,True,49.937,0.02483,0.378,-0.1672,-0.1672,True
+phone,looseness,1,door,x,0.5,8.3333,0.033247,0.033333,0.9974,0.033247,0.000417,True,True,8.322,0.03335,0.068,0.0031,0.0031,True
+phone,looseness,1,door,y,0.5,8.3333,0.019949,0.02,0.9974,0.019949,0.000359,True,True,8.323,0.01988,0.062,-0.0034,-0.0034,True
+phone,looseness,1,door,x,1.0,16.6667,0.057031,0.057645,0.9894,0.056851,0.000417,True,True,16.644,0.04672,0.136,-0.1808,-0.1782,True
+phone,looseness,1,door,y,1.0,16.6667,0.065961,0.066671,0.9894,0.065957,0.000359,True,True,16.645,0.06595,0.13,-0.0002,-0.0001,True
+phone,looseness,1,door,x,2.0,33.3333,0.057197,0.06,0.9533,0.057197,0.000417,True,True,33.29,0.05372,0.26,-0.0608,-0.0608,True
+phone,looseness,1,door,y,2.0,33.3333,0.044487,0.046667,0.9533,0.044487,0.000359,True,True,33.29,0.04315,0.26,-0.03,-0.03,True
+phone,looseness,1,door,x,3.0,50.0,0.035778,0.04,0.8944,0.035778,0.000417,True,True,49.93,0.03321,0.42,-0.0718,-0.0718,True
+phone,looseness,1,door,y,3.0,50.0,0.029815,0.033333,0.8944,0.029815,0.000359,True,True,49.935,0.02577,0.39,-0.1357,-0.1357,True
+phone,misalignment,1,washing machine,x,1.0,16.6667,0.029147,0.029461,0.9894,0.037319,0.000394,True,True,16.639,0.03027,0.166,0.0385,-0.1889,True
+phone,misalignment,1,washing machine,y,1.0,16.6667,0.033004,0.033359,0.9894,0.032978,0.000308,True,True,16.646,0.0345,0.124,0.0453,0.0461,True
+phone,misalignment,1,washing machine,x,2.0,33.3333,0.127103,0.133333,0.9533,0.127103,0.000394,True,True,33.289,0.1188,0.266,-0.0653,-0.0653,True
+phone,misalignment,1,washing machine,y,2.0,33.3333,0.050841,0.053333,0.9533,0.050841,0.000308,True,True,33.291,0.04557,0.254,-0.1037,-0.1037,True
+phone,misalignment,1,washing machine,x,3.0,50.0,0.017889,0.02,0.8944,0.017889,0.000394,True,True,49.933,0.01735,0.402,-0.0301,-0.0301,True
+phone,misalignment,1,washing machine,y,3.0,50.0,0.008944,0.01,0.8944,0.008944,0.000308,True,True,49.929,0.00982,0.426,0.0979,0.0979,True
+phone,misalignment,1,door,x,1.0,16.6667,0.041805,0.042255,0.9894,0.041851,0.000397,True,True,16.638,0.04449,0.172,0.0642,0.0631,True
+phone,misalignment,1,door,y,1.0,16.6667,0.032979,0.033334,0.9894,0.032978,0.000355,True,True,16.646,0.03392,0.124,0.0285,0.0286,True
+phone,misalignment,1,door,x,2.0,33.3333,0.127103,0.133333,0.9533,0.127103,0.000397,True,True,33.289,0.12613,0.266,-0.0077,-0.0077,True
+phone,misalignment,1,door,y,2.0,33.3333,0.050841,0.053333,0.9533,0.050841,0.000355,True,True,33.289,0.04835,0.266,-0.049,-0.049,True
+phone,misalignment,1,door,x,3.0,50.0,0.017889,0.02,0.8944,0.017889,0.000397,True,True,49.937,0.01818,0.378,0.0163,0.0163,True
+phone,misalignment,1,door,y,3.0,50.0,0.008944,0.01,0.8944,0.008944,0.000355,True,True,49.936,0.0081,0.384,-0.0944,-0.0944,True

@@ -243,3 +243,17 @@ and `tests/api/fixtures/real/rotor-2000rpm-Unb2-54492b8/`, kept for the demo and
   The shaft's vertical 1x is 407.1 µm against probe #1's 407.4 µm, and the disc reads 437.5 µm. Both are within
   1.2% of the earlier run (402.0 and 435.3 µm), whose scale was set outside the pipeline. 1x is 33.35 Hz against
   the probes' 33.33 Hz.
+
+## Replayed again on Nov 3 (after the running-speed fixes)
+
+`python scripts/replay_real.py --rotor-ref-height`, then `python scripts/compare_rotor_probes.py --runs
+out/real_replay`, after three fixes: an entered rpm is a 5% window that settles on the strongest peak in it, an rpm
+range with no real peak is set aside, and 1x is never labelled flicker. The before-and-after table above is
+unchanged, value for value:
+- the rules are right on 6 of 9 rotor runs (1000rpm-Unb1 reads looseness, Unb2 and Unb3 none with the misalignment
+  pattern under them);
+- 1x is within 0.02 Hz of the probes on all nine;
+- at 2000 rpm the disc is within 0.7 to 7.4% of probe #1.
+
+Every rotor run was given its rpm, and the 5% window settled on the same 1x as before. Both washer recordings,
+including the 54492b8 sanity run, still read imbalance (1x holds 95% of the vibration energy).

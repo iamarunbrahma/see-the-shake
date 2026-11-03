@@ -24,7 +24,7 @@ Re-scored with the current rules; changed: misalignment: looseness -> misalignme
 
 | fault | Spark phrases | skipped as not clear | SAM missed | IoU washing machine | IoU door | rpm range (true 1000) | rule verdict (SAM masks) | Spark fault | Spark agrees | evidence v/c/d | Spark confidence | cost |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|
-| healthy | washing machine, washer door | - | - | 0.982 | 0.973 (washer door) | 400 to 1600 | none (ok) | none | yes | 0/4/0 | medium | $0.0584 |
+| healthy | washing machine, washer door | - | - | 0.982 | 0.973 (washer door) | 400 to 1600 | none (ok) | none | yes | 0/2/2 | medium -> low | $0.0584 |
 | imbalance | washing machine, washer front door | - | - | 0.984 | 0.975 (washer front door) | 400 to 1600 | imbalance (ok) | imbalance | yes | 3/2/0 | high | $0.0502 |
 | looseness | washing machine, washer front door | - | - | 0.984 | 0.975 (washer front door) | 400 to 1600 | looseness (ok) | looseness | yes | 6/2/0 | high | $0.0518 |
 | misalignment | washing machine, washer front door | - | - | 0.984 | 0.974 (washer front door) | 126 to 1600 | misalignment (ok) | misalignment | yes | 2/2/0 | high | $0.0460 |
@@ -42,5 +42,7 @@ Re-scored with the current rules; no verdict changed.
 
 - 1920x1080 misalignment: looseness to misalignment (the harmonic fix; a 4x at 2% of 2x no longer counts as a harmonic). Spark now agrees, and its confidence is no longer capped.
 - 1280x720 healthy: the reading falls from 6.10 to 2.50 mm/s (alert 7). Nine artifact peaks are left out, among them 83.4 Hz and 116.7 Hz, which were labelled 5x and 7x: they are 100 Hz flicker minus and plus running speed. The verdict stays none.
+- 1280x720 healthy, Spark's evidence: two of the four peaks it cites are those 5x and 7x flicker sidebands, so verification now drops them (0/2/2 where it read 0/4/0) and caps its confidence at low. The rule verdict stays none, and Spark still agrees.
 - Other runs: verdicts unchanged; velocities move by under 3%.
+- Re-scored again on Nov 3 after the energy-share fix (orders above 6x now count in the energy): no verdict or evidence count changed. The running-speed fixes act when a clip is measured, so they do not reach these recorded measurements; see the Nov 3 live round in docs/results/2026-11-02-live-twin.md.
 - The replayed misalignment diagnosis was written when the rules said looseness. The page now notes when a replayed diagnosis was recorded against a different rule verdict.

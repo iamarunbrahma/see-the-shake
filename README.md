@@ -97,12 +97,15 @@ inside the requests. Recorded runs, and runs with Muse Spark and SAM 3.1 off, se
 ## Accuracy
 
 - **Digital twin, renderer's masks, offline** ([docs/accuracy/twin-accuracy.md](docs/accuracy/twin-accuracy.md)):
-  at 1920x1080, 6 s, 4 faults x 3 seeds, the rule verdict is right 12 of 12 times and 120 of 120 vibration
-  components are within one FFT bin and 20% amplitude. A phone-like section (720p, an encoder that discards small
-  motion) gets 4 of 4 verdicts and 31 of 40 components; small components read low.
+  at 1920x1080, 6 s, 4 faults x 3 seeds, the rule verdict is right 12 of 12 times and 119 of 120 vibration
+  components are within one FFT bin and 20% amplitude (the one miss is a 2x that reads 22% high). A phone-like
+  section (720p, an encoder that discards small motion) gets 4 of 4 verdicts and 35 of 40 components; small
+  components read low. The scored truth allows for the drum's slow speed drift, which spreads higher orders in any
+  spectrum.
 - **Live twin runs with SAM 3.1 and Muse Spark** ([docs/results/2026-11-02-live-twin.md](docs/results/2026-11-02-live-twin.md)):
-  SAM 3.1's masks match the renderer's at IoU 0.95 to 0.98; in the latest round the rules are right on 5 of 5 runs and
-  Spark agrees on 4 of 5, at 108 to 197 s and $0.05 to $0.08 per run. Re-scored with the current rules:
+  SAM 3.1's masks match the renderer's at IoU 0.95 to 0.98; in an earlier pipeline round the rules are right on 5 of 5 runs and
+  Spark agrees on 4 of 5, at 108 to 197 s and $0.05 to $0.08 per run. A Nov 3 round after the running-speed fixes
+  is right on 6 of 6 live runs, with Spark agreeing on all 6. Re-scored with the current rules:
   [docs/accuracy/live-rescore.md](docs/accuracy/live-rescore.md).
 - **Real clips** ([docs/results/2026-11-02-real-clips.md](docs/results/2026-11-02-real-clips.md)): a phone-filmed
   washing machine at 120 fps and a laboratory rotor rig at 500 fps with displacement probes for reference. The 1x
