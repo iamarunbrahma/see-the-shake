@@ -366,8 +366,11 @@ def make_api(options, out):
     ledger_path.unlink(missing_ok=True)
     ledger = Ledger(ledger_path)
     if options.api == "replay":
-        if not options.cassette or not Path(options.cassette).exists():
-            raise ValueError(f"replay needs a recording; {options.cassette} does not exist")
+        if not options.cassette:
+            raise OptionsError("A replay needs a recorded run: give its cassette with --cassette (twins replay theirs "
+                               "with --twin <fault> --api replay).")
+        if not Path(options.cassette).exists():
+            raise OptionsError(f"There is no recording at {options.cassette}.")
         return MetaAPI("replay", cassette=Path(options.cassette), ledger=ledger)
     if options.api == "record":
         return MetaAPI("record", cassette=Path(options.cassette or out / "cassette.json.gz"), ledger=ledger)
@@ -901,6 +904,9 @@ def main(argv=None):
                            verify=a.verify, api=a.api, cassette=a.cassette, blades=a.blades,
                            spark_video=not a.no_spark_video,
                            user_parts=[s.strip() for s in a.parts.split(",") if s.strip()] if a.parts else None)
+            if a.api == "replay" and not a.cassette:
+                raise OptionsError("A replay needs a recorded run: give its cassette with --cassette (twins replay "
+                                   "theirs with --twin <fault> --api replay).")
             if not Path(a.clip).is_file():
                 raise OptionsError(f"There is no clip at {a.clip}.")
             r = run(a.clip, masks, a.runs, opts, progress=show)

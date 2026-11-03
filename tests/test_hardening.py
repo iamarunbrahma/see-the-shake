@@ -178,6 +178,7 @@ def cli(capsys, *argv):
     (["clip.mp4", "--api", "live", "--ref", "washing machine"], "--ref needs a part and a length"),
     (["clip.mp4", "--api", "live", "--ref", "washing machine=-5"], "greater than 0"),
     (["missing.mp4", "--mask", "m=m.png"], "There is no clip"),
+    (["missing.mp4", "--api", "replay"], "A replay needs a recorded run"),
 ])
 def test_cli_errors_are_one_line(capsys, argv, words):
     code, text = cli(capsys, *argv)
