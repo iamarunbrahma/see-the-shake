@@ -1,5 +1,6 @@
 """Web app: page, samples, an upload run, a twin run, video serving, input errors. No model calls."""
 import json
+import re
 import time
 from pathlib import Path
 
@@ -178,3 +179,157 @@ def test_reference_axis_is_checked(client):
     r = client.post("/api/runs", files=[clip], data={"boxes": "machine: 10, 10, 200, 200", "ref_part": "machine",
                                                     "ref_mm": "600", "ref_axis": "depth"})
     assert r.status_code == 400 and "width or height" in r.json()["detail"]
+
+
+# ---------------------------------------------------------------- hostile or careless input
+
+def _clip_file():
+    d = twin_clip("healthy")
+    return ("clip", ("clip.mp4", (d / "clip.mp4").read_bytes(), "video/mp4"))
+
+
+@pytest.fixture()
+def fresh(tmp_path):
+    """An app with its own runs folder, to see exactly which files a request leaves behind."""
+    with TestClient(create_app(tmp_path / "runs")) as c:
+        c.uploads = tmp_path / "runs" / "uploads"
+        yield c
+
+
+def test_cross_site_posts_are_refused(fresh):
+    """A page on another site could make the browser POST a run (a paid live one, too): CSRF."""
+    box = {"boxes": "machine: 10, 10, 200, 200"}
+    for headers in ({"Origin": "http://evil.example"}, {"Origin": "http://localhost:9000"}, {"Origin": "null"},
+                    {"Sec-Fetch-Site": "cross-site"}, {"Sec-Fetch-Site": "same-site"}):
+        r = fresh.post("/api/runs", files=[_clip_file()], data=box, headers=headers)
+        assert r.status_code == 403, headers
+        assert fresh.post("/api/twin", json={"fault": "imbalance"}, headers=headers).status_code == 403
+    assert not list(fresh.uploads.iterdir())
+    same = {"Origin": "http://testserver", "Sec-Fetch-Site": "same-origin"}
+    r = fresh.post("/api/runs", files=[_clip_file()], data=box, headers=same)
+    assert r.status_code == 200 and wait(fresh, r.json()["job_id"])["state"] == "done"
+
+
+@pytest.mark.parametrize("form, field", [
+    ({"capture_fps": "nan"}, "capture_fps"), ({"capture_fps": "inf"}, "capture_fps"),
+    ({"capture_fps": "-240"}, "capture_fps"),
+    ({"rpm": "nan"}, "rpm"), ({"rpm": "0"}, "rpm"), ({"rpm": "-600"}, "rpm"), ({"rpm": "1e9"}, "rpm"),
+    ({"rpm_min": "600"}, "rpm_max"), ({"rpm_min": "3000", "rpm_max": "600"}, "rpm_min"),
+    ({"ref_part": "machine", "ref_mm": "nan"}, "ref_mm"), ({"ref_part": "machine", "ref_mm": "0"}, "ref_mm"),
+    ({"ref_part": "machine", "ref_mm": "-5"}, "ref_mm"), ({"ref_mm": "600"}, "ref_part"),
+    ({"alpha": "nan"}, "alpha"), ({"alpha": "1e9"}, "alpha"), ({"min_seconds": "0"}, "min_seconds"),
+    ({"boxes": "/tmp/x/proof: 10, 10, 200, 200"}, "boxes"), ({"boxes": "../../x: 10, 10, 200, 200"}, "boxes"),
+    ({"boxes": "machine: 5000, 10, 10, 10"}, "boxes"), ({"boxes": "machine: 10, 10, 0, 50"}, "boxes"),
+    ({"boxes": "machine: 0, 0, 960, 540"}, "boxes")])
+def test_bad_values_are_refused_before_a_job_starts(fresh, form, field):
+    data = {"boxes": "machine: 10, 10, 200, 200", **form}
+    r = fresh.post("/api/runs", files=[_clip_file()], data=data)
+    assert r.status_code == 400, r.text
+    assert r.json()["detail"]["field"] == field
+    assert not list(fresh.uploads.iterdir())  # a rejected upload is deleted
+
+
+def test_mask_names_cannot_hold_a_path(fresh, tmp_path):
+    d = twin_clip("healthy")
+    truth = json.loads((d / "truth.json").read_text())
+    mask = (d / truth["parts"]["washing machine"]["mask"]).read_bytes()
+    r = fresh.post("/api/runs", files=[_clip_file(), ("masks", ("m.png", mask, "image/png"))],
+                   data={"mask_names": str(tmp_path / "escape")})
+    assert r.status_code == 400 and r.json()["detail"]["field"] == "mask_names"
+    assert not (tmp_path / "escape.png").exists()
+
+
+def test_files_that_are_not_clips(fresh, tmp_path):
+    import subprocess
+    png = tmp_path / "still.png"
+    subprocess.run(["ffmpeg", "-nostdin", "-v", "error", "-y", "-f", "lavfi", "-i", "testsrc2=size=320x240", "-frames:v",
+                    "1", str(png)], check=True, timeout=60)
+    box = {"boxes": "machine: 10, 10, 200, 200"}
+    cases = [(("x.png", png.read_bytes()), "ends in '.png'"), (("x.mp4", png.read_bytes()), "still image"),
+             (("x.mp4", b""), "empty"), (("x.mp4", bytes(range(256)) * 100), "not a video"),
+             (("a." + "b" * 250, b"x"), "Choose a video file")]
+    for (name, body), words in cases:
+        r = fresh.post("/api/runs", files=[("clip", (name, body, "video/mp4"))], data=box)
+        assert r.status_code == 400, (name[:20], r.text)
+        msg = r.json()["detail"]["message"]
+        assert words in msg and str(fresh.uploads) not in msg and "@ 0x" not in msg, msg
+    assert not list(fresh.uploads.iterdir())  # no leftover upload or incoming_ file
+
+
+def test_odd_file_names_are_stored_by_hash(fresh):
+    clip = _clip_file()[1][1]
+    jobs = []
+    for name in ("../../../../tmp/evil.mp4", "ünïcödé 振動.mp4", "a;$(touch PWNED)`id`&.mp4", "CLIP.MOV", "noext"):
+        r = fresh.post("/api/runs", files=[("clip", (name, clip, "video/mp4"))], data={"boxes": "m: 10, 10, 200, 200"})
+        assert r.status_code == 200, (name, r.text)
+        jobs.append(r.json()["job_id"])
+    assert all(wait(fresh, j)["state"] == "done" for j in jobs)
+    assert all(re.fullmatch(r"[0-9a-f]{16}\.(mp4|mov)", p.name) for p in fresh.uploads.iterdir())
+
+
+def test_upload_size_is_enforced_while_the_body_streams(tmp_path):
+    small = TestClient(create_app(tmp_path / "runs", max_upload=4 * 1024 * 1024, max_body=6 * 1024 * 1024))
+    small.uploads, fresh = tmp_path / "runs" / "uploads", small
+    big = b"\0" * (7 * 1024 * 1024)
+    r = fresh.post("/api/runs", files=[("clip", ("big.mp4", big, "video/mp4"))], data={"boxes": "m: 1, 1, 9, 9"})
+    assert r.status_code == 413  # declared Content-Length over the limit: refused before reading
+    boundary = "shakeboundary"
+    head = (f"--{boundary}\r\nContent-Disposition: form-data; name=\"clip\"; filename=\"big.mp4\"\r\n"
+            "Content-Type: video/mp4\r\n\r\n").encode()
+
+    def chunks():  # no Content-Length: the limit is counted as the body arrives
+        yield head
+        for _ in range(8):
+            yield b"\0" * (1024 * 1024)
+        yield f"\r\n--{boundary}--\r\n".encode()
+    r = fresh.post("/api/runs", content=chunks(), headers={"Content-Type": f"multipart/form-data; boundary={boundary}"})
+    assert r.status_code == 413 and "larger than" in r.json()["detail"]
+    r = fresh.post("/api/runs", files=[("clip", ("big.mp4", b"\0" * (5 * 1024 * 1024), "video/mp4"))],
+                   data={"boxes": "m: 1, 1, 9, 9"})
+    assert r.status_code == 413 and "clip is larger than 4 MB" in r.json()["detail"]["message"]
+    assert not list(fresh.uploads.iterdir())
+
+
+def test_live_runs_need_a_key(fresh, monkeypatch):
+    monkeypatch.delenv("MODEL_API_KEY", raising=False)
+    r = fresh.post("/api/runs", files=[_clip_file()], data={"api": "live"})
+    assert r.status_code == 400 and r.json()["detail"]["field"] == "clip_api"
+    assert "MODEL_API_KEY" in r.json()["detail"]["message"]
+    r = fresh.post("/api/twin", json={"fault": "imbalance", "api": "live"})
+    assert r.status_code == 400 and r.json()["detail"]["field"] == "twin_api"
+    assert fresh.post("/api/twin", json={"fault": "imbalance", "seed": -1}).json()["detail"]["field"] == "seed"
+
+
+def test_a_failed_job_reports_one_line_and_drops_its_upload(fresh, monkeypatch):
+    from shake import pipeline as pl
+
+    def boom(*a, **k):
+        raise RuntimeError("could not open /srv/secret/place/frame.png")
+    monkeypatch.setattr(pl, "run", boom)
+    r = fresh.post("/api/runs", files=[_clip_file()], data={"boxes": "m: 10, 10, 200, 200"})
+    j = wait(fresh, r.json()["job_id"])
+    assert j["state"] == "failed" and "trace" not in j and "\n" not in j["error"]
+    assert "frame.png" in j["error"] and "/srv" not in j["error"]
+    assert not list(fresh.uploads.iterdir())
+    assert fresh.get("/api/jobs/000000000000").status_code == 404
+
+
+def test_a_cached_rerun_is_marked(client):
+    d = twin_clip("imbalance")
+    truth = json.loads((d / "truth.json").read_text())
+    files = [("clip", ("clip.mp4", (d / "clip.mp4").read_bytes(), "video/mp4"))]
+    files += [("masks", (f"{n}.png", (d / truth["parts"][n]["mask"]).read_bytes(), "image/png"))
+              for n in truth["parts"]]
+    form = {"mask_names": ", ".join(truth["parts"]), "rpm_min": "900", "rpm_max": "1100", "ref_part": "washing machine",
+            "ref_mm": "600", "min_seconds": "2"}
+    first = wait(client, client.post("/api/runs", files=files, data=form).json()["job_id"])
+    again = wait(client, client.post("/api/runs", files=files, data=form).json()["job_id"])
+    assert first["state"] == again["state"] == "done" and again["from_cache"]
+    assert again["results"]["run_id"] == first["results"]["run_id"]
+
+
+def test_page_handles_failed_requests():
+    """The page must never stay on "Queued": every request is read through getJSON, and a lost job is reported."""
+    page = (ROOT / "shake/web/static/index.html").read_text()
+    assert page.count("getJSON(") >= 3 and "r.status === 404" in page and "MAX_MISSES" in page
+    assert 'accept="video/*,.mp4,.mov,.m4v,.webm,.avi,.mkv"' in page and "WebM or AVI" in page

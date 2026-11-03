@@ -59,7 +59,15 @@
   .err { color: var(--bad); white-space: pre-wrap; }
   .hidden { display: none; }
   .two { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-  @media (max-width: 760px) { .two { grid-template-columns: 1fr; } }
+  .two > *, .grid > * { min-width: 0; }
+  .narrow-only { display: none; }
+  @media (max-width: 760px) {
+    .two { grid-template-columns: 1fr; }
+    .tabs button { flex: 1; }
+    .wide-media video { min-width: 720px; }
+    .wide-media img.spec { min-width: 640px; }
+    .narrow-only { display: block; }
+  }
   a { color: var(--accent); }
 </style>
 </head>
@@ -84,8 +92,8 @@
         <div><label for="scale">Resolution</label>
           <select id="scale"><option value="0.5">960 x 540</option><option value="0.6667">1280 x 720</option><option value="1">1920 x 1080</option></select></div>
         <div><label for="twin_api">Muse Spark and SAM 3.1</label>
-          <select id="twin_api"><option value="off">Off: renderer masks, no cost</option>
-            <option value="replay">Recorded live run, no cost</option><option value="live">Live, costs money</option></select></div>
+          <select id="twin_api"><option value="off">Off, no cost</option>
+            <option value="replay">Recorded run, no cost</option><option value="live">Live, costs money</option></select></div>
         <div><button type="submit">Render and analyse</button></div>
       </div>
       <p class="hint" id="twin_hint"></p>
@@ -93,7 +101,7 @@
 
     <form id="form-clip" class="hidden">
       <div class="grid">
-        <div><label for="clip">Slow-motion clip (MP4 or MOV)</label><input id="clip" type="file" accept="video/mp4,video/quicktime,.mp4,.mov" required></div>
+        <div><label for="clip">Slow-motion clip (MP4, MOV, WebM or AVI)</label><input id="clip" type="file" accept="video/*,.mp4,.mov,.m4v,.webm,.avi,.mkv" required></div>
         <div><label for="masks">Part masks (PNG, white = part, same size as the clip)</label><input id="masks" type="file" accept="image/png" multiple></div>
         <div><label for="mask_names">Part names for the masks, in order (comma separated)</label><input id="mask_names" placeholder="washing machine, door"></div>
       </div>
@@ -110,8 +118,8 @@
           <select id="ref_axis"><option value="width">width</option><option value="height">height</option></select></div>
         <div><label for="alpha">Magnification</label><input id="alpha" value="auto"></div>
         <div><label for="clip_api">Muse Spark and SAM 3.1</label>
-          <select id="clip_api"><option value="live">Live: find the parts and explain, costs money</option>
-            <option value="off">Off: use my masks or boxes</option></select></div>
+          <select id="clip_api"><option value="live">Live, costs money</option>
+            <option value="off">Off, use my masks</option></select></div>
         <div><label for="blades">Fan blades (fans only)</label><input id="blades" placeholder="for example 3"></div>
         <div><label for="parts">Part phrases (optional, replace Spark's)</label><input id="parts" placeholder="ceiling fan motor housing"></div>
         <div><button type="submit">Analyse</button></div>
@@ -157,13 +165,14 @@
 
     <div class="panel">
       <h2>Original and magnified</h2>
-      <video id="video" controls loop muted autoplay playsinline></video>
+      <div class="scroll wide-media"><video id="video" controls loop muted autoplay playsinline></video></div>
+      <p class="hint narrow-only">Scroll sideways, or play it full screen, to see it larger.</p>
       <p class="hint" id="mag-info"></p>
     </div>
 
     <div class="panel">
       <h2>Spectrum of each part</h2>
-      <div id="spectra"></div>
+      <div id="spectra" class="scroll wide-media"></div>
     </div>
 
     <div class="panel">
@@ -197,6 +206,8 @@ const EVIDENCE = { verified: "verified", context: "context", dropped: "dropped",
                    unverifiable: "unverifiable", "not verified": "not verified", "partly verified": "partly verified" };
 const CLAIM = { most_moving_part: "Most moving part", direction: "Direction" };
 const usd = (v) => "$" + Number(v || 0).toFixed(4);
+const times = (v) => Number(v).toFixed(1).replace(/\.0$/, "") + "x";  // 16.6667 -> "16.7x", 8 -> "8x"
+let maxUpload = 0;
 let steps = [], timer = null;
 
 function el(tag, text, cls) { const e = document.createElement(tag); if (text !== undefined && text !== null) e.textContent = text; if (cls) e.className = cls; return e; }
@@ -208,6 +219,7 @@ async function init() {
   const s = await (await fetch("/api/samples")).json();
   steps = s.steps;
   machines = s.machines;
+  maxUpload = s.max_upload_bytes || 0;
   for (const m of machines) { const o = el("option", m.label); o.value = m.key; $("machine").appendChild(o); }
   $("machine").onchange = () => { fillFaults(); twinHint(); };
   fillFaults();
@@ -264,35 +276,80 @@ function showSteps(status) {
 
 function busy(on) { document.querySelectorAll("form button").forEach(b => b.disabled = on); }
 
+// Every request goes through here: a server error page, a dropped connection or a restarted server becomes a
+// message on the page instead of a stuck "Queued".
+async function getJSON(url, init) {
+  const resp = await fetch(url, init);  // throws when the server cannot be reached
+  const text = await resp.text();
+  let body = null;
+  try { body = JSON.parse(text); } catch (e) { /* not JSON: an error page */ }
+  return { ok: resp.ok, status: resp.status, body, text: body === null ? text : "" };
+}
+
+function errorText(r) {
+  const d = r.body && r.body.detail;
+  if (typeof d === "string") return d;
+  if (d && d.message) return d.message;
+  if (Array.isArray(d)) return d.map(x => (x.loc ? x.loc[x.loc.length - 1] + ": " : "") + x.msg).join("; ");
+  if (r.status === 413) return "The file is too large.";
+  return `The server answered HTTP ${r.status}. Its terminal shows the details.`;
+}
+
+function fail(message) {
+  clearTimeout(timer);
+  $("error").textContent = message; $("phase").textContent = "";
+  busy(false);
+}
+
 async function start(url, init) {
   busy(true); $("results").classList.add("hidden"); $("progress").classList.remove("hidden");
   $("error").textContent = ""; $("phase").textContent = "Queued"; showSteps(null);
-  const r = await fetch(url, init);
-  const body = await r.json();
-  if (!r.ok) {
-    const d = body.detail;
-    $("error").textContent = (d && d.message) || d || "The request failed";
-    if (d && d.field && $(d.field)) {  // point at the input that fixes it, for example the capture rate
-      selectTab("clip"); $(d.field).classList.add("needs"); $(d.field).focus();
-      $("progress").classList.remove("hidden");
+  document.querySelectorAll(".needs").forEach(e => e.classList.remove("needs"));
+  let r;
+  try { r = await getJSON(url, init); }
+  catch (e) { fail("Cannot reach the server. Is it still running?"); return; }
+  if (!r.ok || !r.body || !r.body.job_id) {
+    fail(errorText(r));
+    const field = r.body && r.body.detail && r.body.detail.field;
+    if (field && $(field)) {  // point at the input that fixes it, for example the capture rate
+      selectTab($("form-twin").contains($(field)) ? "twin" : "clip"); $(field).classList.add("needs"); $(field).focus();
     }
-    busy(false); return;
+    return;
   }
-  poll(body.job_id);
+  poll(r.body.job_id, 0);
 }
 
-async function poll(jobId) {
+const MAX_MISSES = 20;  // about 40 s without an answer before giving up
+
+async function poll(jobId, misses) {
   clearTimeout(timer);
-  const j = await (await fetch(`/api/jobs/${jobId}`)).json();
+  let r;
+  try { r = await getJSON(`/api/jobs/${jobId}`); }
+  catch (e) {
+    if (misses >= MAX_MISSES) { fail("Lost contact with the server. If it was restarted, start the run again."); return; }
+    $("phase").textContent = "Lost contact with the server, trying again...";
+    timer = setTimeout(() => poll(jobId, misses + 1), 2000); return;
+  }
+  if (r.status === 404) { fail(errorText(r)); return; }  // the server restarted and forgot the job
+  if (!r.ok || !r.body) {
+    if (misses >= MAX_MISSES) { fail(errorText(r)); return; }
+    timer = setTimeout(() => poll(jobId, misses + 1), 2000); return;
+  }
+  const j = r.body;
   showSteps(j.status);
-  $("cost").textContent = (j.results && j.results.api) ? costText(j.results.api) : "";
+  $("cost").textContent = (j.results && j.results.api) ? costText(j.results.api, j.from_cache) : "";
   $("phase").textContent = j.state === "done" ? "Done" : (j.phase ? `Working: ${j.phase}` : (j.state === "queued" ? "Queued" : "Working"));
-  if (j.state === "failed") { $("error").textContent = j.error || (j.status && j.status.error) || "The run failed"; busy(false); return; }
-  if (j.state === "done" && j.results) { busy(false); showResults(j.results, j.base); return; }
-  timer = setTimeout(() => poll(jobId), 1000);
+  if (j.state === "failed") { fail(j.error || (j.status && j.status.error) || "The run failed"); return; }
+  if (j.state === "done" && j.results) {
+    busy(false);
+    try { showResults(j.results, j.base, j.from_cache); }
+    catch (e) { fail("The run finished, but the page could not show its results: " + e.message); }
+    return;
+  }
+  timer = setTimeout(() => poll(jobId, 0), 1000);
 }
 
-function showResults(r, base) {
+function showResults(r, base, fromCache) {
   $("results").classList.remove("hidden");
   const fp = r.fingerprint, m = r.measurement, mm = m.scale.mm_per_px;
   $("verdict").textContent = VERDICT[fp.verdict] || fp.verdict;
@@ -312,12 +369,12 @@ function showResults(r, base) {
     `Overall velocity ${fmt(fp.parts[fp.lead_part].features.velocity_rms, 1)} ${fp.parts[fp.lead_part].features.velocity_unit} RMS; alert level ${fp.alert_level} ${fp.alert_unit}.`;
 
   showPlan(r); showDiagnosis(r);
-  $("cost").textContent = r.api ? costText(r.api) : "";
+  $("cost").textContent = r.api ? costText(r.api, fromCache) : "";
 
   const v = $("video"); v.src = base + r.files.side_by_side + "?v=" + r.run_id; v.load();
   const mg = r.magnify;
   $("mag-info").textContent = `Magnified ${Math.round(mg.alpha)}x in the band ${fmt(mg.band_hz[0], 1)} to ${fmt(mg.band_hz[1], 1)} Hz (around 1x), ` +
-    `played ${mg.slow_factor}x slower than real time. Part outlines show where each part sits at rest.`;
+    `played ${times(mg.slow_factor)} slower than real time. Part outlines show where each part sits at rest.`;
 
   const sp = $("spectra"); clear(sp);
   for (const [part, file] of Object.entries(r.files.spectra)) {
@@ -349,11 +406,12 @@ function showResults(r, base) {
   $("download").href = base + "results.json";
 }
 
-function costText(api) {
+function costText(api, fromCache) {
   const u = api.usd || {};
   const parts = [["plan", "Spark plan"], ["segment", "SAM 3.1"], ["diagnose", "Spark diagnosis"]]
     .filter(([k]) => u[k] !== undefined).map(([k, label]) => `${label} ${usd(u[k])}`);
-  const how = api.mode === "replay" ? "recorded calls, not charged again" : "charged";
+  const how = fromCache ? "charged when this run was first made; shown again from the cache at no cost"
+    : api.mode === "replay" ? "recorded calls, not charged again" : "charged";
   return `Meta Model API cost: ${usd(u.total)} (${how})` + (parts.length ? `: ${parts.join(", ")}.` : ".");
 }
 
@@ -468,15 +526,24 @@ $("form-twin").onsubmit = (e) => {
 };
 $("form-clip").onsubmit = (e) => {
   e.preventDefault();
+  const file = $("clip").files[0];
+  if (maxUpload && file && file.size > maxUpload) {  // say so now, before minutes of uploading
+    $("progress").classList.remove("hidden"); showSteps(null); $("phase").textContent = "";
+    $("error").textContent = `The clip is ${Math.round(file.size / 1048576)} MB; the limit is ${Math.round(maxUpload / 1048576)} MB. Trim it to the 10 s of steady running.`;
+    return;
+  }
   const fd = new FormData();
-  fd.append("clip", $("clip").files[0]);
+  fd.append("clip", file);
   for (const f of $("masks").files) fd.append("masks", f);
   $("capture_fps").classList.remove("needs");
   for (const k of ["mask_names", "boxes", "capture_fps", "rpm", "rpm_min", "rpm_max", "ref_part", "ref_mm", "ref_axis", "alpha", "parts", "blades"]) fd.append(k, $(k).value);
   fd.append("api", $("clip_api").value);
   start("/api/runs", { method: "POST", body: fd });
 };
-init();
+init().catch(() => {
+  $("progress").classList.remove("hidden");
+  $("error").textContent = "Cannot load the app's settings from the server. Is it still running? Reload the page to try again.";
+});
 </script>
 </body>
 </html>
