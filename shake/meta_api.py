@@ -3,7 +3,9 @@
 - OpenAI SDK on MODEL_API_BASE (default https://api.meta.ai/v1) with the key from MODEL_API_KEY. In cloud sessions
   the key may be a network secret, so MODEL_API_KEY can read "proxy-injected".
 - Retries with exponential backoff and jitter on 429, 5xx and connection errors, honouring Retry-After.
-  400, 401, 403, 404 and 413 are not retried. 402 raises CreditExhausted: stop all API work and tell Arun.
+  400, 401, 403, 404 and 413 are not retried. 402 raises CreditExhausted: the account is out of credit, so all API
+  work stops.
+- A live run checks first that MODEL_API_KEY is set (require_key), so it fails before any work is done.
 - Files API uploads (purpose "user_data", for SAM 3.1 and Muse Spark alike).
 - Muse Spark through the streaming Responses API, with a large output budget (it reasons before it answers)
   and a check that the response completed.
@@ -50,11 +52,27 @@ class APIError(RuntimeError):
 
 
 class CreditExhausted(APIError):
-    """HTTP 402. Stop API work and tell Arun. Do not add a card."""
+    """HTTP 402: the account has no credit left. All API work stops."""
 
 
 class IncompleteResponse(APIError):
     pass
+
+
+class MissingKey(APIError):
+    """MODEL_API_KEY is not set, so a live run cannot start."""
+
+
+KEY_MISSING_MESSAGE = ("MODEL_API_KEY is not set. Live runs call the Meta Model API with your key: run "
+                       "export MODEL_API_KEY=<your key> and start again. Recorded runs and runs with Muse Spark "
+                       "and SAM 3.1 off need no key.")
+
+
+def require_key():
+    """Raise MissingKey unless MODEL_API_KEY holds something (a key, or a proxy's placeholder such as
+    "proxy-injected" where a network proxy adds the real key)."""
+    if not os.environ.get("MODEL_API_KEY", "").strip():
+        raise MissingKey(KEY_MISSING_MESSAGE)
 
 
 # ---------------------------------------------------------------- key hygiene
@@ -120,7 +138,8 @@ def call_with_retries(fn, what, attempts=ATTEMPTS, sleep=time.sleep):
             status = e.status_code
             msg = f"{what}: HTTP {status}: {_error_message(e)}"
             if status == 402:
-                raise CreditExhausted(msg + ". Stop API work and tell Arun; do not add a card.", 402) from None
+                raise CreditExhausted(msg + ". The Meta Model API account has no credit left, so API work has "
+                                      "stopped.", 402) from None
             if status not in RETRY_STATUS or i == attempts - 1:
                 raise APIError(msg, status) from None
             wait = _retry_after(e)

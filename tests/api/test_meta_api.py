@@ -62,7 +62,7 @@ def test_402_stops_immediately():
     fn = flaky(status_error(402, message="Billing account issue.", err_code="billing_not_configured"))
     with pytest.raises(CreditExhausted) as e:
         meta_api.call_with_retries(fn, "t", sleep=lambda s: pytest.fail("must not sleep"))
-    assert len(fn.calls) == 1 and "tell Arun" in str(e.value)
+    assert len(fn.calls) == 1 and "no credit left" in str(e.value) and "Arun" not in str(e.value)
 
 
 def test_key_never_logged_or_raised(monkeypatch, caplog):

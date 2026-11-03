@@ -60,15 +60,28 @@ class ClipInfo:
         return asdict(self)
 
 
+STILL_IMAGE_FORMATS = ("image2", "png_pipe", "jpeg_pipe", "bmp_pipe", "webp_pipe", "tiff_pipe", "gif_pipe")
+_FFMPEG_TAG = re.compile(r"\[[^\]]*@ 0x[0-9a-f]+\]\s*")
+
+
+def _ffprobe_reason(stderr, path):
+    """The last line of ffprobe's complaint, without the file's path or ffmpeg's internal tags."""
+    lines = [ln for ln in stderr.strip().splitlines() if ln.strip()]
+    line = _FFMPEG_TAG.sub("", lines[-1] if lines else "unknown error")
+    return line.replace(f"{path}: ", "").replace(str(path), "the file").strip()
+
+
 def probe(path):
     """ffprobe JSON for the file: format and streams."""
+    if Path(path).is_file() and Path(path).stat().st_size == 0:
+        raise IngestError("The file is empty (0 bytes). Choose the clip again.")
     try:
         r = subprocess.run(["ffprobe", "-v", "error", "-print_format", "json", "-show_format", "-show_streams",
                             str(path)], capture_output=True, text=True, stdin=subprocess.DEVNULL, timeout=60)
     except subprocess.TimeoutExpired:
-        raise IngestError(f"ffprobe timed out on {path}")
+        raise IngestError("Reading the file took too long; it may be damaged.")
     if r.returncode != 0:
-        raise IngestError(f"ffprobe could not read {path}: {r.stderr.strip()}")
+        raise IngestError(f"This file is not a video that can be read ({_ffprobe_reason(r.stderr, path)}).")
     return json.loads(r.stdout)
 
 
@@ -104,10 +117,15 @@ def _rotation(video):
 def clip_info(path, capture_fps=None, min_fps=MIN_CAPTURE_FPS):
     """Read metadata and settle the capture frame rate. Raises IngestError if the clip is unusable."""
     meta = probe(path)
-    videos = [s for s in meta.get("streams", []) if s.get("codec_type") == "video"]
+    # a cover picture in an audio file is a "video" stream too; it is not a clip
+    videos = [s for s in meta.get("streams", []) if s.get("codec_type") == "video"
+              and not (s.get("disposition") or {}).get("attached_pic")]
     if not videos:
-        raise IngestError(f"{path} has no video stream")
+        raise IngestError("This file has no video in it (it may be audio only). Choose the slow-motion clip.")
     v = videos[0]
+    if (meta.get("format", {}).get("format_name") in STILL_IMAGE_FORMATS
+            or int(v.get("nb_frames") or 0) == 1):
+        raise IngestError("This is a still image, not a video. Choose the slow-motion clip itself.")
     # avg_frame_rate (frames over duration), not r_frame_rate: a phone's variable-rate file can report r_frame_rate
     # 240 while most of it plays at 30
     avg_fps, r_fps = _rate(v.get("avg_frame_rate")), _rate(v.get("r_frame_rate"))
@@ -177,7 +195,7 @@ def read_gray(path, start=0, count=None, scale=1.0, blur=None):
     """Yield float32 grayscale frames [start, start + count), optionally downscaled and blurred."""
     cap = cv2.VideoCapture(str(path))
     if not cap.isOpened():
-        raise IngestError(f"cannot open {path}")
+        raise IngestError("OpenCV cannot open the clip; it may be damaged or in an unusual format.")
     try:
         i = 0
         while count is None or i < start + count:
@@ -244,7 +262,8 @@ def frame_energies(path, max_frames=1440, scale=0.5, grid=6):
             n2 += 1
             win.pop(0)
     if n2 < 16:
-        raise IngestError(f"{path}: only {n2 + 2} frames decoded")
+        raise IngestError(f"Only {n1 + 1 if n1 else len(win)} frames of the clip could be decoded; it is too short or "
+                          "damaged.")
     return {"e1": e1 / n1, "e2": e2 / n2, "brightness": (bright / (n1 + 1)).ravel(), "global_diff": np.array(gdiff)}
 
 

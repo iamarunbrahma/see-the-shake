@@ -63,7 +63,8 @@ def test_rocking_lever_equals_centroid_for_uniform_texture():
 def test_render_writes_clip_truth_and_masks():
     d = twin_clip("looseness")
     truth = json.loads((d / "truth.json").read_text())
-    for f in ("clip.mp4", "truth_series.npz", "mask_glass.png", "mask_washing_machine.png", "mask_door.png"):
+    assert set(truth["parts"]) == {"washing machine", "door"}
+    for f in ("clip.mp4", "truth_series.npz", "mask_glass.png", *(p["mask"] for p in truth["parts"].values())):
         assert (d / f).exists()
     # the truth records every motion the renderer applies
     assert truth["cabinet"]["rocking"]["amp_deg"] == 0.04

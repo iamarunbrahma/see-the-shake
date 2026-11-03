@@ -26,7 +26,9 @@ import contextlib
 import hashlib
 import json
 import logging
+import math
 import os
+import re
 import shutil
 import sys
 import time
@@ -58,8 +60,142 @@ API_MODES = ("off", "live", "record", "replay")
 RECORDINGS = Path(os.environ.get("SHAKE_RECORDINGS", ROOT / "tests" / "api" / "fixtures" / "live"))
 RECORDED_TWIN = {"seed": 1, "seconds": 6.0, "scale": 1.0}
 IOU_MATCH = 0.5  # a SAM mask stands for a renderer part when their IoU reaches this
-CREDIT_MESSAGE = ("HTTP 402 from the Meta Model API: the credit is used up. API work has stopped; tell Arun. "
-                  "Do not add a card.")
+CREDIT_MESSAGE = ("HTTP 402 from the Meta Model API: the account has no credit left, so the live run stopped. "
+                  "Add credit to your Meta Model API account and try again; recorded runs still work at no cost.")
+MAX_PART_NAME = 80
+log = logging.getLogger("shake.pipeline")
+
+
+class OptionsError(ValueError):
+    """An input the user can fix (a number, a part name, a mask). field names the page input, when there is one."""
+
+    def __init__(self, message, field=None):
+        super().__init__(message)
+        self.field = field
+
+
+def check_part_name(name):
+    """A part name as typed by the user (a box, a mask name, --mask). It names files in the run folder, so it may
+    not hold a path."""
+    n = str(name)
+    if not n.strip():
+        raise OptionsError("A part name is empty.")
+    if len(n) > MAX_PART_NAME:
+        raise OptionsError(f"The part name '{n[:30]}...' is longer than {MAX_PART_NAME} characters.")
+    if "/" in n or "\\" in n or ".." in n or "\x00" in n:
+        raise OptionsError(f"The part name '{n}' cannot contain /, \\ or '..'. Name the part in plain words.")
+    return n
+
+
+def _in_run(out, rel):
+    """out / rel, after checking that it stays inside the run folder out."""
+    root = Path(out).resolve()
+    p = (root / rel).resolve()
+    if p != root and root not in p.parents:
+        raise OptionsError(f"Refusing to write {rel!r} outside the run folder.")
+    return p
+
+
+def _finite(v, what, field=None, low=None, high=None, positive=True):
+    try:
+        x = float(v)
+    except (TypeError, ValueError):
+        raise OptionsError(f"{what} must be a number.", field) from None
+    if not math.isfinite(x):
+        raise OptionsError(f"{what} must be a finite number.", field)
+    if positive and x <= 0:
+        raise OptionsError(f"{what} must be greater than 0.", field)
+    if (low is not None and x < low) or (high is not None and x > high):
+        raise OptionsError(f"{what} must be from {low:g} to {high:g}.", field)
+    return x
+
+
+def measurable_rpm(fps):
+    """(lowest, highest) running speed in rpm that a clip at fps can measure."""
+    return 60 * measure.F_MIN, 60 * (fps / 2 - 1)
+
+
+def validate_options(o, fps=None):
+    """Check the numbers a user can type. With fps (the capture rate, known after ingest) the running speed is also
+    checked against what the clip can measure. Raises OptionsError."""
+    if o.capture_fps is not None:
+        _finite(o.capture_fps, "The capture rate", "capture_fps", 1, 100000)
+    if o.rpm is not None:
+        rpm = _finite(o.rpm, "The running speed", "rpm")
+        if fps:
+            lo, hi = measurable_rpm(fps)
+            if not lo <= rpm <= hi:
+                raise OptionsError(f"A running speed of {rpm:g} rpm is outside what {fps:g} fps can measure "
+                                   f"({lo:.0f} to {hi:.0f} rpm).", "rpm")
+    if o.rpm_range is not None:
+        if len(o.rpm_range) != 2:
+            raise OptionsError("Give the rpm range as a lowest and a highest value.", "rpm_min")
+        a = _finite(o.rpm_range[0], "The lowest rpm", "rpm_min")
+        b = _finite(o.rpm_range[1], "The highest rpm", "rpm_max")
+        if a >= b:
+            raise OptionsError("The lowest rpm must be below the highest.", "rpm_min")
+        if fps:
+            lo, hi = measurable_rpm(fps)
+            if b <= lo or a >= hi:
+                raise OptionsError(f"The rpm range {a:g} to {b:g} is outside what {fps:g} fps can measure "
+                                   f"({lo:.0f} to {hi:.0f} rpm).", "rpm_min")
+    if o.reference:
+        part, mm, *axis = o.reference
+        if not str(part).strip():
+            raise OptionsError("Name the reference part.", "ref_part")
+        _finite(mm, "The reference length", "ref_mm", 0.1, 100000)
+        if axis and axis[0] not in ("width", "height"):
+            raise OptionsError("The reference length is the part's width or height.", "ref_axis")
+    if o.alpha != "auto":
+        _finite(o.alpha, "The magnification", "alpha", *magnify.ALPHA_RANGE)
+    _finite(o.min_seconds, "The shortest window", "min_seconds", 0.1, 60)
+    _finite(o.max_seconds, "The longest window", None, 0.1, 600)
+    _finite(o.video_seconds, "The video length", None, 0.1, 60)
+    if o.blades is not None and not (isinstance(o.blades, int) and 2 <= o.blades <= 12):
+        raise OptionsError("Fan blades must be a whole number from 2 to 12.", "blades")
+
+
+def check_masks(masks, shape, ignore=None):
+    """Every part mask must match the frames, cover some of them, and leave a still background to measure camera
+    shake against (the tracker needs at least MIN_TRACK_PX pixels of each). Raises OptionsError."""
+    H, W = shape
+    for name, m in masks.items():
+        if m.shape != (H, W):
+            raise OptionsError(f"The mask for '{name}' is {m.shape[1]}x{m.shape[0]}, but the clip's frames are "
+                               f"{W}x{H}. Make the mask the same size as the clip.")
+        if not np.any(m):
+            raise OptionsError(f"The part '{name}' is empty: its box or mask lies outside the {W}x{H} frame.")
+    if not masks:
+        return
+    weights, bg = measure.part_weights(masks, (H, W), None, ignore)
+    for name, w in weights.items():
+        if int(np.count_nonzero(w)) < MIN_TRACK_PX:
+            raise OptionsError(f"The part '{name}' is too small to track; draw its box or mask larger.")
+    if int(np.count_nonzero(bg)) < MIN_TRACK_PX:
+        raise OptionsError("The parts cover the whole frame, so no still background is left to measure camera shake "
+                           "against. Mark only the machine's parts, and film with some background in view.")
+
+
+MIN_TRACK_PX = 50  # measure.Region refuses fewer pixels
+MIN_WINDOW_FRAMES = 32  # measure refuses a shorter window
+
+
+_ABS_PATH = re.compile(r"(?:[A-Za-z]:)?(?:[/\\][^\s/\\:'\"]+)+[/\\]([^\s/\\:'\"]+)")
+
+
+def user_message(e):
+    """One line for the page or the terminal: what went wrong, without a traceback or the server's folders."""
+    from .meta_api import APIError, CreditExhausted
+    if isinstance(e, CreditExhausted):
+        return CREDIT_MESSAGE
+    if isinstance(e, APIError) and e.status in (401, 403):
+        return (f"The Meta Model API did not accept the key in MODEL_API_KEY (HTTP {e.status}). Check that it is a "
+                "valid, active key.")
+    if isinstance(e, (OptionsError, ingest.IngestError, APIError)):
+        msg = str(e)
+    else:
+        msg = f"{type(e).__name__}: {e}"
+    return _ABS_PATH.sub(r"\1", msg)
 
 
 @dataclass
@@ -110,10 +246,11 @@ def load_masks(masks):
     """{name: array or path} to {name: uint8 0/255}."""
     out = {}
     for name, m in (masks or {}).items():
+        check_part_name(name)
         if isinstance(m, (str, Path)):
             img = cv2.imread(str(m), cv2.IMREAD_GRAYSCALE)
             if img is None:
-                raise ValueError(f"cannot read mask {m}")
+                raise OptionsError(f"Cannot read the mask image for '{name}' ({Path(m).name}).")
             m = img
         out[name] = ((np.asarray(m) > 0) * 255).astype(np.uint8)
     return out
@@ -200,7 +337,7 @@ def _spectrum_pngs(result, arrays, out, fp=None):
     for part in result["parts"]:
         sub = {**result, "parts": {part: result["parts"][part]}}
         name = f"spectrum_{twin.slug(part)}.png"
-        measure.plot_spectra(sub, arrays, out / name, part, skip=skip)
+        measure.plot_spectra(sub, arrays, _in_run(out, name), part, skip=skip)
         files[part] = name
     measure.plot_spectra(result, arrays, out / "spectrum.png", skip=skip)  # all parts, for Spark
     return files
@@ -211,7 +348,8 @@ def _frame_shape(clip):
     ok, f = cap.read()
     cap.release()
     if not ok:
-        raise ingest.IngestError(f"cannot decode a frame of {clip}")
+        raise ingest.IngestError("Cannot decode a frame of the clip; it may be damaged or in a format OpenCV "
+                                 "cannot read.")
     return f.shape[:2]  # as decoded (display orientation), which is also what ffmpeg hands SAM
 
 
@@ -221,7 +359,9 @@ def make_api(options, out):
         raise ValueError(f"api must be one of {API_MODES}, not {options.api!r}")
     if options.api == "off":
         return None
-    from .meta_api import Ledger, MetaAPI
+    from .meta_api import Ledger, MetaAPI, require_key
+    if options.api in ("live", "record"):
+        require_key()  # before any work: a live run without a key fails at once, not after ingest
     ledger_path = out / "ledger.jsonl"
     ledger_path.unlink(missing_ok=True)
     ledger = Ledger(ledger_path)
@@ -291,6 +431,7 @@ def run(clip, masks=None, runs_dir="runs", options=None, plan=None, segment=None
     """
     clip = Path(clip)
     options = options or Options()
+    validate_options(options)
     masks = load_masks(masks)
     if not masks and options.api == "off":
         raise ValueError("give part masks, or turn on Muse Spark and SAM 3.1 (options.api)")
@@ -307,6 +448,7 @@ def run(clip, masks=None, runs_dir="runs", options=None, plan=None, segment=None
             if progress:
                 for s in cached["steps"]:
                     progress(s["key"], s["status"], s["detail"])
+            cached["from_cache"] = True  # not saved: this call made no model calls and cost nothing
             return cached
     out.mkdir(parents=True, exist_ok=True)
     st = _Status(out, rid, progress)
@@ -317,12 +459,23 @@ def run(clip, masks=None, runs_dir="runs", options=None, plan=None, segment=None
     api = None
     usd = {}
     try:
+        step = "plan"  # the key is checked first, for the first step that needs it
         api = make_api(options, out)
+        step = "ingest"
         st.set(step, "running")
         ing = ingest.ingest(clip, capture_fps=options.capture_fps, min_s=options.min_seconds, max_s=options.max_seconds)
         results["ingest"] = ing.to_dict()
         start, count = ing.window
         fps = ing.fps
+        validate_options(options, fps=fps)  # an entered running speed must be one this clip can measure
+        if count < MIN_WINDOW_FRAMES:
+            raise OptionsError(f"The clip has only {count} frames ({count / fps:.2f} s at {fps:g} fps) to measure; "
+                               f"film at least {options.min_seconds:g} s of steady running.")
+        shape = _frame_shape(clip)
+        if masks:
+            check_masks(masks, shape, ignore)
+            if magnify_masks:
+                check_masks(magnify_masks, shape)
         st.set(step, "done", f"{fps:g} fps ({ing.info.fps_source}), window {count / fps:.1f} s, "
                              f"frames check: {ing.interpolation['status']}")
         if ing.interpolation["flagged"]:
@@ -369,7 +522,6 @@ def run(clip, masks=None, runs_dir="runs", options=None, plan=None, segment=None
             from . import segment as seg_mod
             from .meta_api import CreditExhausted
             st.set(step, "running")
-            shape = _frame_shape(clip)
             sub_start = start + max(0, count // 2 - seg_mod.SUB_FRAMES // 2)
             # The whole machine is segmented too when it is not one of the parts, so that every moving thing SAM
             # can see stays out of the camera-shake reference (an unmasked shaft read as "background" halved the
@@ -428,12 +580,13 @@ def run(clip, masks=None, runs_dir="runs", options=None, plan=None, segment=None
         results["mask_source"] = mask_source
         (out / "masks").mkdir(exist_ok=True)
         for name, m in masks.items():
-            cv2.imwrite(str(out / "masks" / f"{twin.slug(name)}.png"), m)
+            cv2.imwrite(str(_in_run(out, f"masks/{twin.slug(name)}.png")), m)
         results["files"]["masks"] = {n: f"masks/{twin.slug(n)}.png" for n in masks}
 
         # 4. measure
         step = "measure"
         st.set(step, "running")
+        check_masks(masks, shape, ignore)
         scale = None
         if options.reference:
             part, mm, *axis = options.reference
@@ -550,13 +703,12 @@ def run(clip, masks=None, runs_dir="runs", options=None, plan=None, segment=None
         res_path.write_text(json.dumps(_jsonable(results), indent=2))
         st.finish("done")
         return json.loads(res_path.read_text())
-    except Exception as e:  # report which step failed, keep what was done
-        msg = f"{type(e).__name__}: {e}"
-        if type(e).__name__ == "CreditExhausted":
-            msg = CREDIT_MESSAGE
+    except Exception as e:  # report which step failed, keep what was done; the traceback goes to the log only
+        msg = user_message(e)
+        log.debug("run %s failed at %s:\n%s", rid, step, traceback.format_exc())
         st.set(step, "failed", msg)
         results["state"] = "failed"
-        results["error"] = {"step": step, "message": msg, "trace": traceback.format_exc()}
+        results["error"] = {"step": step, "message": msg}
         if api:
             results["api"] = {"mode": options.api, "usd": {"total": api.ledger.total()}, "calls": api.ledger.summary()}
         results["steps"] = st.data["steps"]
@@ -623,6 +775,9 @@ def run_twin(fault, runs_dir="runs", seed=1, seconds=4.0, scale=0.5, api="off", 
     For the fan, the background leaves out the blade disc (its grill and hub move with the head), and the magnified
     video moves the whole guard, blades included, with the guard rim's measured motion.
     """
+    if api in ("live", "record"):
+        from .meta_api import require_key
+        require_key()  # before the twin is rendered
     api_kw = {}
     if api == "replay":
         name = f"fan-{fault}" if machine == "fan" else fault
@@ -651,16 +806,62 @@ def parse_twin(name):
 
 def parse_reference(text):
     """'part=600' (the part's mask width is 600 mm) or 'part=150:height' (its height) -> (part, mm[, axis])."""
-    part, rest = text.split("=", 1)
+    part, eq, rest = str(text).partition("=")
+    if not eq or not part.strip():
+        raise OptionsError(f"--ref needs a part and a length, like \"washing machine=600\", not {text!r}.")
     mm, _, axis = rest.partition(":")
     axis = axis.strip().lower() or "width"
     if axis not in ("width", "height"):
-        raise ValueError(f"reference axis must be width or height, not {axis!r}")
-    return (part.strip(), float(mm)) if axis == "width" else (part.strip(), float(mm), "height")
+        raise OptionsError(f"The reference axis must be width or height, not {axis!r}.")
+    mm = _finite(mm.strip(), "The reference length", None, 0.1, 100000)
+    return (part.strip(), mm) if axis == "width" else (part.strip(), mm, "height")
+
+
+def parse_mask(text):
+    """'part name=mask.png' -> (part name, path), with the name checked like any part name."""
+    name, eq, path = str(text).partition("=")
+    if not eq or not name.strip() or not path.strip():
+        raise OptionsError(f"--mask needs a part name and an image, like \"washing machine=mask.png\", not {text!r}.")
+    return check_part_name(name.strip()), path.strip()
+
+
+def _number(kind):
+    """argparse type: a finite number (kind "positive" or "count", a whole number from 0)."""
+    def conv(v):
+        try:
+            x = int(v) if kind == "count" else float(v)
+        except ValueError:
+            raise argparse.ArgumentTypeError(f"{v!r} is not a {'whole ' if kind == 'count' else ''}number") from None
+        if kind == "count" and x < 0:
+            raise argparse.ArgumentTypeError(f"{v!r} must be 0 or more")
+        if kind == "positive" and (not math.isfinite(x) or x <= 0):
+            raise argparse.ArgumentTypeError(f"{v!r} must be a finite number above 0")
+        return x
+    return conv
+
+
+def _alpha_arg(v):
+    if str(v).strip().lower() == "auto":
+        return "auto"
+    lo, hi = magnify.ALPHA_RANGE
+    x = _number("positive")(v)
+    if not lo <= x <= hi:
+        raise argparse.ArgumentTypeError(f"{v!r} must be auto or a number from {lo:g} to {hi:g}")
+    return x
+
+
+def cost_line(r):
+    """The API cost line for the terminal, saying when nothing was charged this time."""
+    usd = r["api"]["usd"]["total"]
+    if r.get("from_cache"):
+        return f"API cost: ${usd:.4f} when first run; this result came from the cache, so nothing was charged now"
+    if r["api"].get("mode") == "replay":
+        return f"API cost: ${usd:.4f} when recorded; this replay made no calls and cost nothing"
+    return f"API cost: ${usd:.4f}"
 
 
 def main(argv=None):
-    p = argparse.ArgumentParser(description="Run See the Shake on one clip")
+    p = argparse.ArgumentParser(prog="python -m shake.pipeline", description="Run See the Shake on one clip")
     p.add_argument("clip", nargs="?")
     p.add_argument("--mask", action="append", default=[], help='"part name=mask.png" (repeat per part)')
     p.add_argument("--api", choices=API_MODES, default="off",
@@ -670,37 +871,47 @@ def main(argv=None):
     p.add_argument("--no-spark-video", action="store_true", help="do not send the magnified clip to Spark")
     p.add_argument("--twin", choices=sorted(twin.FAULTS) + [f"fan-{f}" for f in twin_fan.FAULTS],
                    help="a twin clip: washing machine faults, or fan-healthy, fan-imbalance, fan-looseness")
-    p.add_argument("--seed", type=int, default=1)
-    p.add_argument("--seconds", type=float, default=4.0)
-    p.add_argument("--scale", type=float, default=0.5)
-    p.add_argument("--rpm", type=float)
+    p.add_argument("--seed", type=_number("count"), default=1, help="twin: random seed (0 or more)")
+    p.add_argument("--seconds", type=_number("positive"), default=4.0, help="twin: clip length in s")
+    p.add_argument("--scale", type=_number("positive"), default=0.5, help="twin: resolution as a share of 1920x1080")
+    p.add_argument("--rpm", type=_number("positive"), help="running speed, if you know it exactly")
     p.add_argument("--blades", type=int, help="a fan's blade count: blades x running speed is blade pass")
-    p.add_argument("--rpm-range", type=float, nargs=2)
-    p.add_argument("--capture-fps", type=float)
+    p.add_argument("--rpm-range", type=_number("positive"), nargs=2, metavar=("LOWEST", "HIGHEST"))
+    p.add_argument("--capture-fps", type=_number("positive"), help="the rate the clip was filmed at, e.g. 240")
     p.add_argument("--ref", help='"part name=length in mm" across the part\'s mask width, or "part=150:height"')
-    p.add_argument("--alpha", default="auto")
-    p.add_argument("--verify", action="store_true")
-    p.add_argument("--runs", default="runs")
+    p.add_argument("--alpha", type=_alpha_arg, default="auto", help="magnification: auto or a number")
+    p.add_argument("--verify", action="store_true", help="also track the magnified clip (slow)")
+    p.add_argument("--runs", default="runs", help="where runs are stored")
     a = p.parse_args(argv)
-    logging.basicConfig(level=logging.WARNING, format="%(levelname)s %(name)s: %(message)s")
-    alpha = a.alpha if a.alpha == "auto" else float(a.alpha)
+    logging.basicConfig(level=logging.DEBUG if os.environ.get("SHAKE_DEBUG") else logging.WARNING,
+                        format="%(levelname)s %(name)s: %(message)s")
     show = lambda k, s, d: print(f"[{s:8s}] {k:12s} {d or ''}", flush=True)  # noqa: E731
-    if a.twin:
-        machine, fault = parse_twin(a.twin)
-        r = run_twin(fault, a.runs, a.seed, a.seconds, a.scale, api=a.api, progress=show, alpha=alpha, machine=machine,
-                     verify=a.verify)
-    else:
-        if not a.clip or (not a.mask and a.api == "off"):
-            p.error("give a clip and at least one --mask, or --api live (or --twin)")
-        masks = dict(m.split("=", 1) for m in a.mask)
-        ref = None
-        if a.ref:
-            ref = parse_reference(a.ref)
-        opts = Options(capture_fps=a.capture_fps, rpm=a.rpm, rpm_range=tuple(a.rpm_range) if a.rpm_range else None,
-                       reference=ref, alpha=alpha, verify=a.verify, api=a.api, cassette=a.cassette, blades=a.blades,
-                       spark_video=not a.no_spark_video,
-                       user_parts=[s.strip() for s in a.parts.split(",") if s.strip()] if a.parts else None)
-        r = run(a.clip, masks, a.runs, opts, progress=show)
+    try:
+        if a.twin:
+            machine, fault = parse_twin(a.twin)
+            r = run_twin(fault, a.runs, a.seed, a.seconds, a.scale, api=a.api, progress=show, alpha=a.alpha,
+                         machine=machine, verify=a.verify)
+        else:
+            if not a.clip or (not a.mask and a.api == "off"):
+                p.error("give a clip and at least one --mask, or --api live (or --twin)")
+            masks = dict(parse_mask(m) for m in a.mask)
+            ref = parse_reference(a.ref) if a.ref else None
+            opts = Options(capture_fps=a.capture_fps, rpm=a.rpm,
+                           rpm_range=tuple(a.rpm_range) if a.rpm_range else None, reference=ref, alpha=a.alpha,
+                           verify=a.verify, api=a.api, cassette=a.cassette, blades=a.blades,
+                           spark_video=not a.no_spark_video,
+                           user_parts=[s.strip() for s in a.parts.split(",") if s.strip()] if a.parts else None)
+            if not Path(a.clip).is_file():
+                raise OptionsError(f"There is no clip at {a.clip}.")
+            r = run(a.clip, masks, a.runs, opts, progress=show)
+    except KeyboardInterrupt:
+        print("stopped", file=sys.stderr)
+        return 130
+    except Exception as e:  # one clear line; SHAKE_DEBUG=1 shows the traceback
+        if os.environ.get("SHAKE_DEBUG"):
+            raise
+        print(f"error: {user_message(e)}", file=sys.stderr)
+        return 1
     fp = r["fingerprint"]
     print(f"verdict: {fp['verdict']} ({fp['confidence']}): {fp['reason']}")
     if r.get("truth_comparison"):
@@ -708,7 +919,7 @@ def main(argv=None):
         print(f"truth: {r['truth']['machine']} {r['truth']['fault']}, expected {tc['expected_verdict']} "
               f"({'right' if tc['verdict_ok'] else 'WRONG'}); components within tolerance {tc['passed']}/{tc['scored']}")
     if r.get("api"):
-        print(f"API cost: ${r['api']['usd']['total']:.4f}")
+        print(cost_line(r))
     print(f"results: {Path(a.runs) / r['run_id'] / 'results.json'}")
     return 0
 

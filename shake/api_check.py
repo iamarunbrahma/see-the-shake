@@ -1,7 +1,7 @@
-"""One small Meta Model API call, to confirm the key reaches api.meta.ai.
+"""One small Meta Model API call, to confirm your key works (it costs about a tenth of a cent).
 
 usage: python -m shake.api_check
-Exit code 0 on success, 2 on 401/403 (key not injected), 3 on 402 (credit), 1 otherwise.
+Exit code 0 on success, 2 when the key is missing or not accepted (401/403), 3 on 402 (no credit), 1 otherwise.
 """
 import os
 import sys
@@ -17,6 +17,9 @@ def client():
 
 
 def main():
+    if not os.environ.get("MODEL_API_KEY", "").strip():
+        print("MODEL_API_KEY is not set. Run: export MODEL_API_KEY=<your Meta Model API key>, then try again.")
+        return 2
     try:
         # Spark reasons before it answers, so a small max_tokens ends in finish_reason=length with no content.
         r = client().chat.completions.create(model=MODEL, max_tokens=4096,
@@ -24,20 +27,23 @@ def main():
     except openai.APIStatusError as e:
         print(f"{MODEL}: HTTP {e.status_code}")
         if e.status_code == 402:
-            print("Payment required. Stop API work and tell Arun. Do not add a card.")
+            print("The Meta Model API account has no credit left. Live runs will fail until credit is added; "
+                  "recorded runs still work at no cost.")
             return 3
         if e.status_code in (401, 403):
-            print("Key not accepted. Check the api.meta.ai network secret (or MODEL_API_KEY).")
+            print("The Meta Model API did not accept the key in MODEL_API_KEY. Check that it is a valid, active key.")
             return 2
         return 1
     except openai.APIConnectionError as e:
-        print(f"{MODEL}: connection error: {e}")
+        print(f"{MODEL}: cannot reach the Meta Model API: {e}")
         return 1
     ch = r.choices[0]
     if ch.finish_reason != "stop" or not ch.message.content:
         print(f"{MODEL}: HTTP 200 but finish_reason={ch.finish_reason!r}, content {ch.message.content!r}")
         return 1
-    print(f"{MODEL}: ok, reply {ch.message.content!r}, usage {r.usage}")
+    u = r.usage
+    print(f"{MODEL}: ok, the key works (reply {ch.message.content!r}, {u.prompt_tokens} tokens in, "
+          f"{u.completion_tokens} out)")
     return 0
 
 

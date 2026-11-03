@@ -94,7 +94,13 @@ class TwinConfig:
 
 
 def slug(name):
-    return name.replace(" ", "_")
+    """A file-name-safe form of a part name: lower case [a-z0-9_-] plus a short hash of the full name, so two names
+    never share a file and no name (a path, "..", a slash) can point outside the folder it is written to."""
+    import hashlib
+    import re
+    text = str(name)
+    base = re.sub(r"[^a-z0-9_-]+", "_", text.lower()).strip("_-")[:40] or "part"
+    return f"{base}_{hashlib.sha1(text.encode('utf-8')).hexdigest()[:6]}"
 
 
 def _rr(img, p1, p2, r, color):

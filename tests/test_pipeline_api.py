@@ -103,7 +103,8 @@ def test_402_stops_the_run(monkeypatch, tmp_path):
     with pytest.raises(CreditExhausted):
         pipeline.run(clip, masks, tmp_path, opts, truth=truth, mask_source="twin renderer")
     res = json.loads(next(tmp_path.glob("*/results.json")).read_text())
-    assert res["state"] == "failed" and res["error"]["step"] == "plan" and "tell Arun" in res["error"]["message"]
+    assert res["state"] == "failed" and res["error"]["step"] == "plan" and res["error"]["message"] == pipeline.CREDIT_MESSAGE
+    assert "Arun" not in res["error"]["message"] and "trace" not in res["error"]
 
 
 def test_worker_processes_start_from_stdin():
