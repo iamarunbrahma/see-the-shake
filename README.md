@@ -14,8 +14,18 @@ Built for the Meta Global AI Developer Hackathon (Indie track). Every model call
 
 ## Quickstart
 
-You need Python 3.10 or later and ffmpeg (`apt install ffmpeg` or `brew install ffmpeg`). Install into a virtual
-environment (recent Ubuntu, Debian and Homebrew Pythons refuse a system-wide `pip install`):
+You need Python 3.10 or later and ffmpeg (`apt install ffmpeg` or `brew install ffmpeg`). Get the code:
+
+```bash
+git clone https://github.com/iamarunbrahma/see-the-shake
+```
+
+```bash
+cd see-the-shake
+```
+
+Install into a virtual environment (recent Ubuntu, Debian and Homebrew Pythons refuse a system-wide `pip install`).
+On Debian and Ubuntu, `python3 -m venv` needs the `python3-venv` package first (`sudo apt install python3-venv`).
 
 ```bash
 python3 -m venv .venv
