@@ -12,7 +12,16 @@ Built for the Meta Global AI Developer Hackathon (Indie track). Every model call
 
 ## Quickstart
 
-You need Python 3.10 or later and ffmpeg (`apt install ffmpeg` or `brew install ffmpeg`).
+You need Python 3.10 or later and ffmpeg (`apt install ffmpeg` or `brew install ffmpeg`). Install into a virtual
+environment (recent Ubuntu, Debian and Homebrew Pythons refuse a system-wide `pip install`):
+
+```bash
+python3 -m venv .venv
+```
+
+```bash
+source .venv/bin/activate
+```
 
 ```bash
 pip install -r requirements.txt
@@ -27,7 +36,7 @@ uvicorn shake.web.app:app --port 8000
 ```
 
 Open http://localhost:8000. The key is only for live runs. With no key at all, open the **Digital twin** tab and pick
-**Recorded live run, no cost**: it replays a real Muse Spark and SAM 3.1 run on a rendered washing machine (the first
+**Recorded run, no cost**: it replays a real Muse Spark and SAM 3.1 run on a rendered washing machine (the first
 time renders and measures the clip, a few minutes). From the command line, the same zero-cost replay is
 `python -m shake.pipeline --twin imbalance --api replay --seconds 6`. To analyse your own clip, use the **Your clip**
 tab with Muse Spark and SAM 3.1 on.
@@ -71,7 +80,19 @@ tab with Muse Spark and SAM 3.1 on.
 supplied are the fallback.
 
 All calls use the OpenAI SDK on the Meta Model API with retries and a cost ledger. Every live run can be recorded
-and replayed, so the test suite runs offline. A full run costs about 5 to 8 cents.
+and replayed, so the test suite runs offline. A full run costs about 5 to 8 cents for a washing machine, and 8 to
+10 cents for the fan (it has more parts to segment).
+
+## Privacy
+
+Your clip stays on your computer; a live run sends the Meta Model API only these pieces of it:
+
+- for the plan, a 4 s, 480p, 30 fps preview of the steady window and one full-resolution frame;
+- for SAM 3.1, 60 consecutive frames at full resolution;
+- for the diagnosis, the side-by-side magnified clip and the spectrum image, with the measured numbers.
+
+The three video files go up through the Files API set to expire after 7 days; the frame and the spectrum image travel
+inside the requests. Recorded runs, and runs with Muse Spark and SAM 3.1 off, send nothing.
 
 ## Accuracy
 
@@ -88,8 +109,9 @@ and replayed, so the test suite runs offline. A full run costs about 5 to 8 cent
   is within 0.02 Hz of the probes on all 9 rotor runs. The rule verdict matches what the probes support on 6 of 9
   (imbalance at 2000 and 3000 rpm); at 1000 rpm, where the rig sits right at the alert level, 2 of 3 show the
   probes' 2x pattern. The washer reads imbalance.
-- **A second machine:** a pedestal fan twin (healthy, imbalance, looseness) gets 3 of 3 verdicts, measured through its
-  housing, guard rim and stand while the blades spin.
+- **A second machine:** a pedestal fan twin (healthy, imbalance, looseness) gets 3 of 3 verdicts, measured through the
+  parts that hold the blades while the blades spin (in the live runs, SAM 3.1 finds the guard rim and the pole but not
+  the motor housing).
 
 ## Limits
 
@@ -100,6 +122,9 @@ and replayed, so the test suite runs offline. A full run costs about 5 to 8 cent
 - **Translation only.** Each part is tracked as a rigid shift in the image plane. Rocking, twisting and motion toward
   the camera are not measured, and amplitudes are fractions of a pixel, so the smallest components read low on
   compressed phone video.
+- **50 Hz mains light.** The flicker handling assumes lights on 50 Hz mains, which flicker at 100 Hz (India, Europe).
+  Under 60 Hz mains (the Americas, parts of Asia) it looks for flicker at the wrong frequencies, so film there in
+  daylight or under flicker-free light.
 - **Rules-based verdicts.** Four fault patterns plus blade pass, with thresholds tuned on the twin. Muse Spark
   explains; it does not decide. This is a hackathon prototype, not a certified condition-monitoring or safety tool,
   and it makes no ISO claims.
@@ -134,7 +159,8 @@ The code is MIT licensed; see [LICENSE](LICENSE). The clips in `samples/real/` k
 
 **Environment variables:** `MODEL_API_KEY` (live runs only), `MODEL_API_BASE` (default `https://api.meta.ai/v1`),
 `SHAKE_RUNS` (where the web app keeps runs, default `./runs`), `SHAKE_RECORDINGS` (recorded live twin runs, default
-`tests/api/fixtures/live`). Check the key with one small call:
+`tests/api/fixtures/live`), `SHAKE_DEBUG=1` (the command line prints the full traceback of an error instead of one
+line). Check the key with one small call (about a tenth of a cent):
 
 ```bash
 python -m shake.api_check
@@ -148,7 +174,8 @@ imbalance, looseness, misalignment) or `--twin fan-imbalance` (fan: healthy, imb
 and `--scale`. Results go to `runs/<run id>/results.json` with the videos and plots beside it. Scripts that call the
 pipeline need an `if __name__ == "__main__":` guard, or SAM mask decoding falls back to serial.
 
-**Tests** run offline (recorded API responses) in about 2 minutes after a first run that renders small twin clips:
+**Tests** run offline (recorded API responses, no key needed) in about 6 minutes on 4 cores, or about 13 minutes the
+first time, which renders the small twin clips:
 
 ```bash
 python -m pytest -q
@@ -163,4 +190,6 @@ Live API tests cost money and run only with `python -m pytest -m live`. Regenera
 **Layout.** `shake/` holds the pipeline: `ingest`, `twin` and `twin_fan` (renderers with complete truth), `measure`,
 `fingerprint` (rules), `magnify`, `meta_api` (client, cost, record and replay), `plan_parts`, `segment`, `diagnose`,
 `pipeline` and `web/` (FastAPI and one page). `scripts/` builds the accuracy tables, `docs/` holds the design, plan
-and results, and `reference/spike/` the Oct 27 spike this was ported from.
+and results, and `reference/spike/` the Oct 27 spike this was ported from. `demo/` builds the 3-minute demo video
+from replayed runs and is not part of the product; its narration is an AI voice (Sarvam Bulbul), which the organizers
+allow for the video. The product itself calls only Meta models.

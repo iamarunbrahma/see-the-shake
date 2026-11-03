@@ -1,6 +1,6 @@
 # Real test clips
 
-Real machines filmed by other people, under open licenses, for testing until Arun's own Redmi clips arrive.
+Real machines filmed by other people, under open licenses, used to test See the Shake on real footage.
 
 ## aeg-washer-120fps
 
