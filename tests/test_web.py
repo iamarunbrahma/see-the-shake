@@ -2,7 +2,6 @@
 import json
 import re
 import time
-from pathlib import Path
 
 import pytest
 from fastapi.testclient import TestClient

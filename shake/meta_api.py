@@ -382,15 +382,6 @@ class MetaAPI:
         log.info("uploaded %s (%s bytes) as %s", path.name, size, fid)
         return fid
 
-    def delete_file(self, file_id):
-        if self.mode == "replay":
-            return
-        try:
-            call_with_retries(lambda: self.client.files.delete(file_id), f"delete {file_id}", attempts=2,
-                              sleep=self._sleep)
-        except APIError as e:
-            log.warning("could not delete %s: %s", file_id, e)
-
     # Muse Spark
     def spark(self, content, label, schema=None, schema_name="answer", max_output_tokens=SPARK_OUTPUT_TOKENS,
               reasoning_effort=None, instructions=None):
