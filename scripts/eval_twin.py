@@ -140,7 +140,11 @@ def main(argv=None):
         "as the structure-weighted least-squares translation of the rotation field over the part's rest image "
         "(`twin.rocking_lever`), which is what any translation estimate of a rotating region aims at. The plain "
         "centroid displacement, and the error against it, are in `accuracy_rows.csv` "
-        "(`true_amp_centroid_px`, `amp_err_centroid`).",
+        "(`true_amp_centroid_px`, `amp_err_centroid`). The drum's speed drifts 0.4% at 0.2 Hz, which spreads the "
+        "higher orders over neighbouring bins in any spectrum, so each scored amplitude is the applied amplitude "
+        "times what a pure line at that order of the drifting speed reads in the pipeline's spectrum over the same "
+        "window (`evaluate.drift_factor`: 0.99 at 1x, 0.89 at 3x, 0.73 at 5x for 6 s). The applied amplitude is "
+        "in the CSV too (`true_amp_applied_px`); which components are scored still follows it.",
         "",
         f"## Main table: x264 crf {twin.CRF}, -tune grain, {int(1920 * a.scale)}x{int(1080 * a.scale)}",
         "",

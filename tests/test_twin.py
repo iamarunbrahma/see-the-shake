@@ -81,3 +81,14 @@ def test_render_writes_clip_truth_and_masks():
 def test_misalignment_has_strong_2x():
     comps = {o: (ax, ay) for o, ax, ay, _ in twin.FAULTS["misalignment"]}
     assert comps[2][0] > comps[1][0]
+
+
+def test_scored_truth_follows_the_drum_drift():
+    """The drum's 0.4% speed drift spreads 3x over neighbouring bins: over 6 s at 240 fps a pure 3x line reads about
+    11% under its applied amplitude in the pipeline's spectrum, and the scored truth says so (1x barely moves)."""
+    from shake import evaluate
+    truth = {"fps": 240, "drum": {"rpm": 1000.0, "drift_frac": twin.RPM_DRIFT, "drift_hz": twin.RPM_DRIFT_HZ}}
+    res = {"frames": 1440, "start_frame": 0}
+    k1, k3 = evaluate.drift_factor(truth, res, 1.0), evaluate.drift_factor(truth, res, 3.0, 0.7)
+    assert 0.98 < k1 <= 1.0 and 0.85 < k3 < 0.93
+    assert evaluate.drift_factor({"fps": 240}, res, 3.0) == 1.0  # no drift recorded: applied amplitude
