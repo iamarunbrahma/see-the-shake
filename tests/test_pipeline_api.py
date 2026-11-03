@@ -209,3 +209,13 @@ def test_real_rotor_replay_at_1000_rpm_matches_the_probes(tmp_path):
     lead = fp["parts"][fp["lead_part"]]["features"]
     assert 0.8 <= lead["r21"] <= 1.6 and 3.7 <= lead["velocity_rms"] <= 8.6, lead
     assert rr.pattern_verdict(now).startswith("misalignment")
+
+
+def test_live_twin_checks_its_recordings_before_rendering(tmp_path, monkeypatch):
+    """scripts/live_twin.py with the committed recordings in place used to render for 1 min 43 s, then stop."""
+    import importlib.util
+    spec = importlib.util.spec_from_file_location("live_twin", pipeline.ROOT / "scripts" / "live_twin.py")
+    lt = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(lt)
+    monkeypatch.setattr(lt.twin, "render", lambda *a, **k: pytest.fail("rendered before checking the recordings"))
+    assert lt.main(["--out", str(tmp_path), "--max-usd", "1.0"]) == 2

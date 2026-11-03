@@ -12,7 +12,9 @@ suite replays the run offline.
 
 usage: python scripts/live_twin.py [--faults imbalance ...] [--seed 1] [--seconds 6] [--out out/live]
                                     [--encoding grain|phone] [--fixtures DIR] [--overwrite] [--max-usd 2.0]
-Existing recordings are never replaced unless --overwrite is given.
+Existing recordings are never replaced unless --overwrite is given; every fault's recording is checked before
+anything is rendered or spent. To record a fresh set beside the committed one, give a new folder, for example
+--fixtures out/live/recordings.
 """
 import argparse
 import faulthandler
@@ -42,6 +44,11 @@ def clip_dir(out, fault, seed, seconds, encoding="grain"):
     return out / "clips" / (f"{fault}_seed{seed}_{seconds:g}s" + ("" if encoding == "grain" else f"_{encoding}"))
 
 
+def _exists_message(cassettes):
+    return (f"{', '.join(str(c) for c in cassettes)} already recorded. Record into a new folder with --fixtures DIR "
+            "(for example out/live/recordings), or pass --overwrite to replace the committed recordings.")
+
+
 def run_fault(fault, seed, seconds, out, fixtures, ledger_path, encoding="grain", overwrite=False):
     enc, scale, _ = ENCODINGS[encoding]
     d = clip_dir(out, fault, seed, seconds, encoding)
@@ -57,7 +64,7 @@ def run_fault(fault, seed, seconds, out, fixtures, ledger_path, encoding="grain"
     cassette = fx / "cassette.json.gz"
     if cassette.exists():
         if not overwrite:  # other tests replay recordings: never replace one by accident
-            raise SystemExit(f"{cassette} exists; pass --overwrite to re-record it")
+            raise SystemExit(_exists_message([cassette]))
         cassette.unlink()
     api = MetaAPI("record", cassette=cassette, ledger=Ledger(ledger_path))
     t0 = time.time()
@@ -189,6 +196,10 @@ def main(argv=None):
     a = p.parse_args(argv)
     faulthandler.enable()
     fixtures = Path(a.fixtures or ROOT / "tests" / "api" / "fixtures" / ENCODINGS[a.encoding][2])
+    existing = [fixtures / f / "cassette.json.gz" for f in a.faults if (fixtures / f / "cassette.json.gz").exists()]
+    if existing and not a.overwrite:  # before rendering anything or spending a cent
+        print(_exists_message(existing))
+        return 2
     out = Path(a.out)
     out.mkdir(parents=True, exist_ok=True)
     reports, spent = [], 0.0
