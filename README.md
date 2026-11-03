@@ -185,8 +185,11 @@ python -m pytest -q
 ```
 
 Live API tests cost money and run only with `python -m pytest -m live`. Regenerate the twin accuracy table with
-`python scripts/eval_twin.py --seeds 1 2 3 --seconds 6 --phone`, and the live twin runs (about 25 cents) with
-`python scripts/live_twin.py --max-usd 1.0`. Replay the real clips through the current code at no cost with
+`python scripts/eval_twin.py --seeds 1 2 3 --seconds 6 --phone`. Record a fresh set of live twin runs (about 25
+cents) into a separate folder with
+`python scripts/live_twin.py --fixtures out/live/recordings --out out/live --max-usd 1.0`; it never touches the
+committed recordings in `tests/api/fixtures/live/`, and without `--fixtures` it stops before rendering anything,
+since those are already recorded. Replay the real clips through the current code at no cost with
 `python scripts/replay_real.py --rotor-ref-height`, then compare with the probes with
 `python scripts/compare_rotor_probes.py --runs out/real_replay`.
 
