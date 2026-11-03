@@ -6,7 +6,8 @@ Rules, first match wins, applied to the part that vibrates most:
                  largest running-speed component; tiny distortion products far below it do not count)
 3. misalignment  2x at least half of 1x
 4. imbalance     1x holds at least 60% of the vibration energy
-5. unclear       anything else
+5. unclear       anything else, and always when running speed is no real peak (1x at the noise floor, so no order
+                 can be read)
 When the blade count of a fan is known, blades x running speed is blade pass: it stays in the velocity (severity is
 overall vibration) but is left out of every pattern feature (energy share, 2x/1x, harmonics), so it cannot push a
 verdict toward imbalance, misalignment or looseness. If the velocity crosses the alert only because of blade pass,
@@ -171,11 +172,13 @@ def part_features(entry, scale_mm_per_px, result=None, blades=None):
         pattern_peaks = [p for p in peaks if p not in bp_peaks]
     else:
         pattern_peaks = peaks
-    # energy: every non-flicker peak, with orders counted once from the order table
+    # energy: every peak left after the artifacts, with orders in the order table (0.5x to 6x) counted once at their
+    # amplitude over both axes, and other orders (3.5x, 7x and up) and non-synchronous peaks at their own amplitude
     sync = [p for p in pattern_peaks if p["order"] is not None]
-    nonsync_energy = sum(p["amp_px"] ** 2 for p in pattern_peaks if p["order"] is None)
-    order_keys = {f"{p['order']:g}x" for p in sync}
-    energy = sum(amp[k_] ** 2 for k_ in order_keys if k_ in amp) + nonsync_energy
+    other_energy = sum(p["amp_px"] ** 2 for p in pattern_peaks
+                       if p["order"] is None or f"{p['order']:g}x" not in amp)
+    order_keys = {f"{p['order']:g}x" for p in sync} & set(amp)
+    energy = sum(amp[k_] ** 2 for k_ in order_keys) + other_energy
     vel = vel_of(peaks)
     a_max = max(amp[k] for k in ["1x"] + HARMONIC_ORDERS)
     harmonics = [h for h in HARMONIC_ORDERS if present.get(h) and amp[h] >= HARMONIC_MIN_RATIO * a_max]
@@ -220,8 +223,9 @@ def _evidence(entry, labels, artifacts=()):
     return sorted(out, key=lambda e: (e["order"], e["axis"]))
 
 
-def classify(feat, alert):
-    """(verdict, confidence, reason) from one part's features."""
+def classify(feat, alert, running_speed_clear=True):
+    """(verdict, confidence, reason) from one part's features. running_speed_clear: whether the running speed is a
+    real peak; when it is not, no order can be read and the verdict above the alert is unclear."""
     v = feat["velocity_rms"]
     if v < alert:
         conf = "high" if v < 0.5 * alert else "medium"
@@ -233,6 +237,9 @@ def classify(feat, alert):
         return "blade_pass", conf, (f"high vibration at blade pass ({bp['blades']} blades x running speed, "
                                     f"{bp['hz']:.1f} Hz): {v:.2f} {feat['velocity_unit']}, {rest:.2f} without it; "
                                     "check the blades and the guard")
+    if not running_speed_clear:
+        return "unclear", "low", ("no clear peak at the running speed (1x is at the noise floor), so the fault "
+                                  "pattern cannot be read")
     if feat["half_order"] or feat["n_harmonics"] >= MIN_HARMONICS:
         why = []
         if feat["half_order"]:
@@ -258,7 +265,7 @@ def fingerprint(result, alert=None, blades=None):
     parts = {}
     for name, entry in result["parts"].items():
         feat = part_features(entry, mm, result, blades)
-        verdict, conf, reason = classify(feat, alert)
+        verdict, conf, reason = classify(feat, alert, result["running_speed"].get("clear", True))
         labels = {"none": set(), "imbalance": {"1x"}, "misalignment": {"1x", "2x"},
                   "looseness": {"0.5x", "1x"} | set(feat["harmonics"]), "unclear": set(),
                   "blade_pass": {feat["blade_pass"]["order"]} if feat.get("blade_pass") else set()}[verdict]
@@ -275,8 +282,13 @@ def fingerprint(result, alert=None, blades=None):
 
 
 def _notes(parts, result):
-    """Plain-words notes for the page: orders on the light flicker, and axes left out."""
+    """Plain-words notes for the page: running speed on the flicker, orders on it, and axes left out."""
     notes = []
+    g, seen = flicker_pattern(result)
+    f1 = result["running_speed"]["hz"]
+    if g and any(abs(f1 - k * g) <= SIDEBAND_TOL_BINS * result["bin_hz"] for k in range(1, int(f1 / g) + 2)):
+        notes.append(f"Running speed ({f1:.1f} Hz) coincides with the light flicker at {result['fps']:g} fps: 1x is "
+                     "kept, but it may include some flicker. Film in daylight or under DC lighting to be sure.")
     flick = sorted({k for p in parts.values() for k in p["features"].get("on_flicker_orders", {})},
                    key=lambda k: float(k[:-1]))
     if flick:

@@ -179,3 +179,94 @@ def test_surface_texture_turning_with_a_part_is_left_out(tmp_path, monkeypatch):
     assert before["excluded_texture_px"] == 0 and yb["3x"]["amp_px"] > 0.5 * yb["1x"]["amp_px"]
     assert e["excluded_texture_px"] > 0.6 * 40 * 40
     assert abs(y["1x"]["amp_px"] - 0.2) < 0.02 and y["3x"]["amp_px"] < 0.25 * yb["3x"]["amp_px"]
+
+
+def _made_up(f1, comps, fps=240.0, seconds=10.0, noise=0.003, seed=0, extra=()):
+    """Tracked series for one part ('machine') and a still background: comps [(order, amp_px)] on both axes at f1,
+    extra [(hz, amp_px)] at other frequencies, white tracking noise."""
+    rng = np.random.default_rng(seed)
+    t = np.arange(int(fps * seconds)) / fps
+    x = sum(a * np.sin(2 * np.pi * o * f1 * t + o) for o, a in comps) + sum(a * np.sin(2 * np.pi * h * t) for h, a in extra)
+    y = sum(a * np.cos(2 * np.pi * o * f1 * t + o) for o, a in comps) + sum(a * np.cos(2 * np.pi * h * t) for h, a in extra)
+    part = np.column_stack([x, y]) + rng.normal(0, noise, (len(t), 2))
+    return {"machine": part, "background": rng.normal(0, noise, (len(t), 2))}
+
+
+def _rules(series, fps=240.0, **kw):
+    from shake import fingerprint
+    res, _ = measure.analyse(series, ["machine"], fps, scale=measure.Scale(1.0, "test"), **kw)
+    return res, fingerprint.fingerprint(res)
+
+
+IMBALANCE = [(1, 0.3), (2, 0.02)]
+
+
+def test_a_range_with_no_real_peak_is_set_aside():
+    """QA H2: Spark said 20 to 200 rpm (clamped to 126 to 200) for a machine at 998 rpm. The range used to give a
+    noise bin at 3.33 Hz as 1x, the true 1x read as 5x and the verdict misalignment."""
+    res, fp = _rules(_made_up(16.64, IMBALANCE, seconds=6.0), rpm_range=(126, 200))
+    rs = res["running_speed"]
+    assert abs(rs["hz"] - 16.64) < 0.05 and rs["clear"] and rs["range_set_aside"] == [126, 200]
+    assert "set aside" in rs["source"] and any("holds no clear vibration peak" in n for n in rs["notes"])
+    assert fp["verdict"] == "imbalance"
+
+
+def test_a_much_stronger_peak_outside_the_range_sets_it_aside_unless_it_is_a_harmonic():
+    # the range holds a small real peak (a belt, say) while the machine's 1x, 25 times stronger, sits outside it
+    s = _made_up(16.64, IMBALANCE, extra=[(3.0, 0.012)])
+    res, fp = _rules(s, rpm_range=(150, 200))
+    assert abs(res["running_speed"]["hz"] - 16.64) < 0.05 and fp["verdict"] == "imbalance"
+    assert any("times stronger" in n for n in res["running_speed"]["notes"])
+    # a fan: the range holds 1x and blade pass (3x) is five times stronger outside it; the range stands
+    res, _ = _rules(_made_up(21.5, [(1, 0.05), (3, 0.25)]), rpm_range=(1200, 1400))
+    assert abs(res["running_speed"]["hz"] - 21.5) < 0.05 and res["running_speed"]["source"] == "rpm_range"
+    assert not res["running_speed"]["notes"]
+
+
+def test_an_entered_rpm_is_a_nameplate_value():
+    """QA H3: an induction motor turning 3% under the rpm entered read every peak as non-synchronous and the
+    verdict unclear. The running speed is now the strongest peak within 5%, and the page says where it settled."""
+    for true_rpm, entered in ((1450, 1500), (2900, 3000)):
+        res, fp = _rules(_made_up(true_rpm / 60, IMBALANCE), rpm=entered)
+        rs = res["running_speed"]
+        assert abs(rs["rpm"] - true_rpm) < 2 and rs["source"].startswith("entered rpm") and rs["clear"]
+        assert any(f"settled on {true_rpm} rpm" in n and f"the {entered} rpm entered" in n for n in rs["notes"])
+        assert fp["verdict"] == "imbalance", fp["reason"]
+    # an rpm entered right: no note
+    res, _ = _rules(_made_up(25.0, IMBALANCE), rpm=1500)
+    assert abs(res["running_speed"]["rpm"] - 1500) < 2 and not res["running_speed"]["notes"]
+
+
+def test_no_real_peak_at_the_running_speed_reads_unclear():
+    """Strong vibration nowhere near the rpm entered: no order can be read, so the verdict is unclear, not a fault."""
+    res, fp = _rules(_made_up(16.67, [(1, 0.0)], extra=[(37.3, 0.3)]), rpm=1000)
+    assert not res["running_speed"]["clear"] and any("noise floor" in n for n in res["running_speed"]["notes"])
+    assert fp["verdict"] == "unclear" and "noise floor" in fp["reason"]
+
+
+def test_running_speed_on_the_flicker_is_still_1x():
+    """QA M1: at 120 fps, 100 Hz flicker folds to 20 Hz; a 1x there was labelled flicker and the verdict was
+    none at 0.00 mm/s, while the same machine at 22 Hz read imbalance."""
+    for hz in (20.0, 22.0):
+        res, fp = _rules(_made_up(hz, IMBALANCE, fps=120.0), fps=120.0, rpm=hz * 60)
+        y = [p for p in res["parts"]["machine"]["axes"]["y"]["peaks"] if abs(p["hz"] - hz) < 0.2]
+        assert y and y[0]["label"] == "1x" and y[0]["order"] == 1.0
+        assert fp["verdict"] == "imbalance" and fp["parts"]["machine"]["features"]["velocity_rms"] > 7
+        assert any("coincides with the light flicker" in n for n in fp["notes"]) == (hz == 20.0)
+    # a peak at the flicker that is no low order is still labelled flicker
+    assert measure.label_order(20.0, 7.0, 0.1, flicker=20.0) == (None, "flicker")
+
+
+def test_the_energy_share_counts_orders_beyond_the_table():
+    """A 7x is a peak like any other: it lowers 1x's share of the energy (it used to be skipped)."""
+    res, fp = _rules(_made_up(10.0, [(1, 0.3), (7, 0.2)]), rpm=600)
+    f = fp["parts"]["machine"]["features"]
+    assert any(p["label"] == "7x" for p in res["parts"]["machine"]["axes"]["x"]["peaks"])
+    assert abs(f["e1_share"] - 0.09 / 0.13) < 0.03
+
+
+def test_one_velocity_per_part_and_named_for_what_it_is():
+    res, fp = _rules(_made_up(25.0, IMBALANCE), rpm=1500)
+    entry = res["parts"]["machine"]
+    assert "velocity_rms" not in entry and entry["velocity_rms_all_peaks"] > 0
+    assert fp["parts"]["machine"]["features"]["velocity_rms"] > 0

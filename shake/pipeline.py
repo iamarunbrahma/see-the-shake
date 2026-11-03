@@ -609,6 +609,7 @@ def run(clip, masks=None, runs_dir="runs", options=None, plan=None, segment=None
                                       rpm_range=rpm_range, scale=scale, mains_hz=options.mains_hz, ignore=ignore)
         results["measurement"] = res
         rs = res["running_speed"]
+        results["warnings"].extend(rs.get("notes", []))  # a range set aside, the speed an entered rpm settled on
         if rs.get("ambiguous"):
             alts = ", ".join(f"{h * 60:.0f}" for h in rs["alternatives_hz"])
             results["warnings"].append(f"The running speed is ambiguous: {rs['rpm']:.0f} rpm was taken, but {alts} rpm "
@@ -617,7 +618,7 @@ def run(clip, masks=None, runs_dir="runs", options=None, plan=None, segment=None
                        for e in res["parts"].values()), default=0.0)
         bg = res["background"]["axes"]
         bg_1x = float(np.hypot(bg["x"]["orders"]["1x"]["amp_px"], bg["y"]["orders"]["1x"]["amp_px"]))
-        if lead_1x > 0 and bg_1x >= BG_STEP_WARN * lead_1x:
+        if rs.get("clear", True) and lead_1x > 0 and bg_1x >= BG_STEP_WARN * lead_1x:
             results["warnings"].append(f"The background moves with the machine at running speed ({bg_1x / lead_1x:.0%} "
                                        "of the part's 1x): the camera or its support is shaking, or a moving part is "
                                        "not masked. Readings may be low.")

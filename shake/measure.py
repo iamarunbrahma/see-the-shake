@@ -282,50 +282,122 @@ def amplitude_at(f, A, hz, search_bins=1.5):
 
 HALF_SWITCH = 0.8  # a peak at half the strongest frequency this strong is taken as 1x (a big 2x over its 1x)
 AMBIGUOUS = 0.5  # half or double the chosen speed this strong in the range: say the running speed is ambiguous
+RPM_TOL = 0.05  # an entered rpm is a nameplate value: induction motors run 2 to 4% under it
+OUTSIDE_RATIO = 4.0  # a peak outside the rpm range this much stronger, and no harmonic of it, sets the range aside
+HARMONIC_N = range(2, 7)  # multiples of the in-range peak that a stronger peak outside it may be (2x, blade pass)
 
 
-def running_speed(f, power, rpm=None, rpm_range=None, detail=False):
-    """Running speed in Hz from summed spectral power: the user's RPM (snapped to the nearest strong bin),
-    else the strongest peak inside the RPM range, else the strongest peak overall.
+def _is_peak(A, k, floor):
+    """A real peak: above the peak threshold and a local maximum, not the edge of a slope."""
+    return bool(0 < k < len(A) - 1 and A[k] > PEAK_FACTOR * floor and A[k] >= A[k - 1] and A[k] >= A[k + 1])
 
-    A wide range can hold both f and 2f. If the peak at half the strongest frequency is nearly as strong
-    (HALF_SWITCH), that half is taken as 1x: a 2x that large over a matching 1x is far more common than a 0.5x
-    that large. If half or double the chosen speed is merely strong (AMBIGUOUS), the result is marked ambiguous so
-    the user can be asked for the rpm. With detail=True returns (hz, source, info)."""
+
+def _pick(f, A, sel, floor, info):
+    """The strongest bin in sel, taken at half its frequency when that is nearly as strong (HALF_SWITCH), and
+    marked ambiguous when half or double the result is merely strong (AMBIGUOUS). Returns (hz, amp, half_taken)."""
+    df = f[1] - f[0]
+    idx = np.flatnonzero(sel)
+    k = int(idx[np.argmax(A[sel])])
+    hz, amp = refine(f, A, k)
+    lo, hi = f[idx[0]] - df, f[idx[-1]] + df
+    inside = lambda h: lo <= h <= hi and F_MIN < h < f[-1] - 1  # noqa: E731
+    half_taken = False
+    if inside(hz / 2):
+        a_h, f_h, k_h = amplitude_at(f, A, hz / 2)
+        if a_h >= HALF_SWITCH * amp and _is_peak(A, k_h, floor):
+            info["alternatives_hz"].append(round(hz, 3))
+            hz, amp, half_taken = f_h, a_h, True
+    for h in (hz / 2, hz * 2):
+        if inside(h):
+            a_h, f_h, k_h = amplitude_at(f, A, h)
+            if a_h >= AMBIGUOUS * amp and _is_peak(A, k_h, floor) and round(f_h, 3) not in info["alternatives_hz"]:
+                info["alternatives_hz"].append(round(f_h, 3))
+    info["ambiguous"] = bool(info["alternatives_hz"])
+    return hz, amp, half_taken
+
+
+def _bin(f, A, hz):
+    """The largest bin next to the bin nearest hz (a refined peak frequency sits within half a bin of its bin)."""
+    k = int(np.argmin(np.abs(f - hz)))
+    return max(range(max(1, k - 1), min(len(A) - 1, k + 2)), key=lambda j: A[j])
+
+
+def _harmonic_of(h, hz, df):
+    return any(abs(h - n * hz) <= max(1.5 * df, 0.02 * h) for n in HARMONIC_N)
+
+
+def running_speed(f, power, rpm=None, rpm_range=None, detail=False, avoid=()):
+    """Running speed in Hz from summed spectral power.
+
+    - rpm entered: the strongest peak within RPM_TOL of it (a nameplate rpm is a few percent high under load).
+    - rpm range (Spark's, or the user's): the strongest peak inside it. A range that holds no real peak, or that a
+      much stronger peak outside it shows to be wrong (OUTSIDE_RATIO, and not a harmonic of the in-range peak), is
+      set aside with a note, and the strongest peak overall is taken.
+    - neither: the strongest peak overall. Frequencies in avoid (the light flicker) are never taken from outside a
+      range.
+    A wide range or the whole spectrum can hold both f and 2f. If the peak at half the strongest frequency is nearly
+    as strong (HALF_SWITCH), that half is taken as 1x: a 2x that large over a matching 1x is far more common than a
+    0.5x that large. If half or double the chosen speed is merely strong (AMBIGUOUS), the result is marked ambiguous
+    so the user can be asked for the rpm. info["clear"] is False when the speed taken is no real peak (1x at the
+    noise floor); info["notes"] says what was set aside and what the speed settled on. With detail=True returns
+    (hz, source, info)."""
     df = f[1] - f[0]
     A = np.sqrt(power)
     band = (f > F_MIN) & (f < f[-1] - 1)
-    info = {"ambiguous": False, "alternatives_hz": []}
+    floor = float(np.median(A[band]))
+    keep = band.copy()
+    for h in avoid:
+        if h:
+            keep &= np.abs(f - h) > 1.5 * df
+    info = {"ambiguous": False, "alternatives_hz": [], "clear": True, "notes": []}
+    out = None
     if rpm:
-        hz = rpm / 60.0
-        _, rf, _ = amplitude_at(f, A, hz, search_bins=1.5)
-        out = (rf, "rpm")
+        hz0 = rpm / 60.0
+        sel = band & (f >= hz0 * (1 - RPM_TOL) - df / 2) & (f <= hz0 * (1 + RPM_TOL) + df / 2)
+        k = int(np.flatnonzero(sel)[np.argmax(A[sel])]) if sel.any() else None
+        info["entered_rpm"] = float(rpm)
+        if k is not None and _is_peak(A, k, floor):
+            hz = refine(f, A, k)[0]
+            out = (hz, "entered rpm, strongest peak within 5%")
+            off = hz * 60 / rpm - 1
+            if abs(off) >= 0.01:
+                info["notes"].append(f"The running speed settled on {hz * 60:.0f} rpm, {abs(off):.1%} "
+                                     f"{'under' if off < 0 else 'over'} the {rpm:.0f} rpm entered: it is the "
+                                     "strongest peak within 5% (motors run a few percent under their nameplate).")
+        else:
+            out = (amplitude_at(f, A, hz0, search_bins=1.5)[1], "entered rpm")
     elif rpm_range:
         lo, hi = rpm_range[0] / 60.0, rpm_range[1] / 60.0
         sel = band & (f >= lo - df) & (f <= hi + df)
         if sel.any():
-            k = int(np.flatnonzero(sel)[np.argmax(A[sel])])
-            hz, amp = refine(f, A, k)
-            source = "rpm_range"
-            inside = lambda h: lo - df <= h <= hi + df  # noqa: E731
-            half = amplitude_at(f, A, hz / 2)[:2] if inside(hz / 2) and hz / 2 > F_MIN else (0.0, None)
-            if half[1] is not None and half[0] >= HALF_SWITCH * amp:
-                info["alternatives_hz"].append(round(hz, 3))
-                hz, amp, source = half[1], half[0], "rpm_range, half of the strongest peak"
-            for h in (hz / 2, hz * 2):
-                if inside(h) and h > F_MIN and h < f[-1] - 1:
-                    a_h, f_h, _ = amplitude_at(f, A, h)
-                    if a_h >= AMBIGUOUS * amp and round(f_h, 3) not in info["alternatives_hz"]:
-                        info["alternatives_hz"].append(round(f_h, 3))
-            info["ambiguous"] = bool(info["alternatives_hz"])
-            out = (hz, source)
-        else:
-            out = None
-    else:
-        out = None
+            trial = {"ambiguous": False, "alternatives_hz": []}
+            hz, amp, half = _pick(f, A, sel, floor, trial)
+            k = _bin(f, A, hz)
+            others = keep & ~sel
+            k_g = int(np.flatnonzero(others)[np.argmax(A[others])]) if others.any() else None
+            stronger = (k_g is not None and _is_peak(A, k_g, floor) and A[k_g] >= OUTSIDE_RATIO * amp
+                        and not _harmonic_of(f[k_g], hz, df))
+            rng = f"{rpm_range[0]:.0f} to {rpm_range[1]:.0f} rpm"
+            if not _is_peak(A, k, floor) and not half:
+                info["notes"].append(f"The rpm range {rng} holds no clear vibration peak, so it was set aside and "
+                                     "the strongest peak was taken as the running speed. Enter the rpm if you know it.")
+            elif stronger:
+                info["notes"].append(f"A peak at {f[k_g] * 60:.0f} rpm, {A[k_g] / amp:.0f} times stronger than "
+                                     f"anything in the rpm range {rng}, shows the range is wrong, so it was set "
+                                     "aside. Enter the rpm if you know it.")
+            else:
+                info.update(trial)
+                out = (hz, "rpm_range, half of the strongest peak" if half else "rpm_range")
+            if out is None:
+                info["range_set_aside"] = list(rpm_range)
     if out is None:
-        k = int(np.flatnonzero(band)[np.argmax(A[band])])
-        out = (refine(f, A, k)[0], "strongest_peak")
+        hz, amp, half = _pick(f, A, keep if keep.any() else band, floor, info)
+        source = "strongest_peak, half of it" if half else "strongest_peak"
+        out = (hz, source + (" (the rpm range was set aside)" if info.get("range_set_aside") else ""))
+    info["clear"] = _is_peak(A, _bin(f, A, out[0]), floor)
+    if not info["clear"]:
+        info["notes"].append(f"No clear peak at the running speed ({out[0] * 60:.0f} rpm): 1x is at the noise "
+                             "floor, so the fault pattern cannot be read. Enter the rpm, or film closer.")
     return (*out, info) if detail else out
 
 
@@ -345,13 +417,16 @@ def axis_confidence(ref, weight):
 
 def label_order(hz, f1, df, flicker=None):
     """'0.5x', '1x', '2x' ... when within tolerance of a half-integer order, else 'non-synchronous'.
-    A peak at the light-flicker frequency is labelled 'flicker' and given no order, even if it sits on one."""
-    if flicker is not None and abs(hz - flicker) <= 1.5 * df:
+    A peak at the light-flicker frequency is labelled 'flicker' and given no order, even if it sits on one, except
+    1x and 0.5x: running speed itself is never discounted (the rules judge higher orders on the flicker by their
+    strength, see fingerprint.on_flicker)."""
+    o = round(2 * hz / f1) / 2 if f1 > 0 else 0.0
+    on_order = o >= 0.5 and abs(hz - o * f1) <= max(1.5 * df, 0.02 * hz)
+    if flicker is not None and abs(hz - flicker) <= 1.5 * df and not (on_order and o <= 1):
         return None, "flicker"
     if f1 <= 0:
         return None, "unknown"
-    o = round(2 * hz / f1) / 2
-    if o >= 0.5 and abs(hz - o * f1) <= max(1.5 * df, 0.02 * hz):
+    if on_order:
         return float(o), f"{o:g}x"
     return None, "non-synchronous"
 
@@ -468,42 +543,55 @@ def measure(path, masks, fps, start=0, count=None, rpm=None, rpm_range=None, sca
 
     Returns (result dict, arrays dict). The result is JSON-ready; arrays holds series and spectra for plots.
     """
-    scale = scale or Scale()
     series, aux = track(path, masks, start, count, exclude_rotating, workers, ignore)
+    return analyse(series, list(masks), fps, start=start, rpm=rpm, rpm_range=rpm_range, scale=scale,
+                   mains_hz=mains_hz, aux=aux)
+
+
+def analyse(series, parts, fps, start=0, rpm=None, rpm_range=None, scale=None, mains_hz=MAINS_HZ, aux=None):
+    """Spectra, running speed, order tables and peaks from tracked series ({part: (n, 2) px, 'background': ...}).
+    aux: track()'s second return (pixel noise, excluded pixels, weights); None for series made up in tests."""
+    scale = scale or Scale()
     n = len(series["background"])
-    rel = {k: series[k] - series["background"] for k in masks}
+    rel = {k: series[k] - series["background"] for k in parts}
     # running speed from the summed power of every part, both axes
     f = None
     power = 0
-    for k in masks:
+    for k in parts:
         for ai in range(2):
             f, Z = spectrum(rel[k][:, ai], fps)
             power = power + np.abs(Z) ** 2
-    f1, f1_source, f1_info = running_speed(f, power, rpm=rpm, rpm_range=rpm_range, detail=True)
+    f1, f1_source, f1_info = running_speed(f, power, rpm=rpm, rpm_range=rpm_range, detail=True,
+                                           avoid=(flicker_hz(fps, mains_hz),))
     df = f[1] - f[0]
     result = {"fps": fps, "frames": n, "start_frame": start, "seconds": round(n / fps, 4), "bin_hz": round(df, 5),
               "nyquist_hz": fps / 2, "running_speed": {"hz": round(f1, 4), "rpm": round(f1 * 60, 1), "source": f1_source,
                                                        **f1_info},
               "scale": {"mm_per_px": scale.mm_per_px, "basis": scale.basis},
-              "flicker_hz": flicker_hz(fps, mains_hz), "pixel_noise_grey": round(aux["pixel_noise"], 4), "parts": {}}
+              "flicker_hz": flicker_hz(fps, mains_hz),
+              "pixel_noise_grey": round(aux["pixel_noise"], 4) if aux else None, "parts": {}}
     arrays = {"series": series, "rel": rel, "spectra": {}}
-    for k in list(masks) + ["background"]:
+    for k in list(parts) + ["background"]:
         x = rel[k] if k in rel else series[k]
         axes = {}
         for ai, axis in enumerate("xy"):
             axes[axis], arrays["spectra"][(k, axis)] = analyse_axis(x[:, ai], fps, f1, scale, mains_hz)
+        # every peak of both axes, artifacts and weak axes included; the rules' velocity, which leaves those out,
+        # is the fingerprint's features["velocity_rms"]
         v = velocity_rms(axes["x"]["peaks"], axes["y"]["peaks"], scale.mm_per_px)
-        entry = {"axes": axes, "velocity_rms": round(v, 3), "velocity_unit": "mm/s" if scale.mm_per_px else "px/s"}
-        if k in masks:
-            entry["excluded_rotating_px"] = aux["excluded_px"][k]
-            entry["excluded_texture_px"] = aux["texture_px"][k]
-            entry["axis_confidence"] = axis_confidence(aux["ref"], aux["weights"][k])
+        entry = {"axes": axes, "velocity_rms_all_peaks": round(v, 3),
+                 "velocity_unit": "mm/s" if scale.mm_per_px else "px/s"}
+        if k in rel:
+            if aux:
+                entry["excluded_rotating_px"] = aux["excluded_px"][k]
+                entry["excluded_texture_px"] = aux["texture_px"][k]
+                entry["axis_confidence"] = axis_confidence(aux["ref"], aux["weights"][k])
             result["parts"][k] = entry
         else:
             result["background"] = entry
     # The background's amplitude at each part peak: whole-frame artifacts (the encoder's, a flicker pattern) show
     # in the background's motion too, real part motion does not. New fields only; nothing above changes.
-    for k in masks:
+    for k in parts:
         for axis in "xy":
             fb, Ab = arrays["spectra"][("background", axis)]
             for p in result["parts"][k]["axes"][axis]["peaks"]:
