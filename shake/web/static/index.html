@@ -368,7 +368,7 @@ function showResults(r, base, fromCache) {
     `${fmt(m.seconds, 1)} s analysed at ${m.fps} fps, frequency resolution ${fmt(m.bin_hz, 2)} Hz. ` +
     `Overall velocity ${fmt(fp.parts[fp.lead_part].features.velocity_rms, 1)} ${fp.parts[fp.lead_part].features.velocity_unit} RMS; alert level ${fp.alert_level} ${fp.alert_unit}.`;
 
-  showPlan(r); showDiagnosis(r);
+  showPlan(r); showDiagnosis(r, fromCache);
   $("cost").textContent = r.api ? costText(r.api, fromCache) : "";
 
   const v = $("video"); v.src = base + r.files.side_by_side + "?v=" + r.run_id; v.load();
@@ -410,9 +410,10 @@ function costText(api, fromCache) {
   const u = api.usd || {};
   const parts = [["plan", "Spark plan"], ["segment", "SAM 3.1"], ["diagnose", "Spark diagnosis"]]
     .filter(([k]) => u[k] !== undefined).map(([k, label]) => `${label} ${usd(u[k])}`);
-  const how = fromCache ? "charged when this run was first made; shown again from the cache at no cost"
-    : api.mode === "replay" ? "recorded calls, not charged again" : "charged";
-  return `Meta Model API cost: ${usd(u.total)} (${how})` + (parts.length ? `: ${parts.join(", ")}.` : ".");
+  const detail = parts.length ? ` (${parts.join(", ")})` : "";
+  if (api.mode === "replay") return `Recorded run: no calls made, no cost. The original live run cost ${usd(u.total)}${detail}.`;
+  if (fromCache) return `Shown from the cache: no calls made, no cost. This run cost ${usd(u.total)}${detail} when it was first made.`;
+  return `Meta Model API cost: ${usd(u.total)} (charged)` + (parts.length ? `: ${parts.join(", ")}.` : ".");
 }
 
 function list(node, title, items) {
@@ -474,7 +475,7 @@ function showVisual(body, v) {
   body.appendChild(el("p", "Checked against the measured motion inside the magnification band. Rocking cannot be confirmed by translation tracking, so it is always unverifiable.", "hint"));
 }
 
-function showDiagnosis(r) {
+function showDiagnosis(r, fromCache) {
   const dg = r.diagnosis || {}, body = $("diagnosis-body"); clear(body);
   $("both").textContent = "";
   if (dg.status === "not_connected") {
@@ -515,7 +516,13 @@ function showDiagnosis(r) {
   showVisual(body, sp.visual);
   list(body, "How to fix it", sp.fix);
   list(body, "What to check next", sp.check_next);
-  if (dg.usd !== undefined) body.appendChild(el("p", "Cost of this answer: " + usd(dg.usd), "hint cost"));
+  if (dg.usd !== undefined) {
+    const recorded = r.api && r.api.mode === "replay";
+    const line = recorded ? `Recorded answer: no call made, no cost. The original answer cost ${usd(dg.usd)}.`
+      : fromCache ? `Shown from the cache: no call made, no cost. This answer cost ${usd(dg.usd)} when it was first made.`
+      : "Cost of this answer: " + usd(dg.usd);
+    body.appendChild(el("p", line, "hint cost"));
+  }
 }
 
 $("form-twin").onsubmit = (e) => {
