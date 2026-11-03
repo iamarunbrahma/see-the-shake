@@ -1,0 +1,24 @@
+{"ts": 1793690140.708, "op": "upload", "model": "files", "label": "healthy:plan:preview", "bytes": 128401, "file_id": "file-4216756805289575", "usd": 0.0, "replayed": false}
+{"ts": 1793690165.605, "op": "spark", "model": "muse-spark-1.3", "label": "healthy:plan", "usage": {"input_tokens": 4494, "output_tokens": 2806, "reasoning_tokens": 2711, "cached_tokens": 0}, "usd": 0.017543, "status": "completed", "replayed": false}
+{"ts": 1793690178.11, "op": "upload", "model": "files", "label": "healthy:segment:subclip", "bytes": 4369245, "file_id": "file-29942457932023055", "usd": 0.0, "replayed": false}
+{"ts": 1793690182.387, "op": "sam", "model": "sam-3.1", "label": "washing machine", "frames_billed": 60, "frames_sent": 60, "usd": 0.012, "replayed": false}
+{"ts": 1793690183.882, "op": "sam", "model": "sam-3.1", "label": "washing machine front door", "frames_billed": 60, "frames_sent": 60, "usd": 0.012, "replayed": false}
+{"ts": 1793690374.937, "op": "spark", "model": "muse-spark-1.3", "label": "healthy:diagnose", "usage": {"input_tokens": 1846, "output_tokens": 2371, "reasoning_tokens": 2154, "cached_tokens": 0}, "usd": 0.012384, "status": "completed", "replayed": false}
+{"ts": 1793690521.397, "op": "upload", "model": "files", "label": "imbalance:plan:preview", "bytes": 141677, "file_id": "file-1593940388721853", "usd": 0.0, "replayed": false}
+{"ts": 1793690534.314, "op": "spark", "model": "muse-spark-1.3", "label": "imbalance:plan", "usage": {"input_tokens": 4494, "output_tokens": 1737, "reasoning_tokens": 1619, "cached_tokens": 0}, "usd": 0.013, "status": "completed", "replayed": false}
+{"ts": 1793690548.21, "op": "upload", "model": "files", "label": "imbalance:segment:subclip", "bytes": 4472289, "file_id": "file-1166715722700479", "usd": 0.0, "replayed": false}
+{"ts": 1793690552.619, "op": "sam", "model": "sam-3.1", "label": "washing machine", "frames_billed": 60, "frames_sent": 60, "usd": 0.012, "replayed": false}
+{"ts": 1793690553.006, "op": "sam", "model": "sam-3.1", "label": "washing machine front door", "frames_billed": 60, "frames_sent": 60, "usd": 0.012, "replayed": false}
+{"ts": 1793690762.17, "op": "spark", "model": "muse-spark-1.3", "label": "imbalance:diagnose", "usage": {"input_tokens": 1940, "output_tokens": 2951, "reasoning_tokens": 2660, "cached_tokens": 0}, "usd": 0.014967, "status": "completed", "replayed": false}
+{"ts": 1793690909.651, "op": "upload", "model": "files", "label": "looseness:plan:preview", "bytes": 139776, "file_id": "file-1435961265181225", "usd": 0.0, "replayed": false}
+{"ts": 1793690924.39, "op": "spark", "model": "muse-spark-1.3", "label": "looseness:plan", "usage": {"input_tokens": 4494, "output_tokens": 2065, "reasoning_tokens": 1971, "cached_tokens": 0}, "usd": 0.014394, "status": "completed", "replayed": false}
+{"ts": 1793690937.466, "op": "upload", "model": "files", "label": "looseness:segment:subclip", "bytes": 4441406, "file_id": "file-1649546076809445", "usd": 0.0, "replayed": false}
+{"ts": 1793690942.202, "op": "sam", "model": "sam-3.1", "label": "washing machine", "frames_billed": 60, "frames_sent": 60, "usd": 0.012, "replayed": false}
+{"ts": 1793690942.375, "op": "sam", "model": "sam-3.1", "label": "washing machine front door", "frames_billed": 60, "frames_sent": 60, "usd": 0.012, "replayed": false}
+{"ts": 1793691130.106, "op": "spark", "model": "muse-spark-1.3", "label": "looseness:diagnose", "usage": {"input_tokens": 2282, "output_tokens": 3030, "reasoning_tokens": 2562, "cached_tokens": 0}, "usd": 0.01573, "status": "completed", "replayed": false}
+{"ts": 1793691271.595, "op": "upload", "model": "files", "label": "misalignment:plan:preview", "bytes": 135391, "file_id": "file-1403334866202779", "usd": 0.0, "replayed": false}
+{"ts": 1793691281.146, "op": "spark", "model": "muse-spark-1.3", "label": "misalignment:plan", "usage": {"input_tokens": 4494, "output_tokens": 1190, "reasoning_tokens": 1070, "cached_tokens": 0}, "usd": 0.010675, "status": "completed", "replayed": false}
+{"ts": 1793691294.617, "op": "upload", "model": "files", "label": "misalignment:segment:subclip", "bytes": 4483160, "file_id": "file-2002850947790339", "usd": 0.0, "replayed": false}
+{"ts": 1793691299.581, "op": "sam", "model": "sam-3.1", "label": "washing machine", "frames_billed": 60, "frames_sent": 60, "usd": 0.012, "replayed": false}
+{"ts": 1793691302.03, "op": "sam", "model": "sam-3.1", "label": "washing machine front door", "frames_billed": 60, "frames_sent": 60, "usd": 0.012, "replayed": false}
+{"ts": 1793691477.109, "op": "spark", "model": "muse-spark-1.3", "label": "misalignment:diagnose", "usage": {"input_tokens": 2075, "output_tokens": 2595, "reasoning_tokens": 2275, "cached_tokens": 0}, "usd": 0.013623, "status": "completed", "replayed": false}

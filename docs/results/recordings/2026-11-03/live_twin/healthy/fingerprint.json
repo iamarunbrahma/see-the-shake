@@ -1,0 +1,107 @@
+{
+ "verdict": "none",
+ "confidence": "medium",
+ "reason": "velocity 3.94 mm/s is below the alert level 7",
+ "lead_part": "washing machine",
+ "evidence": [],
+ "alert_level": 7.0,
+ "alert_unit": "mm/s",
+ "scaled": true,
+ "phase_1x_x_rad": {
+  "washing machine -> washing machine front door": -0.042
+ },
+ "blades": null,
+ "notes": [
+  "At 999 rpm, 5x, 6x land on the light flicker (100 Hz from the mains) or its sidebands; they count only when at least 50% of 1x. Film in daylight or under DC lighting to be sure."
+ ],
+ "parts": {
+  "washing machine": {
+   "features": {
+    "amp_1x_px": 0.0441,
+    "e1_share": 1.0,
+    "r21": 0.009,
+    "r31": 0.008,
+    "harmonics": [],
+    "n_harmonics": 0,
+    "faint_harmonics": [],
+    "half_order": false,
+    "half_ratio": 0.012,
+    "h_over_v_1x": 3.075,
+    "velocity_rms": 3.945,
+    "velocity_unit": "mm/s",
+    "present": {
+     "1x": true
+    },
+    "artifacts": [
+     {
+      "axis": "y",
+      "hz": 79.991,
+      "label": "non-synchronous",
+      "amp_px": 0.00127,
+      "bg_amp_px": 0.00077,
+      "kind": "whole frame"
+     }
+    ],
+    "blade_pass": null,
+    "weak_axes": [],
+    "on_flicker_orders": {
+     "5x": "left out",
+     "6x": "left out"
+    },
+    "velocity_without_blade_pass": null
+   },
+   "verdict": "none",
+   "confidence": "medium",
+   "reason": "velocity 3.94 mm/s is below the alert level 7",
+   "evidence": []
+  },
+  "washing machine front door": {
+   "features": {
+    "amp_1x_px": 0.02287,
+    "e1_share": 1.0,
+    "r21": 0.02,
+    "r31": 0.022,
+    "harmonics": [],
+    "n_harmonics": 0,
+    "faint_harmonics": [],
+    "half_order": false,
+    "half_ratio": 0.022,
+    "h_over_v_1x": 1.374,
+    "velocity_rms": 2.046,
+    "velocity_unit": "mm/s",
+    "present": {
+     "1x": true
+    },
+    "artifacts": [
+     {
+      "axis": "x",
+      "hz": 63.348,
+      "label": "non-synchronous",
+      "amp_px": 0.00162,
+      "bg_amp_px": 0.0002,
+      "kind": "flicker sideband"
+     },
+     {
+      "axis": "x",
+      "hz": 99.991,
+      "label": "flicker",
+      "amp_px": 0.00165,
+      "bg_amp_px": 0.00046,
+      "kind": "flicker"
+     }
+    ],
+    "blade_pass": null,
+    "weak_axes": [],
+    "on_flicker_orders": {
+     "5x": "left out",
+     "6x": "left out"
+    },
+    "velocity_without_blade_pass": null
+   },
+   "verdict": "none",
+   "confidence": "high",
+   "reason": "velocity 2.05 mm/s is below the alert level 7",
+   "evidence": []
+  }
+ }
+}

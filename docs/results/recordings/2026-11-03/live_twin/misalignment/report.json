@@ -1,0 +1,337 @@
+{
+ "fault": "misalignment",
+ "seed": 1,
+ "seconds": 6.0,
+ "expected_verdict": "misalignment",
+ "encoding": {
+  "name": "grain",
+  "codec": "libx264",
+  "crf": 16,
+  "preset": "veryfast",
+  "tune": "grain",
+  "pix_fmt": "yuv420p"
+ },
+ "size": [
+  1920,
+  1080
+ ],
+ "out_scale": 1.0,
+ "window": {
+  "start_frame": 0,
+  "frames": 1440
+ },
+ "fps": 240.0,
+ "plan": {
+  "machine_type": "washing machine",
+  "rpm_range": [
+   400.0,
+   1600.0
+  ],
+  "rpm_reason": "Front loader on spin typically runs between 400 and 1600 rpm.",
+  "parts": [
+   "washing machine",
+   "washing machine front door"
+  ],
+  "parts_not_clear": [],
+  "rotating_parts_seen": [
+   "drum",
+   "laundry"
+  ],
+  "warnings": []
+ },
+ "true_rpm": 1000.0,
+ "rpm_in_plan_range": true,
+ "segment": {
+  "subclip": {
+   "start_frame": 690,
+   "frames": 60
+  },
+  "missing": [],
+  "added_for_iou": [],
+  "parts": {
+   "washing machine": {
+    "objects": 1,
+    "frames_sent": 60,
+    "found": true,
+    "object_id": "0",
+    "frames_returned": 60,
+    "frames_decoded": 8,
+    "present_share": 1.0,
+    "confidence": 0.9494,
+    "area_px": 343663,
+    "bbox": [
+     712,
+     187,
+     1208,
+     887
+    ],
+    "unstable_share": 0.0132,
+    "frames_billed": 60,
+    "usd": 0.012
+   },
+   "washing machine front door": {
+    "objects": 1,
+    "frames_sent": 60,
+    "found": true,
+    "object_id": "0",
+    "frames_returned": 58,
+    "frames_decoded": 8,
+    "present_share": 0.967,
+    "confidence": 0.7816,
+    "area_px": 95222,
+    "bbox": [
+     787,
+     402,
+     1141,
+     750
+    ],
+    "unstable_share": 0.017,
+    "frames_billed": 60,
+    "usd": 0.012
+   }
+  }
+ },
+ "iou": {
+  "washing machine": {
+   "iou": 0.9793,
+   "phrase": "washing machine",
+   "added_for_iou": false
+  },
+  "door": {
+   "iou": 0.9805,
+   "phrase": "washing machine front door",
+   "added_for_iou": false
+  }
+ },
+ "measured_parts": [
+  "washing machine",
+  "washing machine front door"
+ ],
+ "scale_basis": "washing machine width = 600 mm over 496 px",
+ "running_speed": {
+  "hz": 16.6356,
+  "rpm": 998.1,
+  "source": "rpm_range",
+  "ambiguous": false,
+  "alternatives_hz": [],
+  "clear": true,
+  "notes": []
+ },
+ "rule_verdict": "misalignment",
+ "rule_confidence": "high",
+ "rule_reason": "2x is 3.14 of 1x",
+ "rule_ok": true,
+ "spark": {
+  "fault": "misalignment",
+  "confidence_reported": "high",
+  "confidence": "high",
+  "agrees": true,
+  "supported": true,
+  "cap_reasons": [],
+  "counts": {
+   "verified": 2,
+   "context": 3,
+   "dropped": 0
+  },
+  "error": null
+ },
+ "card": {
+  "headline": {
+   "fault": "misalignment",
+   "confidence": "high",
+   "reason": "2x is 3.14 of 1x",
+   "lead_part": "washing machine",
+   "evidence": [
+    {
+     "axis": "x",
+     "hz": 16.627,
+     "order": 1.0,
+     "label": "1x",
+     "amp_px": 0.04451
+    },
+    {
+     "axis": "y",
+     "hz": 16.644,
+     "order": 1.0,
+     "label": "1x",
+     "amp_px": 0.05244
+    },
+    {
+     "axis": "x",
+     "hz": 33.289,
+     "order": 2.0,
+     "label": "2x",
+     "amp_px": 0.20073
+    },
+    {
+     "axis": "y",
+     "hz": 33.289,
+     "order": 2.0,
+     "label": "2x",
+     "amp_px": 0.07985
+    }
+   ],
+   "source": "fixed rules"
+  },
+  "spark": {
+   "fault": "misalignment",
+   "fault_reported": "misalignment",
+   "confidence": "high",
+   "confidence_reported": "high",
+   "capped": false,
+   "cap_reasons": [],
+   "agrees": true,
+   "supported": true,
+   "evidence": [
+    {
+     "part": "washing machine",
+     "frequency_hz": 16.627,
+     "order": "1x",
+     "matched": {
+      "part": "washing machine",
+      "axis": "x",
+      "hz": 16.627,
+      "label": "1x",
+      "amp_px": 0.04451,
+      "snr": 171.8
+     },
+     "status": "context",
+     "reason": "a real 1x peak, but it is not what this fault rests on"
+    },
+    {
+     "part": "washing machine",
+     "frequency_hz": 33.289,
+     "order": "2x",
+     "matched": {
+      "part": "washing machine",
+      "axis": "x",
+      "hz": 33.289,
+      "label": "2x",
+      "amp_px": 0.20073,
+      "snr": 774.7
+     },
+     "status": "verified",
+     "reason": "matches the measured 2x peak"
+    },
+    {
+     "part": "washing machine",
+     "frequency_hz": 49.94,
+     "order": "3x",
+     "matched": {
+      "part": "washing machine",
+      "axis": "x",
+      "hz": 49.94,
+      "label": "3x",
+      "amp_px": 0.03001,
+      "snr": 115.8
+     },
+     "status": "context",
+     "reason": "a real 3x peak, but it is not what this fault rests on"
+    },
+    {
+     "part": "washing machine front door",
+     "frequency_hz": 16.63,
+     "order": "1x",
+     "matched": {
+      "part": "washing machine front door",
+      "axis": "x",
+      "hz": 16.63,
+      "label": "1x",
+      "amp_px": 0.06791,
+      "snr": 232.3
+     },
+     "status": "context",
+     "reason": "a real 1x peak, but it is not what this fault rests on"
+    },
+    {
+     "part": "washing machine front door",
+     "frequency_hz": 33.289,
+     "order": "2x",
+     "matched": {
+      "part": "washing machine front door",
+      "axis": "x",
+      "hz": 33.289,
+      "label": "2x",
+      "amp_px": 0.19775,
+      "snr": 676.5
+     },
+     "status": "verified",
+     "reason": "matches the measured 2x peak"
+    }
+   ],
+   "counts": {
+    "verified": 2,
+    "context": 3,
+    "dropped": 0
+   },
+   "explanation": "The 2x peak near 33.29 Hz is about 3 times larger than the 1x peak on the main body, and the same pattern shows on the front door. That strong 2x with a clear 1x matches misalignment, not imbalance which would be 1x dominant. There is no 0.5x and no long row of harmonics for looseness, and velocity near 40 mm/s RMS is far above the 7 mm/s alert.",
+   "fix": [
+    "Stop the machine and disconnect power before touching it",
+    "Check the machine is level and all feet sit firmly on the floor",
+    "Redistribute the load and check the drum for bunched laundry",
+    "Inspect motor, belt, drum mounts and fasteners, then realign and tighten as needed"
+   ],
+   "check_next": [
+    "Recheck 1x and 2x levels after leveling and reloading",
+    "Check for knocking or movement that suggests loose feet or mounts",
+    "Confirm speed stays near 998 rpm under load"
+   ]
+  },
+  "show_both": false,
+  "spark_raw": {
+   "check_next": [
+    "Recheck 1x and 2x levels after leveling and reloading",
+    "Check for knocking or movement that suggests loose feet or mounts",
+    "Confirm speed stays near 998 rpm under load"
+   ],
+   "confidence": "high",
+   "evidence": [
+    {
+     "frequency_hz": 16.627,
+     "order": "1x",
+     "part": "washing machine"
+    },
+    {
+     "frequency_hz": 33.289,
+     "order": "2x",
+     "part": "washing machine"
+    },
+    {
+     "frequency_hz": 49.94,
+     "order": "3x",
+     "part": "washing machine"
+    },
+    {
+     "frequency_hz": 16.63,
+     "order": "1x",
+     "part": "washing machine front door"
+    },
+    {
+     "frequency_hz": 33.289,
+     "order": "2x",
+     "part": "washing machine front door"
+    }
+   ],
+   "explanation": "The 2x peak near 33.29 Hz is about 3 times larger than the 1x peak on the main body, and the same pattern shows on the front door. That strong 2x with a clear 1x matches misalignment, not imbalance which would be 1x dominant. There is no 0.5x and no long row of harmonics for looseness, and velocity near 40 mm/s RMS is far above the 7 mm/s alert.",
+   "fault": "misalignment",
+   "fix": [
+    "Stop the machine and disconnect power before touching it",
+    "Check the machine is level and all feet sit firmly on the floor",
+    "Redistribute the load and check the drum for bunched laundry",
+    "Inspect motor, belt, drum mounts and fasteners, then realign and tighten as needed"
+   ]
+  },
+  "usd": 0.013623,
+  "usage": {
+   "input_tokens": 2075,
+   "output_tokens": 2595
+  }
+ },
+ "costs_usd": {
+  "plan": 0.010675,
+  "segment": 0.024,
+  "diagnose": 0.013623,
+  "total": 0.048298
+ },
+ "seconds_elapsed": 232.7
+}

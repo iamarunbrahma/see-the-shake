@@ -1,0 +1,248 @@
+{
+ "fault": "healthy",
+ "seed": 1,
+ "seconds": 6.0,
+ "expected_verdict": "none",
+ "encoding": {
+  "name": "grain",
+  "codec": "libx264",
+  "crf": 16,
+  "preset": "veryfast",
+  "tune": "grain",
+  "pix_fmt": "yuv420p"
+ },
+ "size": [
+  1920,
+  1080
+ ],
+ "out_scale": 1.0,
+ "window": {
+  "start_frame": 0,
+  "frames": 1440
+ },
+ "fps": 240.0,
+ "plan": {
+  "machine_type": "washing machine",
+  "rpm_range": [
+   126.0,
+   1600.0
+  ],
+  "rpm_reason": "Typical front loader range covers gentle wash tumble to high speed spin.",
+  "parts": [
+   "washing machine",
+   "washing machine front door"
+  ],
+  "parts_not_clear": [],
+  "rotating_parts_seen": [
+   "drum",
+   "clothes"
+  ],
+  "warnings": [
+   "rpm range clamped from 30-1600 to 126-1600 (measurable band)"
+  ]
+ },
+ "true_rpm": 1000.0,
+ "rpm_in_plan_range": true,
+ "segment": {
+  "subclip": {
+   "start_frame": 690,
+   "frames": 60
+  },
+  "missing": [],
+  "added_for_iou": [],
+  "parts": {
+   "washing machine": {
+    "objects": 1,
+    "frames_sent": 60,
+    "found": true,
+    "object_id": "0",
+    "frames_returned": 60,
+    "frames_decoded": 8,
+    "present_share": 1.0,
+    "confidence": 0.9452,
+    "area_px": 344085,
+    "bbox": [
+     712,
+     187,
+     1208,
+     887
+    ],
+    "unstable_share": 0.0108,
+    "frames_billed": 60,
+    "usd": 0.012
+   },
+   "washing machine front door": {
+    "objects": 1,
+    "frames_sent": 60,
+    "found": true,
+    "object_id": "0",
+    "frames_returned": 58,
+    "frames_decoded": 8,
+    "present_share": 0.967,
+    "confidence": 0.777,
+    "area_px": 95056,
+    "bbox": [
+     787,
+     402,
+     1140,
+     750
+    ],
+    "unstable_share": 0.0122,
+    "frames_billed": 60,
+    "usd": 0.012
+   }
+  }
+ },
+ "iou": {
+  "washing machine": {
+   "iou": 0.9805,
+   "phrase": "washing machine",
+   "added_for_iou": false
+  },
+  "door": {
+   "iou": 0.9789,
+   "phrase": "washing machine front door",
+   "added_for_iou": false
+  }
+ },
+ "measured_parts": [
+  "washing machine",
+  "washing machine front door"
+ ],
+ "scale_basis": "washing machine width = 600 mm over 496 px",
+ "running_speed": {
+  "hz": 16.6439,
+  "rpm": 998.6,
+  "source": "rpm_range",
+  "ambiguous": false,
+  "alternatives_hz": [],
+  "clear": true,
+  "notes": []
+ },
+ "rule_verdict": "none",
+ "rule_confidence": "medium",
+ "rule_reason": "velocity 3.94 mm/s is below the alert level 7",
+ "rule_ok": true,
+ "spark": {
+  "fault": "none",
+  "confidence_reported": "medium",
+  "confidence": "medium",
+  "agrees": true,
+  "supported": true,
+  "cap_reasons": [],
+  "counts": {
+   "verified": 0,
+   "context": 2,
+   "dropped": 0
+  },
+  "error": null
+ },
+ "card": {
+  "headline": {
+   "fault": "none",
+   "confidence": "medium",
+   "reason": "velocity 3.94 mm/s is below the alert level 7",
+   "lead_part": "washing machine",
+   "evidence": [],
+   "source": "fixed rules"
+  },
+  "spark": {
+   "fault": "none",
+   "fault_reported": "none",
+   "confidence": "medium",
+   "confidence_reported": "medium",
+   "capped": false,
+   "cap_reasons": [],
+   "agrees": true,
+   "supported": true,
+   "evidence": [
+    {
+     "part": "washing machine",
+     "frequency_hz": 16.644,
+     "order": "1x",
+     "matched": {
+      "part": "washing machine",
+      "axis": "x",
+      "hz": 16.644,
+      "label": "1x",
+      "amp_px": 0.04194,
+      "snr": 221.9
+     },
+     "status": "context",
+     "reason": "a real 1x peak, but it is not what this fault rests on"
+    },
+    {
+     "part": "washing machine",
+     "frequency_hz": 16.641,
+     "order": "1x",
+     "matched": {
+      "part": "washing machine",
+      "axis": "y",
+      "hz": 16.641,
+      "label": "1x",
+      "amp_px": 0.01364,
+      "snr": 95.7
+     },
+     "status": "context",
+     "reason": "a real 1x peak, but it is not what this fault rests on"
+    }
+   ],
+   "counts": {
+    "verified": 0,
+    "context": 2,
+    "dropped": 0
+   },
+   "explanation": "Vibration on the washing machine is 3.94 mm/s RMS which is below the 7 mm/s alert level. The spectrum shows a clean dominant 1x with very low 2x and 3x and no half order, so no misalignment or looseness pattern is present. I agree with the rule verdict of none and consider this normal running.",
+   "fix": [
+    "No repair needed at this time",
+    "Keep loads balanced and machine level",
+    "Check feet and floor for tightness visually",
+    "Run again if noise or walking appears"
+   ],
+   "check_next": [
+    "Recheck vibration at full spin speed if load changes",
+    "Listen for new noise or walking of the machine"
+   ]
+  },
+  "show_both": false,
+  "spark_raw": {
+   "check_next": [
+    "Recheck vibration at full spin speed if load changes",
+    "Listen for new noise or walking of the machine"
+   ],
+   "confidence": "medium",
+   "evidence": [
+    {
+     "frequency_hz": 16.644,
+     "order": "1x",
+     "part": "washing machine"
+    },
+    {
+     "frequency_hz": 16.641,
+     "order": "1x",
+     "part": "washing machine"
+    }
+   ],
+   "explanation": "Vibration on the washing machine is 3.94 mm/s RMS which is below the 7 mm/s alert level. The spectrum shows a clean dominant 1x with very low 2x and 3x and no half order, so no misalignment or looseness pattern is present. I agree with the rule verdict of none and consider this normal running.",
+   "fault": "none",
+   "fix": [
+    "No repair needed at this time",
+    "Keep loads balanced and machine level",
+    "Check feet and floor for tightness visually",
+    "Run again if noise or walking appears"
+   ]
+  },
+  "usd": 0.012384,
+  "usage": {
+   "input_tokens": 1846,
+   "output_tokens": 2371
+  }
+ },
+ "costs_usd": {
+  "plan": 0.017543,
+  "segment": 0.024,
+  "diagnose": 0.012384,
+  "total": 0.053927
+ },
+ "seconds_elapsed": 262.3
+}

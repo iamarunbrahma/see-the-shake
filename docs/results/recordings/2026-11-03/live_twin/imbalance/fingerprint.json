@@ -1,0 +1,124 @@
+{
+ "verdict": "imbalance",
+ "confidence": "high",
+ "reason": "1x holds 99% of the vibration energy",
+ "lead_part": "washing machine front door",
+ "evidence": [
+  {
+   "axis": "x",
+   "hz": 16.643,
+   "order": 1.0,
+   "label": "1x",
+   "amp_px": 0.25152
+  },
+  {
+   "axis": "y",
+   "hz": 16.643,
+   "order": 1.0,
+   "label": "1x",
+   "amp_px": 0.12008
+  }
+ ],
+ "alert_level": 7.0,
+ "alert_unit": "mm/s",
+ "scaled": true,
+ "phase_1x_x_rad": {
+  "washing machine -> washing machine front door": -0.002
+ },
+ "blades": null,
+ "notes": [],
+ "parts": {
+  "washing machine": {
+   "features": {
+    "amp_1x_px": 0.2612,
+    "e1_share": 0.991,
+    "r21": 0.096,
+    "r31": 0.006,
+    "harmonics": [],
+    "n_harmonics": 0,
+    "faint_harmonics": [
+     "2x"
+    ],
+    "half_order": false,
+    "half_ratio": 0.003,
+    "h_over_v_1x": 1.857,
+    "velocity_rms": 23.789,
+    "velocity_unit": "mm/s",
+    "present": {
+     "1x": true,
+     "2x": true
+    },
+    "artifacts": [],
+    "blade_pass": null,
+    "weak_axes": [],
+    "on_flicker_orders": {},
+    "velocity_without_blade_pass": null
+   },
+   "verdict": "imbalance",
+   "confidence": "high",
+   "reason": "1x holds 99% of the vibration energy",
+   "evidence": [
+    {
+     "axis": "x",
+     "hz": 16.642,
+     "order": 1.0,
+     "label": "1x",
+     "amp_px": 0.22999
+    },
+    {
+     "axis": "y",
+     "hz": 16.644,
+     "order": 1.0,
+     "label": "1x",
+     "amp_px": 0.12382
+    }
+   ]
+  },
+  "washing machine front door": {
+   "features": {
+    "amp_1x_px": 0.27871,
+    "e1_share": 0.992,
+    "r21": 0.091,
+    "r31": 0.007,
+    "harmonics": [],
+    "n_harmonics": 0,
+    "faint_harmonics": [
+     "2x"
+    ],
+    "half_order": false,
+    "half_ratio": 0.003,
+    "h_over_v_1x": 2.095,
+    "velocity_rms": 25.368,
+    "velocity_unit": "mm/s",
+    "present": {
+     "1x": true,
+     "2x": true
+    },
+    "artifacts": [],
+    "blade_pass": null,
+    "weak_axes": [],
+    "on_flicker_orders": {},
+    "velocity_without_blade_pass": null
+   },
+   "verdict": "imbalance",
+   "confidence": "high",
+   "reason": "1x holds 99% of the vibration energy",
+   "evidence": [
+    {
+     "axis": "x",
+     "hz": 16.643,
+     "order": 1.0,
+     "label": "1x",
+     "amp_px": 0.25152
+    },
+    {
+     "axis": "y",
+     "hz": 16.643,
+     "order": 1.0,
+     "label": "1x",
+     "amp_px": 0.12008
+    }
+   ]
+  }
+ }
+}
