@@ -179,7 +179,7 @@ imbalance, looseness, misalignment) or `--twin fan-imbalance` (fan: healthy, imb
 and `--scale`. Results go to `runs/<run id>/results.json` with the videos and plots beside it. Scripts that call the
 pipeline need an `if __name__ == "__main__":` guard, or SAM mask decoding falls back to serial.
 
-**Tests** run offline (recorded API responses, no key needed) in about 10 minutes on 4 cores, or about 15 minutes the
+**Tests** run offline (recorded API responses, no key needed) in about 10 minutes on 4 cores, or about 20 minutes the
 first time, which renders the small twin clips:
 
 ```bash
