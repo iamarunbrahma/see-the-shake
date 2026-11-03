@@ -83,3 +83,9 @@ def test_pixels_outside_part_zones_untouched(twin_runs):
         assert np.array_equal(g[~zone], f[~zone]), f"frame {i}: pixels outside the zones changed"
         changed_inside += int((g[zone] != f[zone]).any(-1).sum())
     assert changed_inside > 0 and grown_by < 40
+
+
+def test_the_slow_down_caption_is_rounded():
+    """The rotor's 500 fps shown at 30 fps read 'Original, 16.6667x slower'."""
+    assert magnify._slow_text(500 / 30) == "16.7x" and magnify._slow_text(240 / 30) == "8x"
+    assert magnify._slow_text(120 / 30) == "4x"

@@ -71,8 +71,6 @@ def encoder_args(encoding, preset):
                 {"bitrate": PHONE_BITRATE, "preset": PHONE_PRESET, "tune": None, "note": "assumed phone-like bitrate"})
     raise ValueError(f"unknown encoding {encoding!r}")
 
-PARTS = ("washing machine", "door")
-
 
 @dataclass
 class TwinConfig:

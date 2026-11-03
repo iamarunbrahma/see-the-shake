@@ -173,11 +173,16 @@ def _even(v):
     return int(v) - int(v) % 2
 
 
-def _outline(img, masks, scale, color=(40, 200, 255)):
+def _outline(img, masks, color=(40, 200, 255)):
     for m in masks.values():
         small = cv2.resize((m > 0).astype(np.uint8), (img.shape[1], img.shape[0]), interpolation=cv2.INTER_NEAREST)
         cnts, _ = cv2.findContours(small, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
         cv2.drawContours(img, cnts, -1, color, 1, cv2.LINE_AA)
+
+
+def _slow_text(slow):
+    """'8x', '16.7x': a playback slow-down for a caption, whole when it nearly is."""
+    return f"{round(slow):d}x" if abs(slow - round(slow)) < 0.05 else f"{slow:.1f}x"
 
 
 def _label(img, text):
@@ -209,8 +214,7 @@ def magnify(path, masks, rel, fps, f1, out_dir, start=0, alpha="auto", band=DEFA
     plate = make_plate(path, start, n_all, layers, shape)
 
     sbs = _Writer(out / "side_by_side.mp4", 2 * hw, hh, PLAYBACK_FPS, ["-preset", "veryfast", "-crf", "20"])
-    nat = _Writer(out / "magnified_native.mp4", W, H, int(round(fps)),
-                  ["-preset", "veryfast", "-tune", "grain", "-crf", "16"]) if write_native else None
+    nat = _Writer(out / "magnified_native.mp4", W, H, int(round(fps)), ["-preset", "veryfast", "-tune", "grain", "-crf", "16"])
     lead = layers[0]
     lm = masks[lead.name] > 0
     row = int(np.nonzero(lm.any(1))[0].mean())
@@ -222,24 +226,22 @@ def magnify(path, masks, rel, fps, f1, out_dir, start=0, alpha="auto", band=DEFA
     try:
         for i, f in enumerate(read_bgr(path, start, m)):
             g = magnify_frame(f, i, layers, plate)
-            if nat:
-                nat.write(g)
+            nat.write(g)
             if i < int(0.5 * fps):
                 slices["original"].append(f[row, c0:c1].copy())
                 slices["magnified"].append(g[row, c0:c1].copy())
             a = cv2.resize(f, (hw, hh), interpolation=cv2.INTER_AREA)
             b = cv2.resize(g, (hw, hh), interpolation=cv2.INTER_AREA)
             if outline:
-                _outline(a, masks, s)
-                _outline(b, masks, s)
-            _label(a, f"Original, {slow:g}x slower")
+                _outline(a, masks)
+                _outline(b, masks)
+            _label(a, f"Original, {_slow_text(slow)} slower")
             _label(b, f"Shake magnified {alpha:.0f}x")
             sbs.write(np.hstack([a, b]))
         ok = True
     finally:
         sbs.close(ok)
-        if nat:
-            nat.close(ok)
+        nat.close(ok)
     tiles = []
     for k in ("original", "magnified"):
         arr = np.array(slices[k], np.uint8)
@@ -251,13 +253,12 @@ def magnify(path, masks, rel, fps, f1, out_dir, start=0, alpha="auto", band=DEFA
     return {
         "alpha": round(alpha, 3), "band_hz": [round(band_hz[0], 3), round(band_hz[1], 3)],
         "band_orders": list(band), "frames": m, "seconds": round(m / fps, 3), "playback_fps": PLAYBACK_FPS,
-        "slow_factor": slow, "start_frame": start, "ref_index": ref_index,
+        "slow_factor": round(slow, 1), "start_frame": start, "ref_index": ref_index,
         "zones_px": {L.name: int(L.zone.sum()) for L in layers},
         "layers": [{"part": L.name, "outer": L.outer, "max_shift_px": round(float(np.abs(L.shift).max()), 3)}
                    for L in layers],
         "slice": {"row": row, "cols": [c0, c1], "seconds": 0.5},
-        "files": {"side_by_side": "side_by_side.mp4", "native": "magnified_native.mp4" if write_native else None,
-                  "slice": "slice.png"},
+        "files": {"side_by_side": "side_by_side.mp4", "native": "magnified_native.mp4", "slice": "slice.png"},
     }
 
 
@@ -300,9 +301,9 @@ def _magnify_display(path, masks, sh, alpha, band, band_hz, fps, start, m, out, 
         sl = (a[row, c0:c1].copy(), b[row, c0:c1].copy()) if i < n_slice else None
         a = a.copy()
         if outline:
-            _outline(a, masks, s)
-            _outline(b, masks, s)
-        _label(a, f"Original, {slow:g}x slower")
+            _outline(a, masks)
+            _outline(b, masks)
+        _label(a, f"Original, {_slow_text(slow)} slower")
         _label(b, f"Shake magnified {alpha:.0f}x")
         return np.hstack([a, b]), sl
 
@@ -338,7 +339,7 @@ def _magnify_display(path, masks, sh, alpha, band, band_hz, fps, start, m, out, 
     return {
         "alpha": round(alpha, 3), "band_hz": [round(band_hz[0], 3), round(band_hz[1], 3)],
         "band_orders": list(band), "frames": m, "seconds": round(m / fps, 3), "playback_fps": PLAYBACK_FPS,
-        "slow_factor": slow, "start_frame": start, "ref_index": ref_index, "render_scale": round(s, 4),
+        "slow_factor": round(slow, 1), "start_frame": start, "ref_index": ref_index, "render_scale": round(s, 4),
         "zones_px": {L.name: int(L.zone.sum()) for L in layers},
         "layers": [{"part": L.name, "outer": L.outer, "max_shift_px": round(float(np.abs(L.shift).max()) / s, 3)}
                    for L in layers],
