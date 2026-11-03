@@ -1,5 +1,7 @@
 # See the Shake
 
+**Demo video:** https://youtu.be/08ZK__uc-3g
+
 Every common machine fault leaves a vibration fingerprint: an unbalanced rotor shakes once per revolution (1x), a
 misaligned shaft shows a strong 2x, a loose mount rattles at 0.5x and a row of harmonics. Factories read these with
 accelerometers and trained analysts; a small workshop or a home has neither, but it has a phone that films 240 fps
