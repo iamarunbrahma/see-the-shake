@@ -1,9 +1,11 @@
-# Lower bounds only. Each is at or past the last release with a known security issue, as of Nov 2026.
+# Lower bounds only, no upper pins. They are the oldest versions the full offline suite was run on (Python 3.10,
+# Nov 2026), each past the last release with a known security issue. Older numpy, scipy, opencv and
+# matplotlib measure slightly differently and fail two borderline tests.
 # Runtime
-numpy>=1.26
-scipy>=1.11
-opencv-python-headless>=4.8.1.78
-matplotlib>=3.8
+numpy>=2.0
+scipy>=1.13
+opencv-python-headless>=5.0
+matplotlib>=3.9
 openai>=3.0  # 3.0 is the first release that installs httpx2, which the tests use
 meta_sam_parser>=0.0.6
 # Web app
@@ -14,6 +16,6 @@ h11>=0.16
 python-multipart>=0.0.31
 # Tests
 pytest>=9.0.3
-pytest-timeout>=2.3
+pytest-timeout>=2.3.1
 httpx>=0.27  # FastAPI TestClient
 # System: ffmpeg and ffprobe (apt install ffmpeg)

@@ -4,17 +4,17 @@ version = "0.1.0"
 description = "Measure, magnify and diagnose machine vibration from a slow-motion phone clip"
 requires-python = ">=3.10"
 dependencies = [
-  "numpy>=1.26",
-  "scipy>=1.11",
-  "opencv-python-headless>=4.8.1.78",
-  "matplotlib>=3.8",
+  "numpy>=2.0",
+  "scipy>=1.13",
+  "opencv-python-headless>=5.0",
+  "matplotlib>=3.9",
   "openai>=3.0",
   "meta_sam_parser>=0.0.6",
 ]
 
 [project.optional-dependencies]
 web = ["fastapi>=0.133", "starlette>=1.3.1", "uvicorn>=0.29", "h11>=0.16", "python-multipart>=0.0.31"]
-dev = ["pytest>=9.0.3", "pytest-timeout>=2.3", "httpx>=0.27"]
+dev = ["pytest>=9.0.3", "pytest-timeout>=2.3.1", "httpx>=0.27"]
 
 [build-system]
 requires = ["setuptools>=68"]
