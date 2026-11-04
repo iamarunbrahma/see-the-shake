@@ -58,6 +58,9 @@
   .warn { color: var(--warn); }
   .err { color: var(--bad); white-space: pre-wrap; }
   .hidden { display: none; }
+  .prepared-list { display: flex; flex-wrap: wrap; gap: 8px; margin: 6px 0 14px; }
+  .prepared-list button { background: var(--chip); color: var(--ink); border: 1px solid var(--line); }
+  .tabs button:disabled { cursor: not-allowed; }
   .two { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
   .two > *, .grid > * { min-width: 0; }
   .narrow-only { display: none; }
@@ -81,6 +84,12 @@
     <div class="tabs" role="tablist">
       <button id="tab-twin" role="tab" aria-selected="true">Digital twin</button>
       <button id="tab-clip" role="tab" aria-selected="false">Your clip</button>
+    </div>
+    <p class="hint hidden" id="static_note">Uploads need your own Meta Model API key, so they run on your own computer:
+      see the <a id="quickstart_link" href="#">Quickstart</a>.</p>
+    <div id="prepared" class="hidden">
+      <h3>Recorded runs, open at once at no cost</h3>
+      <div class="prepared-list" id="prepared_list"></div>
     </div>
 
     <form id="form-twin">
@@ -208,6 +217,10 @@ const CLAIM = { most_moving_part: "Most moving part", direction: "Direction" };
 const usd = (v) => "$" + Number(v || 0).toFixed(4);
 const times = (v) => Number(v).toFixed(1).replace(/\.0$/, "") + "x";  // 16.6667 -> "16.7x", 8 -> "8x"
 let maxUpload = 0;
+// Static mode (scripts/export_static.py sets data-mode="static"): a site with no server. The page reads the prepared
+// runs from runs/index.json and each run from runs/<id>/results.json, and never calls /api.
+const STATIC = document.documentElement.dataset.mode === "static";
+let prepared = [];
 let steps = [], timer = null;
 
 function el(tag, text, cls) { const e = document.createElement(tag); if (text !== undefined && text !== null) e.textContent = text; if (cls) e.className = cls; return e; }
@@ -216,7 +229,7 @@ function clear(node) { while (node.firstChild) node.removeChild(node.firstChild)
 function fmt(v, d = 3) { return (v === null || v === undefined) ? "" : Number(v).toFixed(d); }
 
 async function init() {
-  const s = await (await fetch("/api/samples")).json();
+  const s = await (await fetch(STATIC ? "runs/index.json" : "/api/samples")).json();
   steps = s.steps;
   machines = s.machines;
   maxUpload = s.max_upload_bytes || 0;
@@ -225,6 +238,36 @@ async function init() {
   fillFaults();
   $("fault").value = "imbalance";
   $("twin_api").onchange = twinHint; twinHint();
+  if (STATIC) setupStatic(s);
+}
+
+function setupStatic(s) {
+  prepared = s.prepared || [];
+  // recorded runs only: no live runs and no rendering, so the only twin choice is the recorded run
+  $("twin_api").querySelectorAll('option:not([value="replay"])').forEach(o => o.remove());
+  $("clip_api").querySelectorAll('option[value="live"]').forEach(o => o.remove());
+  $("twin_api").value = "replay"; twinHint();
+  $("tab-clip").disabled = true;
+  $("quickstart_link").href = s.quickstart_url;
+  $("static_note").classList.remove("hidden");
+  const list = $("prepared_list"); clear(list);
+  for (const p of prepared) {
+    const b = el("button", p.label); b.type = "button"; b.onclick = () => openStatic(p.run_id); list.appendChild(b);
+  }
+  if (prepared.length) $("prepared").classList.remove("hidden");
+}
+
+async function openStatic(id) {
+  $("results").classList.add("hidden"); $("progress").classList.remove("hidden");
+  $("error").textContent = ""; $("phase").textContent = "Loading"; showSteps(null);
+  let r;
+  try { r = await getJSON(`runs/${id}/results.json`); }
+  catch (e) { fail("Cannot load this run."); return; }
+  if (!r.ok || !r.body) { fail("Cannot load this run."); return; }
+  const res = r.body.results || r.body;  // the run's results.json, as /api/runs/{id} serves it
+  showSteps({ steps: res.steps || [] }); $("phase").textContent = "Done";
+  try { showResults(res, `runs/${id}/`, true); }
+  catch (e) { fail("The run loaded but could not be shown."); }
 }
 
 let machines = [];
@@ -247,7 +290,9 @@ function twinHint() {
     off: ($("machine").value === "fan"
       ? "The fan twin is a rendered pedestal fan at a 3/4 angle, 1290 rpm, three blades spinning behind the guard, with camera shake, light flicker and sensor noise. The motor housing, guard rim and stand are measured; the blade disc is left out. Exact part masks stand in for SAM 3.1, and the true running speed plus or minus 10% for the Muse Spark plan. Results are compared with the truth."
       : "The twin is a rendered washing machine with a known fault, camera shake, light flicker and sensor noise. Its exact part masks stand in for SAM 3.1, and the true running speed plus or minus 10% stands in for the Muse Spark plan. Results are compared with the truth."),
-    replay: "Replays the recorded live run for this fault: the real Muse Spark plan, SAM 3.1 masks and Spark diagnosis, at no cost. It needs the recording's clip (seed 1, 1920 x 1080); the first run renders and measures it, which takes a few minutes.",
+    replay: STATIC
+      ? "Opens the recorded live run for this fault at once: the real Muse Spark plan, SAM 3.1 masks and Spark diagnosis, at no cost."
+      : "Replays the recorded live run for this fault: the real Muse Spark plan, SAM 3.1 masks and Spark diagnosis, at no cost. It needs the recording's clip (seed 1, 1920 x 1080); the first run renders and measures it, which takes a few minutes.",
     live: "Calls Muse Spark and SAM 3.1 for real, about 6 to 7 cents a run, and records the responses with the run. Results are compared with the truth, and SAM's masks with the renderer's.",
   }[mode];
 }
@@ -527,12 +572,18 @@ function showDiagnosis(r, fromCache) {
 
 $("form-twin").onsubmit = (e) => {
   e.preventDefault();
+  if (STATIC) {  // a twin's recorded run is one of the prepared runs
+    const p = prepared.find(x => x.machine === $("machine").value && x.fault === $("fault").value);
+    if (p) openStatic(p.run_id); else fail("There is no recorded run for this twin here.");
+    return;
+  }
   start("/api/twin", { method: "POST", headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ machine: $("machine").value, fault: $("fault").value, seed: +$("seed").value, seconds: +$("seconds").value, scale: +$("scale").value,
                            api: $("twin_api").value }) });
 };
 $("form-clip").onsubmit = (e) => {
   e.preventDefault();
+  if (STATIC) return;  // no uploads without a server
   const file = $("clip").files[0];
   if (maxUpload && file && file.size > maxUpload) {  // say so now, before minutes of uploading
     $("progress").classList.remove("hidden"); showSteps(null); $("phase").textContent = "";
@@ -549,7 +600,8 @@ $("form-clip").onsubmit = (e) => {
 };
 init().catch(() => {
   $("progress").classList.remove("hidden");
-  $("error").textContent = "Cannot load the app's settings from the server. Is it still running? Reload the page to try again.";
+  $("error").textContent = STATIC ? "Cannot load the list of recorded runs. Reload the page to try again."
+    : "Cannot load the app's settings from the server. Is it still running? Reload the page to try again.";
 });
 </script>
 </body>
