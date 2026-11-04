@@ -5,6 +5,7 @@
 **Film a running machine in slow motion. See how each part vibrates, watch the shake magnified, and get the likely fault.**
 
 [![Demo video](https://img.shields.io/badge/demo-3_min_video-FF0000?style=flat-square&logo=youtube&logoColor=white)](https://youtu.be/08ZK__uc-3g)
+[![Try it](https://img.shields.io/badge/try_it-Hugging_Face-FFD21E?style=flat-square&logo=huggingface&logoColor=black)](https://huggingface.co/spaces/heliosbrahma/see-the-shake)
 [![Muse Spark 1.3](https://img.shields.io/badge/Muse_Spark-1.3-0866FF?style=flat-square&logo=meta&logoColor=white)](#meta-models)
 [![SAM 3.1](https://img.shields.io/badge/SAM-3.1-0866FF?style=flat-square&logo=meta&logoColor=white)](#meta-models)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-3776AB?style=flat-square&logo=python&logoColor=white)](#quickstart)
@@ -12,7 +13,7 @@
 
 <a href="https://youtu.be/08ZK__uc-3g"><img src="docs/assets/demo-poster.jpg" alt="Watch the 3-minute demo on YouTube" width="760"></a>
 
-<sub><a href="https://youtu.be/08ZK__uc-3g">Watch the 3-minute demo on YouTube</a></sub>
+<sub><a href="https://youtu.be/08ZK__uc-3g">Watch the 3-minute demo on YouTube</a> · <a href="https://huggingface.co/spaces/heliosbrahma/see-the-shake">Open the recorded runs in your browser</a></sub>
 
 </div>
 
@@ -47,6 +48,8 @@ uvicorn shake.web.app:app --port 8000
 
 Then open http://localhost:8000.
 
+- **No install?** The [hosted demo](https://huggingface.co/spaces/heliosbrahma/see-the-shake) opens nine recorded runs
+  (the washing machine and fan twins, the real washer and the rotor rig) in your browser, with no key and no cost.
 - **No key?** Open the **Digital twin** tab and pick **Recorded run, no cost**. It replays a real Muse Spark and
   SAM 3.1 run on a rendered washing machine; the first time, it renders and measures the clip, which takes a few
   minutes. The same replay from the command line: `python -m shake.pipeline --twin imbalance --api replay --seconds 6`.
