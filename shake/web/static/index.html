@@ -247,6 +247,8 @@ function setupStatic(s) {
   $("twin_api").querySelectorAll('option:not([value="replay"])').forEach(o => o.remove());
   $("clip_api").querySelectorAll('option[value="live"]').forEach(o => o.remove());
   $("twin_api").value = "replay"; twinHint();
+  $("seconds").disabled = true;
+  $("form-twin").querySelector('button[type="submit"]').textContent = "Open the recorded run";
   $("tab-clip").disabled = true;
   $("quickstart_link").href = s.quickstart_url;
   $("static_note").classList.remove("hidden");
