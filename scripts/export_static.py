@@ -27,14 +27,16 @@ WASHER_CLIP = "https://commons.wikimedia.org/wiki/File:Washing_machine_120fps.we
 ROTOR_DATA = "https://doi.org/10.17632/47y7rwc2yg.1"
 CC_BY_SA = "https://creativecommons.org/licenses/by-sa/4.0/"
 CC_BY = "https://creativecommons.org/licenses/by/4.0/"
+# The Space shows the page in a frame, which these sites refuse to load in, so its links open in a new tab.
+NEW_TAB = 'target="_blank" rel="noopener"'
 # The static page's credit line, put after <main> by export() so the app's own page is left as it is. The real runs'
 # videos and images are made from the two clips (README.md, Credits); the twins are rendered by this project.
 FOOTER = f"""<footer class="hint" style="max-width:1100px;margin:0 auto;padding:0 16px 24px">
-  The real washer and rotor runs are made from <a href="{WASHER_CLIP}">"Washing machine 120fps"</a> by Golha
-  (Wikimedia Commons, <a href="{CC_BY_SA}">CC BY-SA 4.0</a>; trimmed and magnified, and shared under the same license)
-  and the rotor rig videos by Kang, Zheng, Liu and Pei (<a href="{ROTOR_DATA}">Mendeley Data</a>,
-  <a href="{CC_BY}">CC BY 4.0</a>; magnified).
-  <a href="{GITHUB}">Code on GitHub</a> · <a href="{DEMO_VIDEO}">Demo video</a>
+  The real washer and rotor runs are made from <a {NEW_TAB} href="{WASHER_CLIP}">"Washing machine 120fps"</a> by Golha
+  (Wikimedia Commons, <a {NEW_TAB} href="{CC_BY_SA}">CC BY-SA 4.0</a>; trimmed and magnified, and shared under the same
+  license) and the rotor rig videos by Kang, Zheng, Liu and Pei (<a {NEW_TAB} href="{ROTOR_DATA}">Mendeley Data</a>,
+  <a {NEW_TAB} href="{CC_BY}">CC BY 4.0</a>; magnified).
+  <a {NEW_TAB} href="{GITHUB}">Code on GitHub</a> · <a {NEW_TAB} href="{DEMO_VIDEO}">Demo video</a>
 </footer>"""
 SPACE_README = f"""---
 title: See the Shake

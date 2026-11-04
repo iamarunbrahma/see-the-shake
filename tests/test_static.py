@@ -2,6 +2,7 @@
 loads the prepared runs without ever calling /api. No model calls; the browser check needs Node's Playwright."""
 import importlib.util
 import json
+import re
 import shutil
 import socket
 import subprocess
@@ -91,6 +92,17 @@ def test_export_credits_the_real_clips(site):
     for text in (page, card):
         assert "\u2014" not in text and "\u2013" not in text  # no em or en dashes
     assert "<footer" not in ex.PAGE.read_text()
+
+
+def test_export_links_open_in_a_new_tab(site):
+    """The Space shows the page in a frame, and GitHub, YouTube and Wikimedia refuse to load in one: the Quickstart
+    link and the footer's six links open in a new tab."""
+    _, out, _, _ = site
+    page = (out / "index.html").read_text()
+    links = [a for a in re.findall(r"<a [^>]*>", page) if 'href="http' in a or 'id="quickstart_link"' in a]
+    assert len(links) == 7
+    for a in links:
+        assert 'target="_blank"' in a and 'rel="noopener"' in a, a
 
 
 def _has_playwright():
