@@ -125,7 +125,7 @@ const { chromium } = require('playwright');
   await pg.click('#prepared_list button >> nth=1');
   await pg.waitForSelector('#results:not(.hidden)');
   const verdict = await pg.innerText('#results');
-  await pg.click('#form-twin button[type=submit]');  // the twin's recorded run
+  await pg.click('#prepared_list button >> nth=0');  // the twin's recorded run (the static page hides the twin form)
   await pg.waitForFunction(() => document.querySelector('#video').src.includes('a1b2c3d4e5f6'));
   console.log(JSON.stringify({ urls, errors, tab, choices, verdict: verdict.slice(0, 400),
                                note: await pg.innerText('#static_note'), footer: await pg.innerText('footer') }));

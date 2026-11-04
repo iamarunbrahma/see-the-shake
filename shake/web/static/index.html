@@ -19,7 +19,7 @@
   header h1 { margin: 0; font-size: 26px; letter-spacing: -0.01em; }
   header p { margin: 4px 0 0; color: var(--muted); }
   main { max-width: 1100px; margin: 0 auto; padding: 8px 16px 48px; }
-  .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 16px; margin: 12px 0; }
+  .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 18px 20px; margin: 14px 0; }
   .panel h2 { margin: 0 0 10px; font-size: 17px; }
   .panel h3 { margin: 12px 0 6px; font-size: 15px; }
   .tabs { display: flex; gap: 8px; margin-bottom: 12px; }
@@ -32,6 +32,7 @@
   .needs { outline: 2px solid var(--warn); }
   input, select, textarea { font: inherit; color: var(--ink); background: var(--bg); border: 1px solid var(--line);
                             border-radius: 6px; padding: 6px 8px; width: 100%; }
+  input:not([type=file]), select { height: 38px; }
   textarea { min-height: 60px; }
   .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; align-items: end; }
   .hint { color: var(--muted); font-size: 13px; margin: 8px 0 0; }
@@ -49,6 +50,7 @@
   .verdict .conf { color: var(--muted); }
   table { border-collapse: collapse; width: 100%; font-size: 14px; }
   th, td { text-align: left; padding: 5px 8px; border-bottom: 1px solid var(--line); }
+  td { font-variant-numeric: tabular-nums; }
   th { color: var(--muted); font-weight: 600; }
   .scroll { overflow-x: auto; }
   video, img.wide { width: 100%; height: auto; border-radius: 8px; background: #000; display: block; }
@@ -58,8 +60,18 @@
   .warn { color: var(--warn); }
   .err { color: var(--bad); white-space: pre-wrap; }
   .hidden { display: none; }
-  .prepared-list { display: flex; flex-wrap: wrap; gap: 8px; margin: 6px 0 14px; }
+  .prepared-list { display: grid; gap: 12px; margin: 12px 0 14px; }
+  .run-group { display: grid; grid-template-columns: 180px 1fr; gap: 12px; align-items: center; }
+  .run-group .name { color: var(--muted); font-size: 13px; font-weight: 600; }
+  .run-group .opts { display: flex; flex-wrap: wrap; gap: 8px; }
   .prepared-list button { background: var(--chip); color: var(--ink); border: 1px solid var(--line); }
+  .prepared-list button:hover { border-color: var(--accent); }
+  .prepared-list button[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+  /* a static site opens recorded runs only, so the run list replaces the tabs and the twin form */
+  html[data-mode="static"] .tabs, html[data-mode="static"] #form-twin { display: none; }
+  a.button-link { display: inline-block; padding: 8px 14px; border-radius: 8px; border: 1px solid var(--line);
+                  background: var(--chip); color: var(--ink); text-decoration: none; }
+  a.button-link:hover { border-color: var(--accent); }
   .tabs button:disabled { cursor: not-allowed; }
   .two { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
   .two > *, .grid > * { min-width: 0; }
@@ -70,6 +82,9 @@
     .wide-media video { min-width: 720px; }
     .wide-media img.spec { min-width: 640px; }
     .narrow-only { display: block; }
+    .run-group { grid-template-columns: 1fr; gap: 6px; }
+    table { font-size: 13px; }
+    th, td { padding: 5px 6px; }
   }
   a { color: var(--accent); }
 </style>
@@ -85,12 +100,13 @@
       <button id="tab-twin" role="tab" aria-selected="true">Digital twin</button>
       <button id="tab-clip" role="tab" aria-selected="false">Your clip</button>
     </div>
-    <p class="hint hidden" id="static_note">Uploads need your own Meta Model API key, so they run on your own computer:
-      see the <a id="quickstart_link" href="#" target="_blank" rel="noopener">Quickstart</a>.</p>
     <div id="prepared" class="hidden">
-      <h3>Recorded runs, open at once at no cost</h3>
+      <h2>Open a recorded run</h2>
+      <p class="hint">Each one is a real Muse Spark and SAM 3.1 run, recorded once and replayed here at no cost.</p>
       <div class="prepared-list" id="prepared_list"></div>
     </div>
+    <p class="hint hidden" id="static_note">Uploads need your own Meta Model API key, so they run on your own computer:
+      see the <a id="quickstart_link" href="#" target="_blank" rel="noopener">Quickstart</a>.</p>
 
     <form id="form-twin">
       <div class="grid">
@@ -202,7 +218,7 @@
       <div class="scroll"><table id="truth"><thead><tr><th>Part</th><th>Axis</th><th>Order</th><th>True (px)</th><th>Measured (px)</th><th>Error</th><th>Within tolerance</th></tr></thead><tbody></tbody></table></div>
     </div>
 
-    <p><a id="download" download="see-the-shake-report.json">Download the JSON report</a></p>
+    <p><a id="download" class="button-link" download="see-the-shake-report.json">Download the JSON report</a></p>
   </section>
 </main>
 
@@ -224,7 +240,7 @@ let prepared = [];
 let steps = [], timer = null;
 
 function el(tag, text, cls) { const e = document.createElement(tag); if (text !== undefined && text !== null) e.textContent = text; if (cls) e.className = cls; return e; }
-function row(tbody, cells) { const tr = el("tr"); cells.forEach(c => tr.appendChild(el("td", c))); tbody.appendChild(tr); }
+function row(tbody, cells) { const tr = el("tr"); cells.forEach(c => tr.appendChild(el("td", c))); tbody.appendChild(tr); return tr; }
 function clear(node) { while (node.firstChild) node.removeChild(node.firstChild); }
 function fmt(v, d = 3) { return (v === null || v === undefined) ? "" : Number(v).toFixed(d); }
 
@@ -252,22 +268,39 @@ function setupStatic(s) {
   $("tab-clip").disabled = true;
   $("quickstart_link").href = s.quickstart_url;
   $("static_note").classList.remove("hidden");
+  // one row per machine: "Washing machine twin: healthy" goes under "Washing machine twin" as "Healthy", and a run
+  // without a colon in its label (the real clips) goes under "Real clips" with its full label
   const list = $("prepared_list"); clear(list);
+  const groups = new Map();
   for (const p of prepared) {
-    const b = el("button", p.label); b.type = "button"; b.onclick = () => openStatic(p.run_id); list.appendChild(b);
+    const i = p.label.indexOf(": ");
+    const [group, name] = i > 0 ? [p.label.slice(0, i), p.label.slice(i + 2)] : ["Real clips", p.label];
+    if (!groups.has(group)) groups.set(group, []);
+    groups.get(group).push([name.charAt(0).toUpperCase() + name.slice(1), p]);
+  }
+  for (const [group, items] of groups) {
+    const g = el("div", null, "run-group"), opts = el("div", null, "opts");
+    g.appendChild(el("div", group, "name"));
+    for (const [name, p] of items) {
+      const b = el("button", name); b.type = "button"; b.title = p.label; b.setAttribute("aria-pressed", "false");
+      b.onclick = () => { list.querySelectorAll("button").forEach(x => x.setAttribute("aria-pressed", x === b)); openStatic(p.run_id, p.label); };
+      opts.appendChild(b);
+    }
+    g.appendChild(opts); list.appendChild(g);
   }
   if (prepared.length) $("prepared").classList.remove("hidden");
 }
 
-async function openStatic(id) {
+async function openStatic(id, label) {
   $("results").classList.add("hidden"); $("progress").classList.remove("hidden");
   $("error").textContent = ""; $("phase").textContent = "Loading"; showSteps(null);
+  $("progress").scrollIntoView({ behavior: "smooth", block: "start" });
   let r;
   try { r = await getJSON(`runs/${id}/results.json`); }
   catch (e) { fail("Cannot load this run."); return; }
   if (!r.ok || !r.body) { fail("Cannot load this run."); return; }
   const res = r.body.results || r.body;  // the run's results.json, as /api/runs/{id} serves it
-  showSteps({ steps: res.steps || [] }); $("phase").textContent = "Done";
+  showSteps({ steps: res.steps || [] }); $("phase").textContent = label ? `Showing the recorded run: ${label}` : "Done";
   try { showResults(res, `runs/${id}/`, true); }
   catch (e) { fail("The run loaded but could not be shown."); }
 }
@@ -446,8 +479,9 @@ function showResults(r, base, fromCache) {
       (r.mask_source === "SAM 3.1" ? "Masks from SAM 3.1, matched to the renderer's parts by overlap." : `Masks: ${r.mask_source}.`);
     const tb = $("truth").querySelector("tbody"); clear(tb);
     for (const x of tc.rows.filter(x => x.scored)) {
-      row(tb, [x.part, x.axis, `${x.order}x`, fmt(x.true_amp_px, 4), fmt(x.meas_amp_px, 4),
-               x.amp_err === null ? "missed" : `${(x.amp_err * 100).toFixed(1)}%`, x.pass ? "yes" : "no"]);
+      const tr = row(tb, [x.part, x.axis, `${x.order}x`, fmt(x.true_amp_px, 4), fmt(x.meas_amp_px, 4),
+                          x.amp_err === null ? "missed" : `${(x.amp_err * 100).toFixed(1)}%`, ""]);
+      tr.lastChild.appendChild(el("span", x.pass ? "yes" : "no", "chip " + (x.pass ? "verified" : "not_verified")));
     }
   }
   $("download").href = base + "results.json";
