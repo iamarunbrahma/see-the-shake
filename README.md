@@ -162,10 +162,15 @@ inside the requests. Recorded runs, and runs with Muse Spark and SAM 3.1 off, se
 <summary><b>Environment variables</b></summary>
 <br>
 
-`MODEL_API_KEY` (live runs only), `MODEL_API_BASE` (default `https://api.meta.ai/v1`), `SHAKE_RUNS` (where the web app
-keeps runs, default `./runs`), `SHAKE_RECORDINGS` (recorded live twin runs, default `tests/api/fixtures/live`),
-`SHAKE_DEBUG=1` (the command line prints the full traceback of an error instead of one line). Check the key with one
-small call (about a tenth of a cent):
+| Variable | Default | Use |
+|---|---|---|
+| `MODEL_API_KEY` | none | Meta Model API key, for live runs only |
+| `MODEL_API_BASE` | `https://api.meta.ai/v1` | API endpoint |
+| `SHAKE_RUNS` | `./runs` | Where the web app keeps runs |
+| `SHAKE_RECORDINGS` | `tests/api/fixtures/live` | Recorded live twin runs |
+| `SHAKE_DEBUG` | off | `1` prints the full traceback of a command-line error |
+
+Check the key with one small call (about a tenth of a cent):
 
 ```bash
 python -m shake.api_check
@@ -177,12 +182,28 @@ python -m shake.api_check
 <summary><b>Command line</b></summary>
 <br>
 
-`python -m shake.pipeline clip.mp4 --api live --ref "washing machine=600"` runs your clip with Muse Spark and SAM 3.1
-(`--ref "large metal disc=150:height"` takes the length as the mask's height); `--api off --mask "part=mask.png"` uses
-your own masks. Other options: `--capture-fps 240`, `--rpm` or `--rpm-range`, `--blades`, `--parts "phrase, phrase"`.
-Twins: `--twin imbalance` (washing machine faults: healthy, imbalance, looseness, misalignment) or
-`--twin fan-imbalance` (fan: healthy, imbalance, looseness), with `--seconds` and `--scale`. Results go to
-`runs/<run id>/results.json` with the videos and plots beside it. Scripts that call the pipeline need an
+```bash
+# Your clip, with Muse Spark and SAM 3.1 (a reference length in mm gives millimetres)
+python -m shake.pipeline clip.mp4 --api live --ref "washing machine=600"
+
+# Your own masks, no model calls
+python -m shake.pipeline clip.mp4 --api off --mask "door=mask.png"
+
+# A digital twin, replaying its recorded Muse Spark and SAM 3.1 run at no cost
+python -m shake.pipeline --twin imbalance --api replay --seconds 6
+```
+
+| Option | Use |
+|---|---|
+| `--ref "part=150:height"` | Takes the reference length as the mask's height instead of its width |
+| `--capture-fps 240` | The rate the clip was filmed at, when the phone saved it as a 30 fps file |
+| `--rpm`, `--rpm-range` | The running speed, if you know it, or a range for it |
+| `--blades` | A fan's blade count, so blade pass is labelled |
+| `--parts "phrase, phrase"` | Part phrases to use instead of Spark's |
+| `--twin` | `healthy`, `imbalance`, `looseness`, `misalignment`, or `fan-healthy`, `fan-imbalance`, `fan-looseness` |
+| `--seconds`, `--scale` | A twin's length (default 4 s) and resolution (default half of 1920x1080) |
+
+Results go to `runs/<run id>/results.json`, with the videos and plots beside it. Scripts that call the pipeline need an
 `if __name__ == "__main__":` guard, or SAM mask decoding falls back to serial.
 
 </details>
@@ -191,21 +212,26 @@ Twins: `--twin imbalance` (washing machine faults: healthy, imbalance, looseness
 <summary><b>Tests and evaluation scripts</b></summary>
 <br>
 
-Tests run offline (recorded API responses, no key needed) in about 13 minutes on 4 cores, or about 20 minutes the
-first time, which renders the small twin clips:
+The tests run offline on recorded API responses, so they need no key. They take about 13 minutes on 4 cores, or about
+20 minutes the first time, which renders the small twin clips.
 
 ```bash
-python -m pytest -q
+python -m pytest -q          # the offline suite
+python -m pytest -m live     # live API tests, which cost money
 ```
 
-Live API tests cost money and run only with `python -m pytest -m live`. Regenerate the twin accuracy table with
-`python scripts/eval_twin.py --seeds 1 2 3 --seconds 6 --phone`. Record a fresh set of live twin runs (about 25
-cents) into a separate folder with
-`python scripts/live_twin.py --fixtures out/live/recordings --out out/live --max-usd 1.0`; it never touches the
-committed recordings in `tests/api/fixtures/live/`, and without `--fixtures` it stops before rendering anything,
-since those are already recorded. Replay the real clips through the current code at no cost with
-`python scripts/replay_real.py --rotor-ref-height`, then compare with the probes with
-`python scripts/compare_rotor_probes.py --runs out/real_replay`.
+```bash
+# Regenerate the twin accuracy table
+python scripts/eval_twin.py --seeds 1 2 3 --seconds 6 --phone
+
+# Record a fresh set of live twin runs (about 25 cents) into a separate folder. It never touches the committed
+# recordings in tests/api/fixtures/live/, and without --fixtures it stops before rendering anything.
+python scripts/live_twin.py --fixtures out/live/recordings --out out/live --max-usd 1.0
+
+# Replay the real clips through the current code at no cost, then compare the rotor runs with the probes
+python scripts/replay_real.py --rotor-ref-height
+python scripts/compare_rotor_probes.py --runs out/real_replay
+```
 
 </details>
 
@@ -213,12 +239,16 @@ since those are already recorded. Replay the real clips through the current code
 <summary><b>Repository layout</b></summary>
 <br>
 
-`shake/` holds the pipeline: `ingest`, `twin` and `twin_fan` (renderers with complete truth), `measure`,
-`fingerprint` (rules), `magnify`, `meta_api` (client, cost, record and replay), `plan_parts`, `segment`, `diagnose`,
-`pipeline` and `web/` (FastAPI and one page). `scripts/` builds the accuracy tables, `docs/` holds the design, plan
-and results, and `reference/spike/` the Oct 27 spike this was ported from. `demo/` builds the 3-minute demo video
-from replayed runs and is not part of the product; its narration is an AI voice (Sarvam Bulbul), which the organizers
-allow for the video. The product itself calls only Meta models.
+| Path | Contents |
+|---|---|
+| `shake/` | The pipeline: `ingest`, `twin` and `twin_fan` (renderers with complete truth), `measure`, `fingerprint` (rules), `magnify`, `meta_api` (client, cost, record and replay), `plan_parts`, `segment`, `diagnose` and `pipeline` |
+| `shake/web/` | The FastAPI app and its one page |
+| `tests/` | The offline suite and the recorded API responses |
+| `scripts/` | Accuracy tables and replays |
+| `docs/` | The design, the plan and the results |
+| `samples/real/` | The two real clips, with their licenses |
+| `reference/spike/` | The Oct 27 spike this was ported from |
+| `demo/` | Builds the demo video from replayed runs. It is not part of the product: its narration is an AI voice (Sarvam Bulbul), which the organizers allow for the video, and the product itself calls only Meta models. |
 
 </details>
 
