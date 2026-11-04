@@ -251,7 +251,6 @@ python scripts/compare_rotor_probes.py --runs out/real_replay
 | `docs/` | The design, the plan and the results |
 | `samples/real/` | The real washer clip and nine rotor-rig clips with their probe data, with their licenses |
 | `reference/spike/` | The Oct 27 spike this was ported from |
-| `demo/` | Builds the demo video from replayed runs. It is not part of the product: its narration is an AI voice (Sarvam Bulbul), which the organizers allow for the video, and the product itself calls only Meta models. |
 
 </details>
 
@@ -264,6 +263,8 @@ python scripts/compare_rotor_probes.py --runs out/real_replay
   Operational Conditions: High-speed Camera Video Data and Eddy current displacement sensor data", Mendeley Data, V1,
   2024, doi:10.17632/47y7rwc2yg.1, CC BY 4.0.
 - Details and changes: [samples/real/README.md](samples/real/README.md).
+- The demo video's narration is an AI voice (Sarvam Bulbul), which the organizers allow for the video. The product
+  itself calls only Meta models.
 
 ## License
 
