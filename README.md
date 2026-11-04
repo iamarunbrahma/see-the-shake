@@ -241,12 +241,12 @@ python scripts/compare_rotor_probes.py --runs out/real_replay
 
 | Path | Contents |
 |---|---|
-| `shake/` | The pipeline: `ingest`, `twin` and `twin_fan` (renderers with complete truth), `measure`, `fingerprint` (rules), `magnify`, `meta_api` (client, cost, record and replay), `plan_parts`, `segment`, `diagnose` and `pipeline` |
+| `shake/` | The pipeline: `ingest`, `twin` and `twin_fan` (renderers with complete truth), `measure`, `fingerprint` (rules), `magnify`, `meta_api` (client, cost, record and replay), `plan_parts`, `segment`, `diagnose`, `pipeline`, `evaluate` (scores a twin run against its truth) and `api_check` (one small call to check the key) |
 | `shake/web/` | The FastAPI app and its one page |
 | `tests/` | The offline suite and the recorded API responses |
 | `scripts/` | Accuracy tables and replays |
 | `docs/` | The design, the plan and the results |
-| `samples/real/` | The two real clips, with their licenses |
+| `samples/real/` | The real washer clip and nine rotor-rig clips with their probe data, with their licenses |
 | `reference/spike/` | The Oct 27 spike this was ported from |
 | `demo/` | Builds the demo video from replayed runs. It is not part of the product: its narration is an AI voice (Sarvam Bulbul), which the organizers allow for the video, and the product itself calls only Meta models. |
 
