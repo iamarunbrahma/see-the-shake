@@ -55,20 +55,20 @@ Then open http://localhost:8000.
 
 ## How it works
 
-| | Step | Done by | What happens |
+| | Step | Done&nbsp;by | What happens |
 |:-:|---|---|---|
 | 1 | Ingest | code | Reads the clip on its capture time base (phones often save 240 fps as a slowed 30 fps file), refuses clips below 120 fps, flags synthesised in-between frames and picks a steady window of up to 10 s. |
-| 2 | Plan | **Muse Spark** | Names the machine, a running-speed range and up to four parts to measure. |
-| 3 | Find the parts | **SAM 3.1** | One stable mask per part phrase. |
+| 2 | Plan | **Muse&nbsp;Spark** | Names the machine, a running-speed range and up to four parts to measure. |
+| 3 | Find&nbsp;the&nbsp;parts | **SAM&nbsp;3.1** | One stable mask per part phrase. |
 | 4 | Measure | code | Tracks each part's sub-pixel motion minus the background (camera shake), leaving out light flicker, compression artifacts and spinning content such as drums and blades. One spectrum per part, with peaks labelled as orders of running speed, in mm when you give one reference length. |
 | 5 | Fingerprint | code | Fixed rules give the official verdict: none, imbalance, misalignment, looseness or unclear (and high vibration at blade pass, for a fan with a known blade count), citing the peaks it rests on. |
 | 6 | Magnify | code | Moves each part by alpha times its motion around 1x over an inpainted background; original and magnified play side by side. |
-| 7 | Diagnose | **Muse Spark** | A plain-words explanation, fix steps and what to check next, with each claim checked by code. |
+| 7 | Diagnose | **Muse&nbsp;Spark** | A plain-words explanation, fix steps and what to check next, with each claim checked by code. |
 
 <p align="center">
-  <img src="docs/assets/results.png" alt="Results page of a live run on a real washing machine" width="760">
+  <img src="docs/assets/results.png" alt="Results page for the Nov 2 live run on a real washing machine" width="760">
   <br>
-  <sub>A live run on a real washing machine: the rule verdict, the peaks it rests on, and Muse Spark's diagnosis with
+  <sub>The Nov 2 live run on a real washing machine, replayed in the app: the rule verdict, the peaks it rests on, and Muse Spark's diagnosis with
   each claim checked.</sub>
 </p>
 
@@ -106,7 +106,7 @@ and replayed, so the test suite runs offline. A full run costs about 5 to 8 cent
 | Live twin runs with SAM 3.1 and Muse Spark | SAM 3.1 masks at IoU 0.95 to 0.98 against the renderer's; rules right on 6 of 6, Spark agrees on all 6 | [live runs](docs/results/2026-11-02-live-twin.md), [re-scored](docs/accuracy/live-rescore.md) |
 | Lab rotor rig at 500 fps, with displacement probes | 1x within 0.02 Hz of the probes on 9 of 9 runs; verdict matches the probes on 6 of 9 | [real clips](docs/results/2026-11-02-real-clips.md) |
 | Real washing machine, phone clip at 120 fps | Reads imbalance | [real clips](docs/results/2026-11-02-real-clips.md) |
-| Pedestal fan twin: healthy, imbalance, looseness | 3 of 3 verdicts | |
+| Pedestal fan twin: healthy, imbalance, looseness | 3 of 3 verdicts | [live runs](docs/results/2026-11-02-live-twin.md) |
 
 - The one twin miss is a 2x that reads 22% high. On the phone-like section, small components read low. The scored
   truth allows for the drum's slow speed drift, which spreads higher orders in any spectrum.
@@ -121,7 +121,7 @@ and replayed, so the test suite runs offline. A full run costs about 5 to 8 cent
 
 Your clip stays on your computer; a live run sends the Meta Model API only these pieces of it:
 
-- for the plan, a 4 s, 480p, 30 fps preview of the steady window and one full-resolution frame;
+- for the plan, a 4 s, 480p, 30 fps preview of the steady window and one full-resolution frame (at most 1920 px wide);
 - for SAM 3.1, 60 consecutive frames at full resolution;
 - for the diagnosis, the side-by-side magnified clip and the spectrum image, with the measured numbers.
 
@@ -191,7 +191,7 @@ Twins: `--twin imbalance` (washing machine faults: healthy, imbalance, looseness
 <summary><b>Tests and evaluation scripts</b></summary>
 <br>
 
-Tests run offline (recorded API responses, no key needed) in about 10 minutes on 4 cores, or about 20 minutes the
+Tests run offline (recorded API responses, no key needed) in about 13 minutes on 4 cores, or about 20 minutes the
 first time, which renders the small twin clips:
 
 ```bash
