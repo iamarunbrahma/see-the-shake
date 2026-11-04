@@ -1,10 +1,11 @@
 """Export the prepared runs (scripts/prepare_hosted.py) as a static site for a Hugging Face Static Space.
 
 site/ holds:
-- index.html: the app's page in static mode (data-mode="static"), which never calls /api;
+- index.html: the app's page in static mode (data-mode="static"), which never calls /api, with a footer crediting
+  the real clips;
 - runs/index.json: what /api/samples gives the page (steps, machines and faults), plus the prepared runs;
 - runs/<id>/results.json and every file it references (videos re-encoded when larger than --max-video-mb);
-- README.md: the Space's card.
+- README.md: the Space's card, with the same credits.
 
 usage: python scripts/export_static.py [--runs hosted_runs] [--out site] [--max-video-mb 5]
 """
@@ -22,6 +23,19 @@ PAGE = ROOT / "shake" / "web" / "static" / "index.html"
 GITHUB = "https://github.com/iamarunbrahma/see-the-shake"
 QUICKSTART_URL = GITHUB + "#quickstart"
 DEMO_VIDEO = "https://youtu.be/08ZK__uc-3g"
+WASHER_CLIP = "https://commons.wikimedia.org/wiki/File:Washing_machine_120fps.webm"
+ROTOR_DATA = "https://doi.org/10.17632/47y7rwc2yg.1"
+CC_BY_SA = "https://creativecommons.org/licenses/by-sa/4.0/"
+CC_BY = "https://creativecommons.org/licenses/by/4.0/"
+# The static page's credit line, put after <main> by export() so the app's own page is left as it is. The real runs'
+# videos and images are made from the two clips (README.md, Credits); the twins are rendered by this project.
+FOOTER = f"""<footer class="hint" style="max-width:1100px;margin:0 auto;padding:0 16px 24px">
+  The real washer and rotor runs are made from <a href="{WASHER_CLIP}">"Washing machine 120fps"</a> by Golha
+  (Wikimedia Commons, <a href="{CC_BY_SA}">CC BY-SA 4.0</a>; trimmed and magnified, and shared under the same license)
+  and the rotor rig videos by Kang, Zheng, Liu and Pei (<a href="{ROTOR_DATA}">Mendeley Data</a>,
+  <a href="{CC_BY}">CC BY 4.0</a>; magnified).
+  <a href="{GITHUB}">Code on GitHub</a> · <a href="{DEMO_VIDEO}">Demo video</a>
+</footer>"""
 SPACE_README = f"""---
 title: See the Shake
 emoji: 📳
@@ -35,6 +49,16 @@ short_description: Phone slow-motion video to machine vibration diagnosis
 
 Code: [github.com/iamarunbrahma/see-the-shake]({GITHUB})
 Demo video: [youtu.be/08ZK__uc-3g]({DEMO_VIDEO})
+
+## Credits
+
+- The real washer run is made from "Washing machine 120fps" by Golha, Wikimedia Commons,
+  {WASHER_CLIP}, CC BY-SA 4.0 ({CC_BY_SA}), trimmed and magnified. Its video and
+  images here are shared under CC BY-SA 4.0.
+- The rotor rig run is made from Kang, Zheng, Liu, Pei, "Vibration Displacement Dataset of Rotors under Various
+  Operational Conditions: High-speed Camera Video Data and Eddy current displacement sensor data", Mendeley Data, V1,
+  2024, doi:10.17632/47y7rwc2yg.1, CC BY 4.0 ({CC_BY}), magnified.
+- The twin runs are rendered by this project's own code. The code is MIT licensed.
 """
 
 
@@ -103,9 +127,10 @@ def export(runs, out, max_video_mb=5.0):
                 shutil.copy2(src / name, dst / name)
     (out / "runs" / "index.json").write_text(json.dumps(samples(prepared), indent=1))
     page = PAGE.read_text()
-    if page.count('<html lang="en">') != 1:
-        raise SystemExit("index.html no longer starts with <html lang=\"en\">; update export_static.py")
-    (out / "index.html").write_text(page.replace('<html lang="en">', '<html lang="en" data-mode="static">'))
+    if page.count('<html lang="en">') != 1 or page.count("</main>") != 1:
+        raise SystemExit("index.html no longer has one <html lang=\"en\"> and one </main>; update export_static.py")
+    page = page.replace('<html lang="en">', '<html lang="en" data-mode="static">')
+    (out / "index.html").write_text(page.replace("</main>", "</main>\n" + FOOTER))
     (out / "README.md").write_text(SPACE_README)
     return prepared
 

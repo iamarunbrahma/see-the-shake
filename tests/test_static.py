@@ -73,6 +73,26 @@ def test_export_writes_every_file_the_runs_reference(site):
     assert "https://youtu.be/08ZK__uc-3g" in card and "github.com/iamarunbrahma/see-the-shake" in card
 
 
+def test_export_credits_the_real_clips(site):
+    """The real runs republish videos made from a CC BY-SA 4.0 and a CC BY 4.0 clip: the page's footer and the Space
+    card credit both, and the app's own page is left without the footer."""
+    ex, out, _, _ = site
+    page = (out / "index.html").read_text()
+    assert page.count("<footer") == 1 and page.index("</main>") < page.index("<footer") < page.index("<script>")
+    footer = page[page.index("<footer"):page.index("</footer>")]
+    card = (out / "README.md").read_text()
+    credits = card[card.index("## Credits"):]
+    for text in (footer, credits):
+        for need in ("Washing machine 120fps", "Golha", "CC BY-SA 4.0", "Kang, Zheng, Liu", "CC BY 4.0",
+                     "commons.wikimedia.org/wiki/File:Washing_machine_120fps.webm", "47y7rwc2yg.1"):
+            assert need in text, need
+    assert 'href="https://github.com/iamarunbrahma/see-the-shake"' in footer
+    assert 'href="https://youtu.be/08ZK__uc-3g"' in footer
+    for text in (page, card):
+        assert "\u2014" not in text and "\u2013" not in text  # no em or en dashes
+    assert "<footer" not in ex.PAGE.read_text()
+
+
 def _has_playwright():
     return shutil.which("node") and subprocess.run(["node", "-e", "require('playwright')"], capture_output=True,
                                                    cwd=ROOT).returncode == 0
@@ -96,7 +116,7 @@ const { chromium } = require('playwright');
   await pg.click('#form-twin button[type=submit]');  // the twin's recorded run
   await pg.waitForFunction(() => document.querySelector('#video').src.includes('a1b2c3d4e5f6'));
   console.log(JSON.stringify({ urls, errors, tab, choices, verdict: verdict.slice(0, 400),
-                               note: await pg.innerText('#static_note') }));
+                               note: await pg.innerText('#static_note'), footer: await pg.innerText('footer') }));
   await b.close();
 })().catch(e => { console.error(e); process.exit(1); });
 """
@@ -121,5 +141,6 @@ def test_static_page_never_calls_the_api(site):
     assert not got["errors"], got["errors"]
     assert got["tab"] and got["choices"] == ["replay"]  # no upload, no live run, no rendering
     assert "Imbalance" in got["verdict"] and "Quickstart" in got["note"]
+    assert "CC BY-SA 4.0" in got["footer"] and "CC BY 4.0" in got["footer"] and "Demo video" in got["footer"]
     assert any(u.endswith("/runs/index.json") for u in got["urls"])
     assert any("/runs/0f1e2d3c4b5a/results.json" in u for u in got["urls"])  # a run opens from its own folder
