@@ -248,7 +248,7 @@ python scripts/compare_rotor_probes.py --runs out/real_replay
 | `shake/web/` | The FastAPI app and its one page |
 | `tests/` | The offline suite and the recorded API responses |
 | `scripts/` | Accuracy tables and replays |
-| `docs/` | The design, the plan and the results |
+| `docs/` | The accuracy tables, the results and their recordings, and the images on this page |
 | `samples/real/` | The real washer clip and nine rotor-rig clips with their probe data, with their licenses |
 | `reference/spike/` | The Oct 27 spike this was ported from |
 
