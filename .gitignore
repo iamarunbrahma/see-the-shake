@@ -8,3 +8,8 @@ raw/
 demo/build/
 demo/out/
 demo/**/*.mp4
+
+# the hosted demo, built from the recordings and not committed: its prepared runs (scripts/prepare_hosted.py) and
+# the static site made from them (scripts/export_static.py)
+hosted_runs/
+site/
